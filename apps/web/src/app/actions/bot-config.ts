@@ -1,0 +1,122 @@
+'use server';
+
+import { revalidatePath }         from 'next/cache';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getSession }             from '@/lib/session';
+import { writeAuditLog }          from '@/lib/audit';
+import type { GuardrailsConfig }  from '@alphabot/shared';
+
+export interface SaveBotConfigInput {
+  productSlug:          string;
+  systemPrompt:         string;
+  kbOnlyMode:           boolean;
+  confidenceThreshold:  number;
+  escalationTriggers:   string[];
+  tone:                 GuardrailsConfig['tone'];
+  maxResponseLength:    number;
+  blockedTopics:        string[];
+  blockedKeywords:      string[];
+  noExternalLinks:      boolean;
+  noPersonalData:       boolean;
+  noPhoneNumbers:       boolean;
+  onBlockedTopic:       GuardrailsConfig['on_blocked_topic'];
+  customBlockedMessage: string;
+  voiceEnabled:                  boolean;
+  voiceLanguage:                 string;
+  voiceGreeting:                 string;
+  voiceVoicemail:                string;
+  autoDispatchOnEscalation:      boolean;
+  escalationVoiceDelaySeconds:   number;
+  // Escalation policy
+  maxLowConfidenceReprompts: number;
+  repromptMessage:           string;
+  autoEscalateAfterHours:    number | null;
+}
+
+export async function saveBotConfigAction(input: SaveBotConfigInput) {
+  const session = await getSession();
+  if (!session) return { error: 'Not authenticated' };
+
+  const admin = getSupabaseAdminClient();
+
+  const guardrails_json: GuardrailsConfig = {
+    blocked_topics:      input.blockedTopics,
+    blocked_keywords:    input.blockedKeywords,
+    max_response_length: input.maxResponseLength,
+    tone:                input.tone,
+    content_filters: {
+      no_personal_data:             input.noPersonalData,
+      no_external_links:            input.noExternalLinks,
+      no_phone_numbers_in_response: input.noPhoneNumbers,
+    },
+    on_blocked_topic:       input.onBlockedTopic,
+    on_low_confidence:      'escalate',
+    custom_blocked_message: input.customBlockedMessage || undefined,
+  };
+
+  const { data: existingBotCfg } = await admin
+    .from('bot_configs')
+    .select('voice_config')
+    .eq('tenant_id', session.tenantId)
+    .eq('product_slug', input.productSlug)
+    .single();
+
+  const existingVoiceCfg = (existingBotCfg?.voice_config ?? {}) as Record<string, unknown>;
+
+  const voice_config = {
+    ...existingVoiceCfg,
+    enabled:                        input.voiceEnabled,
+    language:                       input.voiceLanguage,
+    voicemail_enabled:              true,
+    voicemail_message:              input.voiceVoicemail,
+    greeting_message:               input.voiceGreeting.trim() || null,
+    max_call_duration_seconds:      existingVoiceCfg['max_call_duration_seconds'] ?? 300,
+    max_turns:                      existingVoiceCfg['max_turns'] ?? 20,
+    silence_timeout_seconds:        existingVoiceCfg['silence_timeout_seconds'] ?? 10,
+    auto_dispatch_on_escalation:    input.autoDispatchOnEscalation,
+    escalation_voice_delay_seconds: input.escalationVoiceDelaySeconds,
+  };
+
+  const escalation_policy = {
+    confidence_threshold:        input.confidenceThreshold,
+    max_low_confidence_reprompts: input.maxLowConfidenceReprompts,
+    on_exhaust:                  'escalate' as const,
+    reprompt_message:            input.repromptMessage.trim() || null,
+    auto_escalate_after_hours:   input.autoEscalateAfterHours,
+  };
+
+  const { data: updated, error } = await admin
+    .from('bot_configs')
+    .update({
+      system_prompt:        input.systemPrompt.trim() || null,
+      kb_only_mode:         input.kbOnlyMode,
+      confidence_threshold: input.confidenceThreshold,
+      escalation_triggers:  input.escalationTriggers,
+      guardrails_json,
+      voice_config,
+      escalation_policy,
+      updated_by:           session.userId,
+    })
+    .eq('tenant_id', session.tenantId)
+    .eq('product_slug', input.productSlug)
+    .select('id')
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!updated) return { error: 'Bot config not found — activate your bot in Settings first' };
+
+  void writeAuditLog({
+    tenantId:    session.tenantId,
+    actorId:     session.userId,
+    actorEmail:  session.userEmail,
+    action:      'bot.config.updated',
+    entityType:  'bot_config',
+    entityId:    input.productSlug,
+    description: `Updated bot configuration for ${input.productSlug.replace(/_/g, ' ')} (confidence: ${input.confidenceThreshold}%)`,
+    metadata: { productSlug: input.productSlug, confidenceThreshold: input.confidenceThreshold, kbOnlyMode: input.kbOnlyMode },
+  });
+
+  revalidatePath('/settings');
+  revalidatePath('/call-triggers');
+  return { success: true };
+}

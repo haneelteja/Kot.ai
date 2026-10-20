@@ -1,0 +1,504 @@
+import { getServerClient } from '@alphabot/database';
+import type { Conversation } from '@alphabot/shared';
+import { WhatsAppGateway } from '../whatsapp/gateway.js';
+import type { WhatsAppProvider } from '@alphabot/shared';
+import { classifyAndPersistOutcome } from '../../lib/outcome-classifier.js';
+
+export interface EscalationResult {
+  escalationId: string;
+  conversationId: string;
+}
+
+export async function escalateConversation(
+  conversation: Conversation,
+  triggerReason: string
+): Promise<EscalationResult> {
+  const db = getServerClient();
+
+  // 1. Flip conversation status — must succeed before creating the escalation record,
+  // otherwise the bot continues auto-replying to an escalated conversation.
+  const { error: convError } = await db
+    .from('conversations')
+    .update({ status: 'escalated' })
+    .eq('id', conversation.id);
+
+  if (convError) throw new Error(`Failed to escalate conversation: ${convError.message}`);
+
+  // 2. Create escalation record
+  const { data, error } = await db
+    .from('escalations')
+    .insert({
+      tenant_id:       conversation.tenant_id,
+      conversation_id: conversation.id,
+      trigger_reason:  triggerReason,
+      status:          'pending',
+    })
+    .select('id')
+    .single();
+
+  if (error) throw new Error(`Failed to create escalation: ${error.message}`);
+
+  // 3. Fire all notifications non-blocking
+  void sendEscalationNotifications(conversation, triggerReason);
+
+  // 4. Auto-dispatch voice call if bot voice config has auto_dispatch_on_escalation=true
+  void maybeDispatchEscalationVoiceCall(conversation);
+
+  return {
+    escalationId: (data as { id: string }).id,
+    conversationId: conversation.id,
+  };
+}
+
+/**
+ * If the bot's voice_config.auto_dispatch_on_escalation is true, dispatch
+ * an outbound voice callback to the customer immediately after escalation.
+ * This replaces "a human will call you back" with an instant AI voice call.
+ */
+async function maybeDispatchEscalationVoiceCall(conversation: Conversation): Promise<void> {
+  try {
+    const db = getServerClient();
+
+    // Load bot config to check voice settings
+    const { data: botConfig } = await db
+      .from('bot_configs')
+      .select('voice_config')
+      .eq('tenant_id', conversation.tenant_id)
+      .eq('product_slug', conversation.product_type)
+      .single();
+
+    const voiceCfg = (botConfig as { voice_config?: { enabled?: boolean; auto_dispatch_on_escalation?: boolean; escalation_voice_delay_seconds?: number } } | null)?.voice_config;
+    if (!voiceCfg?.enabled || !voiceCfg?.auto_dispatch_on_escalation) return;
+
+    // Fetch customer phone number
+    const { data: contact } = await db
+      .from('contacts')
+      .select('phone, name')
+      .eq('id', conversation.contact_id)
+      .single();
+
+    if (!contact?.phone) return;
+
+    const delayMs = ((voiceCfg.escalation_voice_delay_seconds ?? 0)) * 1000;
+    if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs));
+
+    // Lazy import to avoid circular dependencies
+    const { dispatchCall } = await import('../voice/call-manager.js');
+    await dispatchCall({
+      tenant_id:       conversation.tenant_id,
+      product_slug:    conversation.product_type,
+      to_number:       (contact as { phone: string }).phone,
+      conversation_id: conversation.id,
+      triggered_by:    'escalation',
+      call_context: {
+        customer_name:    (contact as { name: string | null }).name ?? '',
+        escalation_reason: 'WhatsApp conversation escalated — calling to assist',
+        greeting_override: `Hello${(contact as { name: string | null }).name ? ` ${(contact as { name: string | null }).name}` : ''}! I am calling regarding your recent support request. How can I help you further?`,
+      },
+    });
+  } catch (err) {
+    console.error('[Escalation] Voice auto-dispatch failed:', err instanceof Error ? err.message : err);
+    // Non-fatal — escalation already happened, notifications already sent
+  }
+}
+
+export async function claimEscalation(
+  conversationId: string,
+  escalationId: string,
+  agentId: string
+): Promise<void> {
+  const db = getServerClient();
+
+  // Use status='pending' as an optimistic lock — if two agents race, only one
+  // UPDATE matches and the other gets 0 rows back (PGRST116 / data: null).
+  const { data: claimed } = await db
+    .from('escalations')
+    .update({ agent_id: agentId, status: 'assigned' })
+    .eq('id', escalationId)
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle();
+
+  if (!claimed) throw new Error('Escalation already claimed by another agent');
+
+  await Promise.all([
+    db.from('conversations').update({
+      status: 'bot_paused',
+      assigned_agent_id: agentId,
+    }).eq('id', conversationId),
+
+    db.from('agent_sessions').insert({
+      conversation_id: conversationId,
+      agent_id: agentId,
+    }),
+  ]);
+}
+
+export async function releaseToBot(
+  conversationId: string,
+  agentId: string,
+  resolutionNote?: string
+): Promise<void> {
+  const db = getServerClient();
+
+  await Promise.all([
+    db.from('conversations').update({
+      status: 'open',
+      assigned_agent_id: null,
+    }).eq('id', conversationId),
+
+    db.from('escalations').update({ status: 'resolved' })
+      .eq('conversation_id', conversationId)
+      .eq('status', 'assigned'),
+
+    db.from('agent_sessions').update({
+      ended_at: new Date().toISOString(),
+      resolution_note: resolutionNote ?? null,
+    })
+      .eq('conversation_id', conversationId)
+      .eq('agent_id', agentId)
+      .is('ended_at', null),
+  ]);
+
+  // Non-blocking: send CSAT survey to the customer
+  void sendCsatSurvey(conversationId);
+
+  // Non-blocking: classify why this conversation closed (AI outcome taxonomy)
+  void classifyAndPersistOutcome(conversationId, 'ai');
+}
+
+// ─── CSAT survey dispatcher ───────────────────────────────────────────────────
+
+async function sendCsatSurvey(conversationId: string): Promise<void> {
+  const db = getServerClient();
+
+  const { data: conv } = await db
+    .from('conversations')
+    .select('tenant_id, contact_id, product_type')
+    .eq('id', conversationId)
+    .single();
+
+  if (!conv) return;
+
+  const [contactRes, wnRes] = await Promise.all([
+    db.from('contacts')
+      .select('id, phone, memory_json')
+      .eq('id', conv.contact_id)
+      .single(),
+    db.from('whatsapp_numbers')
+      .select('config_json, provider')
+      .eq('tenant_id', conv.tenant_id)
+      .eq('product_slug', conv.product_type)
+      .eq('active', true)
+      .limit(1)
+      .single(),
+  ]);
+
+  const contact = contactRes.data;
+  const wn      = wnRes.data;
+
+  if (!contact?.phone || !wn) return;
+
+  const wnConfig = wn.config_json as { phone_number_id: string; access_token: string };
+  const gateway  = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+
+  try {
+    await gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
+      type: 'text',
+      to:   contact.phone,
+      text: 'How was your experience with our support today? Reply with a number from 1 (poor) to 5 (excellent) ⭐',
+    });
+
+    const currentMemory = (contact.memory_json ?? {}) as Record<string, unknown>;
+    await db.from('contacts').update({
+      memory_json: { ...currentMemory, awaiting_csat: true },
+    }).eq('id', contact.id);
+  } catch (err) {
+    console.error('[CSAT] Failed to send survey:', err);
+  }
+}
+
+// ─── Internal notification dispatcher ────────────────────────────────────────
+
+async function sendEscalationNotifications(
+  conversation: Conversation,
+  triggerReason: string
+): Promise<void> {
+  const db = getServerClient();
+
+  // Fetch notification settings, contact, recent messages, and WhatsApp config in parallel
+  const [settingsRes, contactRes, messagesRes, wnRes] = await Promise.all([
+    db.from('tenant_notification_settings')
+      .select('escalation_emails, escalation_wa_numbers, escalation_customer_message, from_email, resend_api_key')
+      .eq('tenant_id', conversation.tenant_id)
+      .single(),
+    db.from('contacts')
+      .select('phone, name')
+      .eq('id', conversation.contact_id)
+      .single(),
+    db.from('messages')
+      .select('role, content, timestamp')
+      .eq('conversation_id', conversation.id)
+      .order('timestamp', { ascending: false })
+      .limit(10),
+    db.from('whatsapp_numbers')
+      .select('config_json, provider')
+      .eq('tenant_id', conversation.tenant_id)
+      .eq('product_slug', conversation.product_type)
+      .eq('active', true)
+      .limit(1)
+      .single(),
+  ]);
+
+  const settings = settingsRes.data;
+  const contact  = contactRes.data;
+  const messages = (messagesRes.data ?? []).reverse(); // oldest first
+  const wn       = wnRes.data;
+
+  const customerName  = contact?.name ?? contact?.phone ?? 'Unknown';
+  const customerPhone = contact?.phone ?? '—';
+
+  const webUrl  = process.env['WEB_BASE_URL'] ?? 'https://whats-app-agent-web.vercel.app';
+  const convUrl = `${webUrl}/conversations/${conversation.id}`;
+
+  // ── 1. WhatsApp acknowledgment to customer ─────────────────────────────
+  const customerMessage = settings?.escalation_customer_message
+    ?? 'Your query has been escalated to our team. A team member will get back to you shortly.';
+
+  if (wn && contact?.phone) {
+    const wnConfig = wn.config_json as { phone_number_id: string; access_token: string };
+    const gateway  = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+    try {
+      await gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
+        type: 'text',
+        to:   contact.phone,
+        text: customerMessage,
+      });
+      // Store in messages table so it appears in dashboard
+      await db.from('messages').insert({
+        conversation_id: conversation.id,
+        role:            'assistant',
+        content:         customerMessage,
+      });
+    } catch (err) {
+      console.error('[Escalation] Failed to send customer WA acknowledgment:', err);
+    }
+  }
+
+  // Build conversation transcript (last 10 messages)
+  const transcript = messages
+    .map((m: { role: string; content: string }) => `[${m.role === 'user' ? 'Customer' : 'Bot'}]: ${m.content}`)
+    .join('\n');
+
+  // ── 2. Email to each configured address ────────────────────────────────
+  const emails = (settings?.escalation_emails as string[] | null) ?? [];
+  if (emails.length > 0) {
+    const s = settings as { from_email?: string; resend_api_key?: string } | null;
+    void sendEscalationEmails(emails, {
+      customerName,
+      customerPhone,
+      triggerReason,
+      transcript,
+      convUrl,
+      tenantId: conversation.tenant_id,
+      fromEmail:    s?.from_email    ?? undefined,
+      resendApiKey: s?.resend_api_key ?? undefined,
+    });
+  }
+
+  // ── 3. WhatsApp to each configured team number ─────────────────────────
+  const waNumbers = (settings?.escalation_wa_numbers as string[] | null) ?? [];
+  if (waNumbers.length > 0 && wn) {
+    const wnConfig = wn.config_json as { phone_number_id: string; access_token: string };
+    const gateway  = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+    // Compact message for WhatsApp (use last 3 messages)
+    const shortTranscript = messages.slice(-3)
+      .map((m: { role: string; content: string }) => `${m.role === 'user' ? '👤' : '🤖'} ${m.content.substring(0, 120)}${m.content.length > 120 ? '…' : ''}`)
+      .join('\n');
+
+    const teamWaMessage = [
+      `🚨 *New Escalation*`,
+      ``,
+      `*Customer:* ${customerName}`,
+      `*Phone:* ${customerPhone}`,
+      `*Reason:* ${triggerReason}`,
+      ``,
+      `*Recent messages:*`,
+      shortTranscript,
+      ``,
+      `View: ${convUrl}`,
+    ].join('\n');
+
+    await Promise.allSettled(
+      waNumbers.map(number =>
+        gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
+          type: 'text',
+          to:   number,
+          text: teamWaMessage,
+        }).catch(err => console.error(`[Escalation] Failed to send team WA to ${number}:`, err))
+      )
+    );
+  }
+}
+
+// ─── Lead notification dispatcher ────────────────────────────────────────────
+
+export async function sendLeadNotifications(
+  conversation: Conversation,
+  leadScore: number,
+): Promise<void> {
+  const db = getServerClient();
+
+  const [settingsRes, contactRes, wnRes] = await Promise.all([
+    db.from('tenant_notification_settings')
+      .select('lead_notification_emails, lead_notification_wa_numbers, from_email, resend_api_key')
+      .eq('tenant_id', conversation.tenant_id)
+      .single(),
+    db.from('contacts')
+      .select('phone, name')
+      .eq('id', conversation.contact_id)
+      .single(),
+    db.from('whatsapp_numbers')
+      .select('config_json, provider')
+      .eq('tenant_id', conversation.tenant_id)
+      .eq('product_slug', conversation.product_type)
+      .eq('active', true)
+      .limit(1)
+      .single(),
+  ]);
+
+  const settings = settingsRes.data as {
+    lead_notification_emails:     string[] | null;
+    lead_notification_wa_numbers: string[] | null;
+    from_email:                   string | null;
+    resend_api_key:               string | null;
+  } | null;
+
+  const contact = contactRes.data;
+  const wn      = wnRes.data;
+
+  const customerName  = contact?.name ?? contact?.phone ?? 'Unknown';
+  const customerPhone = contact?.phone ?? '—';
+  const webUrl        = process.env['WEB_BASE_URL'] ?? 'https://whats-app-agent-web.vercel.app';
+  const convUrl       = `${webUrl}/conversations/${conversation.id}`;
+
+  // ── Email alerts ────────────────────────────────────────────────────────────
+  const leadEmails = (settings?.lead_notification_emails as string[] | null) ?? [];
+  if (leadEmails.length > 0) {
+    const apiKey = settings?.resend_api_key ?? process.env['RESEND_API_KEY'];
+    const from   = settings?.from_email ?? process.env['RESEND_FROM_EMAIL'] ?? 'alerts@alphabot.in';
+    if (apiKey) {
+      const html = `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#fff;">
+          <div style="margin-bottom:20px;">
+            <span style="font-weight:700;font-size:18px;color:#111">Alphabot</span>
+            <span style="display:inline-block;margin-left:10px;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:600;padding:3px 8px;border-radius:99px;">New Lead</span>
+          </div>
+          <h2 style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px">A new lead has been captured</h2>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+            <tr><td style="padding:8px 0;color:#666;font-size:13px;width:140px;">Customer</td><td style="padding:8px 0;font-size:13px;font-weight:600;color:#111;">${customerName}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;font-size:13px;">Phone</td><td style="padding:8px 0;font-size:13px;color:#111;">${customerPhone}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;font-size:13px;">Lead score</td><td style="padding:8px 0;font-size:13px;color:#111;">${leadScore}</td></tr>
+          </table>
+          <a href="${convUrl}" style="display:inline-block;background:#059669;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
+            View Conversation →
+          </a>
+        </div>
+      `;
+      void fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          from,
+          to: leadEmails,
+          subject: `[Alphabot] New lead: ${customerName}`,
+          html,
+        }),
+      }).catch(err => console.error('[LeadNotify] Resend error:', err));
+    }
+  }
+
+  // ── WhatsApp alerts ─────────────────────────────────────────────────────────
+  const leadWaNumbers = (settings?.lead_notification_wa_numbers as string[] | null) ?? [];
+  if (leadWaNumbers.length > 0 && wn) {
+    const wnConfig = wn.config_json as { phone_number_id: string; access_token: string };
+    const gateway  = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+
+    const waMessage = [
+      `🎯 *New Lead Captured*`,
+      ``,
+      `*Customer:* ${customerName}`,
+      `*Phone:* ${customerPhone}`,
+      `*Lead score:* ${leadScore}`,
+      ``,
+      `View: ${convUrl}`,
+    ].join('\n');
+
+    await Promise.allSettled(
+      leadWaNumbers.map(number =>
+        gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
+          type: 'text',
+          to:   number,
+          text: waMessage,
+        }).catch(err => console.error(`[LeadNotify] Failed to send WA to ${number}:`, err))
+      )
+    );
+  }
+}
+
+async function sendEscalationEmails(
+  emails: string[],
+  ctx: {
+    customerName: string;
+    customerPhone: string;
+    triggerReason: string;
+    transcript: string;
+    convUrl: string;
+    tenantId: string;
+    fromEmail?: string;
+    resendApiKey?: string;
+  }
+): Promise<void> {
+  // Prefer tenant's own Resend key; fall back to platform key
+  const apiKey = ctx.resendApiKey ?? process.env['RESEND_API_KEY'];
+  const from   = ctx.fromEmail ?? process.env['RESEND_FROM_EMAIL'] ?? 'alerts@alphabot.in';
+  if (!apiKey) return;
+
+  const transcriptHtml = ctx.transcript
+    .split('\n')
+    .map(line => `<p style="margin:4px 0;font-size:13px;color:#333;">${line.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`)
+    .join('');
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#fff;">
+      <div style="margin-bottom:20px;">
+        <span style="font-weight:700;font-size:18px;color:#111">Alphabot</span>
+        <span style="display:inline-block;margin-left:10px;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:600;padding:3px 8px;border-radius:99px;">Escalation</span>
+      </div>
+      <h2 style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px">New conversation escalated</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+        <tr><td style="padding:8px 0;color:#666;font-size:13px;width:140px;">Customer</td><td style="padding:8px 0;font-size:13px;font-weight:600;color:#111;">${ctx.customerName}</td></tr>
+        <tr><td style="padding:8px 0;color:#666;font-size:13px;">Phone</td><td style="padding:8px 0;font-size:13px;color:#111;">${ctx.customerPhone}</td></tr>
+        <tr><td style="padding:8px 0;color:#666;font-size:13px;">Reason</td><td style="padding:8px 0;font-size:13px;color:#111;">${ctx.triggerReason}</td></tr>
+      </table>
+      <div style="background:#f9fafb;border-radius:8px;padding:16px;margin-bottom:24px;">
+        <p style="font-size:12px;font-weight:600;color:#666;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">Recent Conversation</p>
+        ${transcriptHtml}
+      </div>
+      <a href="${ctx.convUrl}" style="display:inline-block;background:#059669;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
+        View Conversation →
+      </a>
+    </div>
+  `;
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      from,
+      to: emails,
+      subject: `[Alphabot] Escalation: ${ctx.customerName} — ${ctx.triggerReason}`,
+      html,
+    }),
+  }).catch(err => console.error('[Escalation] Resend error:', err));
+}

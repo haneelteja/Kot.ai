@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 138 40% 98%;
+    --foreground: 152 30% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 152 30% 10%;
+    --primary: 152 65% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 138 30% 95%;
+    --secondary-foreground: 152 30% 10%;
+    --muted: 138 20% 96%;
+    --muted-foreground: 152 10% 45%;
+    --accent: 138 25% 93%;
+    --accent-foreground: 152 30% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 138 25% 88%;
+    --input: 138 25% 88%;
+    --ring: 152 65% 40%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+
+  /* Global focus ring — enables keyboard navigation across the entire app.
+     Uses :focus-visible so mouse users never see the ring. */
+  *:focus-visible {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Remove outline from elements that have their own focus style */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+  }
+}

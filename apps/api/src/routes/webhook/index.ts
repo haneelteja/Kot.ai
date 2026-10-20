@@ -1,0 +1,1843 @@
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { getServerClient } from '@alphabot/database';
+import type { BotConfig, Contact, Conversation, LayeredGuardrailsConfig, OutgoingInteractiveMessage, PlatformGuardrails, Product, ProductType, WhatsAppProvider } from '@alphabot/shared';
+import { WhatsAppGateway } from '../../services/whatsapp/gateway.js';
+import { getAIResponse } from '../../services/ai/claude.js';
+import { lookupKBWithScore } from '../../services/kb/lookup.js';
+import { escalateConversation, sendLeadNotifications } from '../../services/escalation/index.js';
+import { detectAndStoreSentiment } from '../../services/sentiment/detector.js';
+import { checkTokenQuota, incrementTokenCounter } from '../../services/ai/token-quota.js';
+import { assembleHistory } from '../../services/ai/history-assembler.js';
+import { fireForget } from '../../lib/fire-forget.js';
+import { getBotContext } from '../../services/bot-context.js';
+import { calcLeadScore, generateLeadSummary } from '../../lib/lead-scoring.js';
+import { formatContactMemory } from '../../services/contact/memory.js';
+import { extractAndMergeFacts } from '../../services/contact/fact-extractor.js';
+import { cacheGet, cacheSet } from '../../lib/redis.js';
+import { resolveMultiBotRouting } from '../../services/routing/router.js';
+import type { BranchLocation, RoutingConfig } from '../../services/routing/router.js';
+import { detectSentimentText } from '../../services/sentiment/detector.js';
+import { isWithinBusinessHours } from '../../lib/business-hours.js';
+import { dispatchCall } from '../../services/voice/call-manager.js';
+import { getProductCatalogue } from '../../lib/product-cache.js';
+import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
+import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
+import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
+import { classifyMessageKind, KIND_CLASSIFIER_VERSION } from '../../lib/message-kind.js';
+import { maybeUpdateChatSummary } from '../../lib/chat-summary.js';
+import { createHash } from 'crypto';
+
+// ── Reasoning Effort Tiers ───────────────────────────────────────────────────
+// Classify each inbound message into a tier that controls max_tokens and whether
+// the LLM call can be bypassed entirely when the KB already has a confident answer.
+
+type ReasoningTier = 'bypass' | 'faq' | 'standard' | 'complex';
+
+const COMPLEX_KEYWORDS = /\b(book|reserv|table for|party of|occasion|complaint|refund|wrong order|damaged|defective|escalat|cancel|urgent|dispute|exchange|replace)\b/i;
+
+function classifyReasoningTier(text: string, topKbScore: number, hasKbResults: boolean): ReasoningTier {
+  const isShort   = text.length < 80;
+  const isSimple  = !/[.!?].*[.!?]/.test(text); // not multi-sentence
+  const isComplex = COMPLEX_KEYWORDS.test(text);
+
+  if (isComplex) return 'complex';
+  if (hasKbResults && topKbScore >= 0.92 && isShort) return 'bypass';
+  if (hasKbResults && topKbScore >= 0.75 && isShort && isSimple) return 'faq';
+  if (isShort && isSimple && !isComplex) return 'standard';
+  return 'complex';
+}
+
+const TIER_MAX_TOKENS: Record<ReasoningTier, number> = {
+  bypass:   0,   // not used — LLM is skipped
+  faq:      280,
+  standard: 400,
+  complex:  560,
+};
+
+const RETURN_REQUEST_INSTRUCTION = `
+
+RETURN / REPLACEMENT DETECTION: If the customer clearly requests a return, refund, replacement, or reports a damaged / defective product, first respond with empathy and provide clear next steps (e.g. "Please share your order ID and photos of the item"). Then append the exact text [RETURN_REQUEST] on a new line at the very end of your response. IMPORTANT: Always write a full, helpful reply first. Never respond with ONLY the tag. Do not explain the tag. Only use it when the intent is unambiguous — not for general complaints or questions about a product.`;
+
+// Default system prompts used only when no bot_config row exists yet
+const SALES_LEAD_INSTRUCTION = `
+
+SALES LEAD DETECTION: If the customer shows clear buying intent — such as requesting a quote, specifying a product + quantity + location, asking about bulk pricing, or expressing readiness to place an order — append the exact text [SALES_LEAD] on a new line at the very end of your response. IMPORTANT: Always write a full, helpful reply first, then append [SALES_LEAD] on the last line. Never respond with ONLY the tag. Do not explain the tag. Only use it when buying intent is clear and specific — never for greetings, general questions, or vague enquiries.`;
+
+const DEFAULT_SYSTEM_PROMPTS: Record<ProductType, string> = {
+  support_bot: `You are a helpful customer support assistant. Answer questions accurately using the knowledge base. If you cannot confidently answer, say so and offer to escalate to a human agent. Be concise, friendly, and professional.`,
+  sales_bot: `You are a sales assistant. Understand customer needs, share relevant product information, and guide warm leads toward a purchase decision. Detect buying intent and hand off to a human when the customer is ready to buy.`,
+  lifecycle_bot: `You are an onboarding and account management assistant. Help customers track their orders, answer invoicing questions, and collect payments. Be proactive and professional.`,
+};
+
+// Default keywords that trigger escalation (overridden by bot_config.escalation_triggers)
+const DEFAULT_ESCALATION_TRIGGERS = [
+  'speak to human', 'talk to agent', 'human please', 'escalate',
+  'complaint', 'refund', 'dispute', 'urgent', 'angry',
+];
+
+// Default confidence threshold (overridden by bot_config.confidence_threshold)
+const DEFAULT_CONFIDENCE_THRESHOLD = 0.6;
+
+/** Returns a human-readable language name if the text contains non-Latin scripts. */
+function detectLanguageHint(text: string): string | null {
+  if (/[ऀ-ॿ]/.test(text)) return 'Hindi (Devanagari script)';
+  if (/[ఀ-౿]/.test(text)) return 'Telugu';
+  if (/[஀-௿]/.test(text)) return 'Tamil';
+  if (/[ಀ-೿]/.test(text)) return 'Kannada';
+  if (/[઀-૿]/.test(text)) return 'Gujarati';
+  if (/[਀-੿]/.test(text)) return 'Punjabi (Gurmukhi script)';
+  if (/[଀-୿]/.test(text)) return 'Odia';
+  if (/[؀-ۿ]/.test(text)) return 'Arabic';
+  if (/[一-鿿]/.test(text)) return 'Chinese';
+  return null;
+}
+
+// ─── Haversine distance (km) between two GPS coordinates ─────────────────────
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ─── Status ladder for delivery receipts ─────────────────────────────────────
+// ─── Button template helper ───────────────────────────────────────────────────
+
+interface ButtonTemplate {
+  name:             string;
+  description:      string | null;
+  type:             'quick_reply' | 'list' | 'cta_url';
+  template_json:    Record<string, unknown>;
+  trigger_keywords: string[];
+}
+
+/** Map a stored template row + the AI reply text into an OutgoingInteractiveMessage. */
+function buildInteractiveFromTemplate(
+  tmpl:     ButtonTemplate,
+  to:       string,
+  bodyText: string,
+): OutgoingInteractiveMessage {
+  const j = tmpl.template_json;
+
+  if (tmpl.type === 'quick_reply') {
+    const rawButtons = (j['buttons'] ?? []) as Array<{ id: string; title: string }>;
+    return {
+      type:            'interactive',
+      interactiveType: 'button',
+      to,
+      body:    bodyText.slice(0, 1024),
+      buttons: rawButtons.slice(0, 3).map(b => ({ type: 'reply' as const, reply: { id: b.id, title: b.title.slice(0, 20) } })),
+    };
+  }
+
+  if (tmpl.type === 'list') {
+    const rawSections = (j['sections'] ?? []) as Array<{
+      title: string;
+      rows:  Array<{ id: string; title: string; description?: string }>;
+    }>;
+    const sections = rawSections
+      .map(s => ({
+        title: s.title,
+        rows:  s.rows
+          .filter(r => r.title?.trim())  // Meta requires non-empty row titles
+          .slice(0, 10)
+          .map(r => ({ id: r.id, title: r.title.slice(0, 24), description: r.description })),
+      }))
+      .filter(s => s.rows.length > 0);  // drop sections with no valid rows
+    return {
+      type:            'interactive',
+      interactiveType: 'list',
+      to,
+      body:            bodyText.slice(0, 4096),
+      listButtonLabel: (j['button_label'] as string | undefined) ?? 'Choose an option',
+      listSections:    sections,
+    };
+  }
+
+  // cta_url
+  return {
+    type:            'interactive',
+    interactiveType: 'cta_url',
+    to,
+    body:          bodyText.slice(0, 1024),
+    ctaButtonText: (j['button_text'] as string | undefined) ?? 'Open',
+    ctaUrl:        (j['url']         as string | undefined) ?? '',
+  };
+}
+
+// Only accept updates that move the status forward (sent→delivered→read).
+// `failed` is always accepted regardless of current status.
+const STATUS_RANK: Record<string, number> = { sent: 1, delivered: 2, read: 3 };
+
+async function applyDeliveryStatusUpdates(
+  db: ReturnType<typeof import('@alphabot/database').getServerClient>,
+  updates: import('@alphabot/shared').DeliveryStatusUpdate[],
+): Promise<void> {
+  const validUpdates = updates.filter(u => !!u.messageId);
+  if (!validUpdates.length) return;
+
+  // One SELECT for all message IDs in this batch (Meta often sends several receipts together)
+  const { data: msgs } = await db
+    .from('messages')
+    .select('id, whatsapp_msg_id, delivery_status')
+    .in('whatsapp_msg_id', validUpdates.map(u => u.messageId!));
+
+  if (!msgs?.length) return;
+
+  type MsgRow = { id: string; whatsapp_msg_id: string | null; delivery_status: string | null };
+  const msgMap = new Map((msgs as MsgRow[]).map(m => [m.whatsapp_msg_id ?? '', m]));
+
+  // Group qualifying updates by target status so we can batch-update per bucket
+  const updateGroups = new Map<string, string[]>(); // status → [msg.id]
+
+  for (const update of validUpdates) {
+    const msg = msgMap.get(update.messageId!);
+    if (!msg) continue; // Not a message we sent
+
+    const currentRank = STATUS_RANK[msg.delivery_status ?? ''] ?? 0;
+    const newRank     = update.status === 'failed' ? 999 : (STATUS_RANK[update.status] ?? 0);
+
+    if (newRank > currentRank) {
+      const group = updateGroups.get(update.status) ?? [];
+      group.push(msg.id);
+      updateGroups.set(update.status, group);
+    }
+  }
+
+  // At most 4 UPDATE statements (one per status bucket: sent/delivered/read/failed)
+  for (const [status, ids] of updateGroups) {
+    await db.from('messages').update({ delivery_status: status }).in('id', ids);
+  }
+}
+
+/**
+ * Return the number of conversations started this calendar month for a tenant.
+ * Cached in Redis for 60 s — a tenant cannot exceed their monthly limit within
+ * the same minute they were under it, so brief staleness is acceptable.
+ * Falls back to a direct DB count when Redis is unavailable.
+ */
+async function getMonthlyConvCount(
+  db: ReturnType<typeof getServerClient>,
+  tenantId: string,
+): Promise<number> {
+  const month      = new Date().toISOString().slice(0, 7); // "2026-07"
+  const cacheKey   = `conv_count:${tenantId}:${month}`;
+  const monthStart = new Date(
+    Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1),
+  ).toISOString();
+
+  const cached = await cacheGet<number>(cacheKey);
+  if (cached !== null) return cached;
+
+  const { count } = await db
+    .from('conversations')
+    .select('*', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId)
+    .gte('created_at', monthStart);
+
+  const result = count ?? 0;
+  await cacheSet(cacheKey, result, 60);
+  return result;
+}
+
+/** Build a context suffix appended to escalation reason notes (stage + captured entities). */
+function buildEscalationContext(stage: string, aiVars: Record<string, string>): string {
+  const parts: string[] = [];
+  if (stage && stage !== 'greeting') parts.push(`stage: ${stage}`);
+  const pairs = Object.entries(aiVars);
+  if (pairs.length > 0) parts.push(pairs.map(([k, v]) => `${k}=${v}`).join(', '));
+  return parts.length > 0 ? ` [${parts.join(' | ')}]` : '';
+}
+
+// ─── Call Trigger Helpers ─────────────────────────────────────────────────────
+
+async function dispatchCallTrigger(
+  tenantId: string,
+  productType: string,
+  conversationId: string,
+  contactPhone: string,
+  contactName: string | null,
+  triggerReason: string,
+  delaySeconds: number,
+  db: ReturnType<typeof import('@alphabot/database').getServerClient>,
+): Promise<void> {
+  // Skip if there's already an active call for this conversation
+  const { count } = await db
+    .from('voice_calls')
+    .select('*', { count: 'exact', head: true })
+    .eq('conversation_id', conversationId)
+    .in('status', ['initiated', 'ringing', 'in_progress']);
+
+  if ((count ?? 0) > 0) return;
+
+  const doDispatch = async () => {
+    try {
+      await dispatchCall({
+        tenant_id:       tenantId,
+        product_slug:    productType,
+        to_number:       contactPhone,
+        conversation_id: conversationId,
+        triggered_by:    'escalation',
+        call_context: {
+          customer_name:     contactName ?? '',
+          trigger_reason:    triggerReason,
+          greeting_override: `Hello${contactName ? ` ${contactName}` : ''}! I noticed you might need some help. I am calling to assist you. How can I help?`,
+        },
+      });
+    } catch (err) {
+      console.error('[CallTrigger] dispatch failed:', err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  if (delaySeconds > 0) {
+    // Schedule without blocking — setTimeout callback fires in the background
+    setTimeout(() => { void doDispatch(); }, delaySeconds * 1000);
+  } else {
+    await doDispatch();
+  }
+}
+
+export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
+  // ─── GET: Meta webhook verification ─────────────────────────────────────
+  fastify.get<{ Querystring: Record<string, string> }>('/:tenantId/:productType', async (request, reply) => {
+    const { tenantId, productType } = request.params as {
+      tenantId: string;
+      productType: ProductType;
+    };
+
+    // Fetch the tenant's WhatsApp config to get the verify token
+    // Only Meta Cloud uses hub.challenge GET verification; filter by provider to avoid
+    // returning a Twilio number's config when multiple numbers share the same product_slug.
+    const db = getServerClient();
+    const { data: wn } = await db
+      .from('whatsapp_numbers')
+      .select('config_json, provider')
+      .eq('tenant_id', tenantId)
+      .eq('product_slug', productType)
+      .eq('provider', 'meta_cloud')
+      .eq('active', true)
+      .limit(1)
+      .single();
+
+    if (!wn) {
+      return reply.status(404).send('Tenant not found');
+    }
+
+    const config = wn.config_json as { verify_token: string };
+    const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+    const challenge = gateway.verifyWebhook(request.query, config.verify_token);
+
+    if (challenge === false) {
+      return reply.status(403).send('Verification failed');
+    }
+    return reply.status(200).send(challenge);
+  });
+
+  // ─── GET: Meta webhook verification (new single-URL: /:tenantId) ─────────
+  fastify.get<{ Querystring: Record<string, string> }>('/:tenantId', async (request, reply) => {
+    const { tenantId } = request.params as { tenantId: string };
+    const db = getServerClient();
+
+    // Find which number's verify_token matches the hub challenge
+    const { data: numbers } = await db
+      .from('whatsapp_numbers')
+      .select('config_json, provider')
+      .eq('tenant_id', tenantId)
+      .eq('provider', 'meta_cloud')
+      .eq('active', true);
+
+    for (const wn of numbers ?? []) {
+      const config = wn.config_json as { verify_token: string };
+      const gw = new WhatsAppGateway('meta_cloud');
+      const challenge = gw.verifyWebhook(request.query, config.verify_token);
+      if (challenge !== false) {
+        return reply.status(200).send(challenge);
+      }
+    }
+    return reply.status(403).send('Verification failed');
+  });
+
+  // ─── POST handler (shared): contact lookup, AI reply, escalation, etc. ───
+  async function handleWebhookPost(
+    tenantId: string,
+    productType: ProductType,
+    request: FastifyRequest,
+    /** For multi-bot routing: the phone_number_id from the payload, used as fallback in getBotContext */
+    phoneNumberIdHint?: string,
+    /** UUID of the whatsapp_numbers row — stamped on conversations for per-number inbox filtering */
+    whatsappNumberId?: string,
+  ): Promise<void> {
+    try {
+
+    const db = getServerClient();
+    fastify.log.info({ tenantId, productType }, '[Webhook] processing message');
+
+    // Infer provider from payload shape so we look up the right whatsapp_numbers row
+    // (a tenant may have both a Twilio and a Meta Cloud number under the same product_slug)
+    const body = request.body as Record<string, unknown>;
+    const inferredProvider =
+      body?.object === 'whatsapp_business_account' ? 'meta_cloud' : 'twilio';
+
+    // Single RPC call replaces 7 parallel Supabase queries (cache-backed, 60 s TTL)
+    let botCtx = await getBotContext(tenantId, productType, inferredProvider, phoneNumberIdHint);
+
+    // If provider inference was wrong (e.g. body shape didn't match), try the other provider
+    if (!botCtx.whatsapp_number) {
+      const fallbackProvider = inferredProvider === 'meta_cloud' ? 'twilio' : 'meta_cloud';
+      botCtx = await getBotContext(tenantId, productType, fallbackProvider, phoneNumberIdHint);
+    }
+
+    const wn = botCtx.whatsapp_number;
+    if (!wn) {
+      fastify.log.warn({ tenantId }, '[Webhook] whatsapp_numbers not found');
+      return;
+    }
+
+    // ── Tenant status + plan limit enforcement ────────────────────────────
+    const tenant = botCtx.tenant;
+    if (tenant?.status === 'suspended') {
+      fastify.log.info({ tenantId }, '[Webhook] tenant suspended — dropping reply');
+      return;
+    }
+
+    const PLAN_LIMITS: Record<string, number> = { starter: 500, growth: 2000, scale: Infinity };
+    const planLimit = PLAN_LIMITS[tenant?.plan ?? 'starter'] ?? 500;
+    if (isFinite(planLimit)) {
+      const convCount = await getMonthlyConvCount(db, tenantId);
+      if (convCount >= planLimit) {
+        fastify.log.warn({ tenantId, convCount, planLimit }, '[Webhook] plan limit reached — silently dropping reply');
+        return;
+      }
+    }
+
+    const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+    const config = wn.config_json as {
+      phone_number_id: string;
+      access_token: string;
+    };
+    // Bot session replies always happen within the 24h WhatsApp window (customer
+    // just sent a message), so plain Body works without a Content Template.
+    // Strip ContentSid here so Twilio uses Body instead of ContentVariables.
+    if (wn.provider === 'twilio') {
+      config.access_token = config.access_token.split('|')[0]!;
+    }
+
+    // ── Feature: Status Ladder — process delivery receipts ────────────────
+    // Meta delivers receipts (sent/delivered/read) through the same POST endpoint
+    // as inbound messages. Process them with the one-way ladder before doing
+    // anything else. If the payload was receipts-only, parseIncoming returns null.
+    const deliveryUpdates = gateway.parseDeliveryStatus(request.body);
+    if (deliveryUpdates.length > 0) {
+      await applyDeliveryStatusUpdates(db, deliveryUpdates);
+    }
+
+    const incoming = gateway.parseIncoming(request.body);
+    fastify.log.info({ incoming: incoming ? { type: incoming.type, from: incoming.from } : null }, '[Webhook] parsed incoming');
+    if (!incoming || incoming.type === 'unsupported') return;
+
+    // Derive a text description for location messages so the AI sees something meaningful
+    const locationText = incoming.type === 'location' && incoming.location
+      ? `User shared their location${incoming.location.name ? ': ' + incoming.location.name : ''}` +
+        `${incoming.location.address ? ' (' + incoming.location.address + ')' : ''}` +
+        ` [lat: ${incoming.location.latitude.toFixed(5)}, lon: ${incoming.location.longitude.toFixed(5)}]`
+      : null;
+
+    // Mark message as read (non-blocking)
+    void gateway.markAsRead(config.phone_number_id, config.access_token, incoming.messageId);
+
+    // ── Upsert contact ──────────────────────────────────────────────────────
+    // When a user has a WhatsApp username, Meta sends a BSUID (opaque ID)
+    // in `from` instead of a phone number. Phone numbers are E.164 (digits
+    // only, or with a leading +). Twilio always sends +E.164, so strip the
+    // leading + before checking so "+919652321333" is treated as a phone.
+    const normalizedFrom = incoming.from.replace(/^\+/, '');
+    const isBsuid = !/^\d{7,15}$/.test(normalizedFrom);
+    // Preserve the original form (with +) as the stored phone number.
+    const phoneValue = incoming.from.startsWith('+') ? incoming.from : `+${incoming.from}`;
+
+    // ── Internal team number check ──────────────────────────────────────────
+    // If the sender is a configured internal number, drop the message silently.
+    if (!isBsuid) {
+      const { data: internalMatch } = await db
+        .from('tenant_internal_numbers')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('phone', phoneValue)
+        .maybeSingle();
+      if (internalMatch) {
+        fastify.log.info({ tenantId, phone: phoneValue }, '[Webhook] internal number — skipping');
+        return;
+      }
+    }
+
+    // For phone contacts: omit name when Meta doesn't send one, so we don't overwrite
+    // the name captured by the routing layer (e.g., "Ravi" from the greeting flow).
+    const phoneContactFields: Record<string, unknown> = { tenant_id: tenantId, phone: phoneValue };
+    if (incoming.contactName) phoneContactFields.name = incoming.contactName;
+
+    const contactUpsertResult = isBsuid
+      ? await db
+          .from('contacts')
+          .upsert(
+            { tenant_id: tenantId, bsuid: incoming.from, name: incoming.contactName ?? null },
+            { onConflict: 'tenant_id,bsuid', ignoreDuplicates: false }
+          )
+          .select()
+          .single()
+      : await db
+          .from('contacts')
+          .upsert(
+            phoneContactFields,
+            { onConflict: 'tenant_id,phone', ignoreDuplicates: false }
+          )
+          .select()
+          .single();
+
+    const { data: contact, error: contactError } = contactUpsertResult;
+
+    fastify.log.info({ contact: contact ? (contact as Contact).id : null, contactError, isBsuid }, '[Webhook] contact upsert');
+    if (!contact) return;
+
+    // ── Opt-out / suppression guard ────────────────────────────────────────────
+    // Checked immediately after contact identification.
+    // Opt-out takes precedence over everything — including CSAT, escalation, and AI.
+    const contactPhone = (contact as Contact).phone ?? incoming.from;
+    if (incoming.text && isOptOutMessage(incoming.text)) {
+      // Write suppression record (idempotent)
+      void writeSuppression(tenantId, contactPhone, 'user_opt_out');
+      // Mark any open conversation for this contact as opted_out (non-blocking, best-effort)
+      void db
+        .from('conversations')
+        .update({ terminal_outcome: 'opted_out', outcome_set_by: 'system', outcome_set_at: new Date().toISOString() })
+        .eq('tenant_id', tenantId)
+        .eq('contact_id', (contact as Contact).id)
+        .in('status', ['open', 'escalated']);
+      // Acknowledge opt-out to the customer
+      await gateway.sendMessage(config.phone_number_id, config.access_token, {
+        type: 'text',
+        to:   incoming.from,
+        text:  "You've been unsubscribed and won't receive further messages from us. Reply START to re-subscribe anytime.",
+      });
+      return;
+    }
+
+    // Check if this contact is already suppressed (e.g. earlier opt-out)
+    if (contactPhone && await isSuppressed(tenantId, contactPhone)) {
+      fastify.log.info({ tenantId, phone: contactPhone }, '[Webhook] suppressed contact — dropping reply');
+      return;
+    }
+
+    // ── CSAT response detection ───────────────────────────────────────────────
+    // If we're awaiting a CSAT rating and the customer replies with 1-5, record it and exit.
+    const memJson = ((contact as Contact).memory_json ?? {}) as unknown as Record<string, unknown>;
+    if (memJson.awaiting_csat === true && incoming.text) {
+      const csatValue = incoming.text.trim();
+      if (['1', '2', '3', '4', '5'].includes(csatValue)) {
+        const updatedMem = {
+          ...memJson,
+          awaiting_csat:  false,
+          csat_score:     Number(csatValue),
+          csat_scored_at: new Date().toISOString(),
+        };
+        await db.from('contacts').update({ memory_json: updatedMem }).eq('id', (contact as Contact).id);
+        const stars = '⭐'.repeat(Number(csatValue));
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to:   incoming.from,
+          text: `Thank you for your rating! ${stars} We appreciate your feedback.`,
+        });
+        return;
+      }
+    }
+
+    // ── Upsert conversation (one open conversation per contact per product per number) ─
+    let convoQuery = db
+      .from('conversations')
+      .select()
+      .eq('tenant_id', tenantId)
+      .eq('contact_id', (contact as Contact).id)
+      .eq('product_type', productType)
+      .in('status', ['open', 'escalated', 'bot_paused'])
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (whatsappNumberId) convoQuery = convoQuery.eq('whatsapp_number_id', whatsappNumberId);
+
+    const { data: existingConvo, error: convoLookupError } = await convoQuery.single();
+
+    fastify.log.info({ existingConvo: existingConvo ? (existingConvo as Conversation).id : null, convoLookupError }, '[Webhook] conversation lookup');
+
+    let conversation = existingConvo as Conversation | null;
+
+    if (!conversation) {
+      const { data: newConvo, error: newConvoError } = await db
+        .from('conversations')
+        .insert({
+          tenant_id:           tenantId,
+          contact_id:          (contact as Contact).id,
+          product_type:        productType,
+          status:              'open',
+          whatsapp_number_id:  whatsappNumberId ?? null,
+        })
+        .select()
+        .single();
+
+      fastify.log.info({ newConvo: newConvo ? (newConvo as Conversation).id : null, newConvoError }, '[Webhook] conversation insert');
+      conversation = newConvo as Conversation;
+
+      // Track usage event
+      fireForget(
+        db.from('usage_events').insert({ tenant_id: tenantId, product_type: productType, event_type: 'conversation_started' }),
+        'track-conversation-started',
+        fastify.log,
+      );
+
+      // Schedule enquiry follow-up nudge (+2h by default; unique index deduplicates silently)
+      if (whatsappNumberId) {
+        const fireAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+        fireForget(
+          db.from('enquiry_followup_jobs').insert({
+            tenant_id:          tenantId,
+            conversation_id:    (newConvo as Conversation).id,
+            contact_phone:      phoneValue,
+            whatsapp_number_id: whatsappNumberId,
+            fire_at:            fireAt,
+          }),
+          'schedule-enquiry-followup',
+          fastify.log,
+        );
+      }
+    }
+
+    if (!conversation) return;
+
+    // ── If bot is paused (human takeover), do not auto-reply ───────────────
+    if (conversation.status === 'bot_paused') {
+      // Still store the incoming message
+      await db.from('messages').insert({
+        conversation_id: conversation.id,
+        role: 'user',
+        content: locationText ?? incoming.text ?? `[${incoming.type} received]`,
+        media_url: incoming.mediaUrl ?? null,
+        media_type: (incoming.type !== 'text')
+          ? incoming.type
+          : null,
+        whatsapp_msg_id: incoming.messageId,
+      });
+      return;
+    }
+
+    // ── Store incoming message (dedup via whatsapp_msg_id unique constraint) ─
+    const { error: msgError } = await db.from('messages').insert({
+      conversation_id: conversation.id,
+      role: 'user',
+      content: locationText ?? incoming.text ?? `[${incoming.type} received]`,
+      media_url: incoming.mediaUrl ?? null,
+      media_type: (incoming.type !== 'text')
+        ? (incoming.type as 'image' | 'audio' | 'video' | 'document')
+        : null,
+      whatsapp_msg_id: incoming.messageId,
+    });
+
+    // 23505 = unique_violation — Meta retry; skip AI call
+    if (msgError?.code === '23505') return;
+    if (msgError) {
+      fastify.log.error({ msgError }, 'Failed to store incoming message');
+      return;
+    }
+
+    // Classify message kind (non-blocking) — human_reply / auto_reply / opt_out / unrelated
+    const msgKind = classifyMessageKind(incoming.text, incoming.type !== 'text' ? incoming.type : null);
+    fireForget(
+      db.from('messages').update({
+        message_kind:            msgKind,
+        kind_classifier_version: KIND_CLASSIFIER_VERSION,
+        kind_classified_at:      new Date().toISOString(),
+      }).eq('conversation_id', conversation.id).eq('role', 'user').order('timestamp', { ascending: false }).limit(1),
+      'classify-message-kind',
+      fastify.log,
+    );
+
+    // Non-blocking: classify customer sentiment and persist to contact memory
+    if (incoming.text) {
+      fireForget(
+        detectAndStoreSentiment((contact as Contact).id, incoming.text),
+        'detect-sentiment',
+        fastify.log,
+      );
+    }
+
+    fireForget(
+      db.from('usage_events').insert({ tenant_id: tenantId, product_type: productType, event_type: 'message_sent' }),
+      'track-message-sent',
+      fastify.log,
+    );
+
+    // ── Feature: Optimistic Lock — prevent concurrent AI calls ────────────
+    // Meta retries webhooks on non-2xx or timeout. With LLM calls taking 1–5s,
+    // two identical webhooks can race and produce duplicate responses.
+    // Lock the conversation row for up to 30s; the loser exits cleanly.
+    const lockUntil = new Date(Date.now() + 30_000).toISOString();
+    const now       = new Date().toISOString();
+    const { data: lockData } = await db
+      .from('conversations')
+      .update({ processing_lock_expires_at: lockUntil })
+      .eq('id', conversation.id)
+      .or(`processing_lock_expires_at.is.null,processing_lock_expires_at.lt.${now}`)
+      .select('id');
+
+    if (!lockData?.length) {
+      fastify.log.warn({ conversationId: conversation.id }, '[Webhook] AI lock not acquired — concurrent processing in progress, skipping duplicate');
+      return;
+    }
+
+    // ── Button-tap escalation check ───────────────────────────────────────────
+    // When a customer taps a quick-reply button marked escalate:true, skip AI
+    // and hand the conversation off to a human agent immediately.
+    if (incoming.type === 'interactive' && incoming.interactiveReplyId && conversation.status === 'open') {
+      const { data: tapTemplates } = await db
+        .from('interactive_button_templates')
+        .select('template_json')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true);
+
+      const tappedId = incoming.interactiveReplyId;
+      const shouldEscalate = (tapTemplates ?? []).some(tmpl => {
+        type BtnRow = { id: string; title: string; escalate?: boolean };
+        const btns = (tmpl.template_json as Record<string, unknown>)?.['buttons'] as BtnRow[] | undefined;
+        return btns?.some(b => b.id === tappedId && b.escalate === true);
+      });
+
+      if (shouldEscalate) {
+        fastify.log.info({ tappedId, conversationId: conversation.id }, '[Webhook] Escalating via button tap');
+        await escalateConversation(conversation, 'Customer requested human agent via button tap');
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to:   incoming.from,
+          text: "I'm connecting you with a human agent right away. Please hold on for a moment! 🙌",
+        });
+        fireForget(
+          db.from('conversations').update({ processing_lock_expires_at: null }).eq('id', conversation.id),
+          'release-lock-btn-escalate',
+          fastify.log,
+        );
+        return;
+      }
+    }
+
+    // Resolve bot config values (DB row takes precedence over defaults)
+    const botConfig = botCtx.bot_config as (BotConfig & { product: Product | null }) | null;
+
+    // ── 4-layer guardrails ────────────────────────────────────────────────────
+    // Layer 1: global (platform_settings)
+    const globalG   = (botCtx.platform_guardrails ?? null) as PlatformGuardrails | null;
+    // Layer 2: per-bot-type (bot_type_guardrails)
+    const botTypeG  = (botCtx.bot_type_guardrails ?? null) as LayeredGuardrailsConfig | null;
+    // Layer 3: per-client across all bots (tenant_guardrails)
+    const tenantG   = (botCtx.tenant_guardrails ?? null) as LayeredGuardrailsConfig | null;
+    // Layer 4: per-client per-bot (bot_configs.guardrails_json)
+    const clientBotG = botConfig?.guardrails_json ?? null;
+
+    const baseSystemPrompt =
+      botConfig?.system_prompt ??
+      (botConfig?.product as Product | null)?.default_prompt ??
+      DEFAULT_SYSTEM_PROMPTS[productType];
+
+    // Resolve tool manifest — falls back to defaults for bots without a row yet
+    const allowedTools = ((botConfig as unknown as { allowed_tools?: string[] } | null)?.allowed_tools) ?? [];
+
+    const escalationTriggers: string[] =
+      botConfig?.escalation_triggers?.length
+        ? botConfig.escalation_triggers
+        : DEFAULT_ESCALATION_TRIGGERS;
+    const confidenceThreshold =
+      botConfig?.confidence_threshold ?? DEFAULT_CONFIDENCE_THRESHOLD;
+
+    // Arrays: UNION across all layers (every layer contributes its list)
+    const allBlockedKeywords = [
+      ...(globalG?.global_blocked_keywords?.map((k: string) => k.toLowerCase()) ?? []),
+      ...(botTypeG?.blocked_keywords?.map((k: string) => k.toLowerCase()) ?? []),
+      ...(tenantG?.blocked_keywords?.map((k: string) => k.toLowerCase()) ?? []),
+      ...(clientBotG?.blocked_keywords?.map((k: string) => k.toLowerCase()) ?? []),
+    ];
+    const allBlockedTopics = [
+      ...(globalG?.global_blocked_topics ?? []),
+      ...(botTypeG?.blocked_topics ?? []),
+      ...(tenantG?.blocked_topics ?? []),
+      ...(clientBotG?.blocked_topics ?? []),
+    ];
+
+    // Numbers: MIN across all layers (most restrictive wins)
+    const effectiveMaxLength = Math.min(
+      globalG?.max_response_length   ?? 2000,
+      botTypeG?.max_response_length  ?? 2000,
+      tenantG?.max_response_length   ?? 2000,
+      clientBotG?.max_response_length ?? 1000,
+    );
+
+    // Booleans: OR across all layers (any layer can switch it on)
+    const kbOnly =
+      !!(clientBotG as { kb_only_mode?: boolean } | null)?.kb_only_mode ||
+      !!tenantG?.kb_only_mode   ||
+      !!botTypeG?.kb_only_mode  ||
+      !!globalG?.enforce_kb_only_globally;
+
+    const noExternalLinks =
+      !!clientBotG?.content_filters?.no_external_links ||
+      !!tenantG?.no_external_links  ||
+      !!botTypeG?.no_external_links ||
+      !!globalG?.content_filters?.no_external_links;
+
+    const noPersonalData =
+      !!clientBotG?.content_filters?.no_personal_data ||
+      !!tenantG?.no_personal_data  ||
+      !!botTypeG?.no_personal_data ||
+      !!globalG?.content_filters?.no_personal_data;
+
+    // Most-specific layer wins for action/message strings
+    const onBlockedTopic   = clientBotG?.on_blocked_topic ?? tenantG?.on_blocked_topic ?? botTypeG?.on_blocked_topic ?? 'escalate';
+    const customBlockedMsg = clientBotG?.custom_blocked_message ?? tenantG?.custom_blocked_message ?? botTypeG?.custom_blocked_message;
+
+    // ── Check for manual escalation request ────────────────────────────────
+    const messageText = incoming.text?.toLowerCase() ?? '';
+    const wantsHuman = escalationTriggers.some((t) => messageText.includes(t));
+
+    if (wantsHuman && conversation.status === 'open') {
+      await escalateConversation(conversation, 'Customer requested human agent');
+      await gateway.sendMessage(config.phone_number_id, config.access_token, {
+        type: 'text',
+        to: incoming.from,
+        text: "I'm connecting you with a human agent right away. Please hold on for a moment.",
+      });
+      return;
+    }
+
+    // ── Check blocked keywords (4-layer guardrails) ───────────────────────
+    if (allBlockedKeywords.length > 0 && allBlockedKeywords.some((kw) => messageText.includes(kw))) {
+      const blockedMsg = customBlockedMsg ?? "I'm sorry, I'm not able to help with that topic.";
+      if (onBlockedTopic === 'escalate' && conversation.status === 'open') {
+        await escalateConversation(conversation, 'Blocked keyword detected in message');
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to: incoming.from,
+          text: "I'm connecting you with a human agent who can better assist you.",
+        });
+      } else {
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to: incoming.from,
+          text: blockedMsg,
+        });
+      }
+      return;
+    }
+
+    // ── Fetch conversation history + KB context ────────────────────────────
+    // Load up to 40 messages; the assembler splits them into recent verbatim
+    // + archived summary so the LLM always gets fresh context efficiently.
+    const { data: historyDesc } = await db
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversation.id)
+      .order('timestamp', { ascending: false })
+      .limit(40);
+    const allHistory = ((historyDesc ?? []) as import('@alphabot/shared').Message[]).reverse();
+
+    const { archiveBlock, recentMessages, stats: historyStats } = assembleHistory(allHistory);
+    fastify.log.info(historyStats, '[Webhook] history assembled');
+
+    const contactData = contact as Contact;
+    const kbToolEnabled = Boolean(incoming.text && toolEnabled(allowedTools, TOOL_IDS.KNOWLEDGE_BASE));
+    const { results: kbResults, topScore: kbTopScore } = kbToolEnabled
+      ? await lookupKBWithScore(tenantId, productType, incoming.text!)
+      : { results: [], topScore: 0 };
+
+    if (kbToolEnabled && kbResults.length === 0) {
+      void db.from('kb_unanswered_queries').insert({
+        tenant_id:    tenantId,
+        query:        incoming.text!.slice(0, 500),
+        product_type: productType,
+      }).then(() => {}, () => {});
+    }
+
+    const reasoningTier = incoming.text
+      ? classifyReasoningTier(incoming.text, kbTopScore, kbResults.length > 0)
+      : 'standard';
+    fastify.log.info({ reasoningTier, kbTopScore, kbCount: kbResults.length }, '[Webhook] reasoning tier');
+
+    const contactMemory = formatContactMemory(contactData.memory_json as unknown as Record<string, unknown> | null);
+
+    // Fetch active button templates — skipped when button_templates tool is disabled
+    let buttonTemplates: ButtonTemplate[] = [];
+    if (toolEnabled(allowedTools, TOOL_IDS.BUTTON_TEMPLATES)) {
+      const { data: btnRaw, error: btnTplError } = await db
+        .from('interactive_button_templates')
+        .select('name, description, type, template_json, trigger_keywords')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+        .or(`product_slug.eq.${productType},product_slug.is.null`);
+      if (btnTplError) {
+        fastify.log.error({ btnTplError, tenantId }, '[Webhook] Failed to fetch button templates');
+      }
+      buttonTemplates = (btnRaw ?? []) as ButtonTemplate[];
+    }
+    fastify.log.info({ count: buttonTemplates.length, tenantId }, '[Webhook] button templates loaded');
+
+    // ── Build effective system prompt with guardrails injected ───────────
+    // Always append SALES_LEAD_INSTRUCTION so it applies even when the DB
+    // has a custom system_prompt that doesn't include it.
+    const wantLeadScoring = toolEnabled(allowedTools, TOOL_IDS.LEAD_SCORING) && productType !== 'lifecycle_bot';
+    const wantReturnFlow  = toolEnabled(allowedTools, TOOL_IDS.RETURN_REQUEST) && productType === 'lifecycle_bot';
+    let systemPrompt = baseSystemPrompt + (wantLeadScoring ? SALES_LEAD_INSTRUCTION : '') + (wantReturnFlow ? RETURN_REQUEST_INSTRUCTION : '');
+
+    // Inject persona preamble when bot_config has persona fields set
+    const bc = botConfig as (typeof botConfig & {
+      persona_name?: string | null;
+      persona_role?: string | null;
+      company_description?: string | null;
+      company_values?: string | null;
+      conversation_purpose?: string | null;
+    }) | null;
+    if (bc?.persona_name || bc?.company_description) {
+      const personaLines: string[] = [];
+      if (bc.persona_name)         personaLines.push(`You are ${bc.persona_name}${bc.persona_role ? `, ${bc.persona_role}` : ''}.`);
+      if (bc.company_description)  personaLines.push(`Company: ${bc.company_description}`);
+      if (bc.company_values)       personaLines.push(`Values: ${bc.company_values}`);
+      if (bc.conversation_purpose) personaLines.push(`Your purpose in this conversation: ${bc.conversation_purpose}`);
+      systemPrompt = personaLines.join('\n') + '\n\n' + systemPrompt;
+    }
+
+    // Inject archive summary (Tier 3) — older turns compressed into the system prompt
+    if (archiveBlock) {
+      systemPrompt += `\n\n---\n${archiveBlock}`;
+    }
+
+    if (kbOnly) {
+      systemPrompt += kbResults.length > 0
+        ? '\n\nIMPORTANT: Only answer using the knowledge base entries provided. If the answer is not there, say "I don\'t have information on that" and offer to connect with a human agent.'
+        : '\n\nIMPORTANT: Only answer from your knowledge base. If you cannot find an answer, tell the customer you don\'t have that information and offer to escalate.';
+    }
+
+    if (allBlockedTopics.length > 0) {
+      systemPrompt += `\n\nDo NOT discuss: ${allBlockedTopics.join(', ')}. If asked, politely decline.`;
+    }
+
+    const toneMap: Record<string, string> = {
+      professional: 'Maintain a professional and courteous tone.',
+      casual:       'Use a friendly, casual and conversational tone.',
+      empathetic:   'Be empathetic, warm and understanding in every response.',
+      formal:       'Use formal, business-appropriate language at all times.',
+    };
+    systemPrompt += `\n\nTone: ${toneMap[clientBotG?.tone ?? 'professional']}`;
+
+    if (noExternalLinks) {
+      systemPrompt += '\nNever include external URLs or links in your responses.';
+    }
+    if (clientBotG?.content_filters?.no_phone_numbers_in_response) {
+      systemPrompt += '\nDo not include phone numbers in your responses.';
+    }
+    if (noPersonalData) {
+      systemPrompt += '\nNever share or reference personally identifiable information.';
+    }
+
+    // ── Language-aware reply directive ────────────────────────────────────────
+    const langHint = incoming.text ? detectLanguageHint(incoming.text) : null;
+    if (langHint) {
+      systemPrompt += `\nThe customer is writing in ${langHint}. Respond in the same language and script.`;
+    }
+
+    // ── Intent signal detection (sales + lifecycle bots when tool enabled) ───
+    if (toolEnabled(allowedTools, TOOL_IDS.INTENT_SIGNALS)) {
+      systemPrompt += `\n\n---\nINTENT SIGNAL DETECTION:
+Tag this conversation with customer intent by appending [SIGNAL:x] markers at the VERY END of your response (stripped before the customer sees them). Use at most 3 signals per reply. Only signal what is clearly present in the customer's message:
+[SIGNAL:pricing_inquiry] — customer asked about price or cost
+[SIGNAL:urgency] — customer expressed time pressure or deadline
+[SIGNAL:budget_mentioned] — customer named a specific budget or spending limit
+[SIGNAL:competitor_mentioned] — customer referenced a competing product or vendor
+[SIGNAL:decision_maker] — customer indicated they are the decision-maker
+[SIGNAL:objection_price] — customer raised price as a concern or barrier
+[SIGNAL:ready_to_buy] — customer expressed clear buying intent or readiness
+[SIGNAL:needs_demo] — customer requested a demo, sample, or trial
+[SIGNAL:technical_question] — customer asked a detailed technical question
+[SIGNAL:complaint] — customer expressed dissatisfaction or a complaint
+[SIGNAL:referral] — customer was referred by someone or mentioned a referral`;
+    }
+
+    // ── Inject product catalogue (sales_bot only, when tool enabled) ─────────
+    // Active products are fetched from the product_catalogue table (Redis-cached,
+    // 5 min TTL) and appended to the system prompt so the bot can quote exact prices.
+    if (productType === 'sales_bot' && toolEnabled(allowedTools, TOOL_IDS.PRODUCT_CATALOGUE)) {
+      const catalogue = await getProductCatalogue(tenantId);
+      if (catalogue.length > 0) {
+        const catalogueText = catalogue.map(p => {
+          const lines = [`• ${p.name}`];
+          if (p.sku)         lines.push(`  SKU: ${p.sku}`);
+          if (p.category)    lines.push(`  Category: ${p.category}`);
+          if (p.description) lines.push(`  ${p.description}`);
+          if (p.price_inr !== null) {
+            lines.push(`  Price: ₹${Number(p.price_inr).toLocaleString('en-IN')}`);
+          }
+          return lines.join('\n');
+        }).join('\n\n');
+        systemPrompt += `\n\n---\nPRODUCT CATALOGUE (always use these exact prices when customers ask):\n${catalogueText}\n\nWhen a customer asks to see all products or the full price list, append [SEND_CATALOGUE] on the very last line of your response.`;
+      }
+    }
+
+    // ── Feature: AI Conversation State Machine ────────────────────────────
+    // Inject the current conversation stage and AI-extracted entities into the
+    // system prompt. The AI can advance the stage or capture new info by appending
+    // structured markers to the END of its response (stripped before sending).
+    const convStage  = (conversation as Conversation & { stage?: string }).stage ?? 'greeting';
+    const convAiVars = (conversation as Conversation & { ai_vars?: Record<string, string> }).ai_vars ?? {};
+    const aiVarPairs = Object.entries(convAiVars);
+
+    systemPrompt += `\n\n---\nCONVERSATION STATE:
+${buildStagePromptBlock(productType, convStage)}
+${aiVarPairs.length > 0 ? `Captured info: ${aiVarPairs.map(([k, v]) => `${k}=${v}`).join(', ')}` : 'No customer info captured yet.'}
+
+To update state, append these markers at the VERY END of your response (they are stripped before reaching the customer):
+[STAGE:<new_stage>] — advance when the conversation naturally moves to a new phase (use a valid stage ID from the list above)
+[ENTITY:<key>=<value>] — capture extracted customer info (e.g. [ENTITY:email=alice@example.com] [ENTITY:order_id=ORD-123])`;
+
+    // ── Inject interactive button templates ───────────────────────────────────
+    if (buttonTemplates.length > 0) {
+      const templateList = buttonTemplates
+        .map(t => `  • "${t.name}" (${t.type})${t.description ? ` — ${t.description}` : ''}`)
+        .join('\n');
+
+      systemPrompt += `\n\n---\nINTERACTIVE BUTTONS
+You can send a WhatsApp interactive button message by appending [BUTTONS:name] on the VERY LAST LINE of your response. It is invisible to the customer — they will see clickable buttons instead.
+Available templates:\n${templateList}
+
+General rule: append [BUTTONS:name] when the customer faces a clear multiple-choice decision. Use at most ONE tag per reply.`;
+
+      // Rule-based: if user's message contains a template's trigger keywords, force it
+      const lowerMsg = incoming.text?.toLowerCase() ?? '';
+      if (lowerMsg) {
+        const triggered = buttonTemplates.find(t =>
+          t.trigger_keywords.some(kw => kw && lowerMsg.includes(kw.toLowerCase())),
+        );
+        if (triggered) {
+          systemPrompt += `\n\nMANDATORY INSTRUCTION: The customer's message matched a trigger keyword. You MUST end your reply with [BUTTONS:${triggered.name}] as the very last thing — on its own line, after your message text. Do not omit it. Example:\n\nHey! How can I help?\n[BUTTONS:${triggered.name}]`;
+        }
+      }
+    }
+
+    // ── Inject inline OPTIONS instruction (always on) ────────────────────────
+    systemPrompt += `\n\n---\nINTERACTIVE OPTIONS
+When you ask the customer to pick from a short list (2–5 items), append [OPTIONS: choice1 | choice2 | choice3] on the very last line of your response. Use | as the separator. The customer will see tappable buttons or a list — they will NOT see the tag.
+Rules:
+- Use it when the whole point of the message is to collect one of these choices (branch, time slot, party size, cuisine type, etc.)
+- Max 5 options. Keep each option under 20 characters.
+- Do NOT use [OPTIONS:] and [BUTTONS:] in the same reply.
+- Do not use it for rhetorical questions or when free-text is expected.
+Example — asking for branch:
+Which branch works best for you?
+[OPTIONS: Banjara Hills Rd 4 | Hitex | Gachibowli | Kompally | Banjara Hills Rd 12]`;
+
+    // ── Resolve LLM config — 6-level hierarchy (most specific wins) ─────
+    // 1. llm_configs Client Bot      (validated API key + model)
+    // 2. llm_configs Client Generic  (validated API key + model)
+    // 3. llm_configs Platform Bot    (validated API key + model)
+    // 4. llm_configs Platform Generic(validated API key + model)
+    // 5. bot_configs.ai_model        (model only, uses env API key)
+    // 6. products.default_model      (model only, uses env API key)
+    // 7. OPENROUTER_REPLY_MODEL env  (ultimate fallback in claude.ts)
+    type LlmRow = { tenant_id: string | null; product_slug: string | null; provider: string; api_key: string; model: string; base_url: string | null; validation_status: string };
+    const llmRows = (botCtx.llm_configs ?? []) as LlmRow[];
+
+    const resolvedLlm = (
+      llmRows.find(r => r.tenant_id === tenantId  && r.product_slug === productType) ??
+      llmRows.find(r => r.tenant_id === tenantId  && r.product_slug === null) ??
+      llmRows.find(r => r.tenant_id === null       && r.product_slug === productType) ??
+      llmRows.find(r => r.tenant_id === null       && r.product_slug === null)
+    );
+
+    // DB-configured model — only use if it's an Anthropic model name (starts with 'claude-').
+    // Ignore legacy OpenRouter slugs (e.g. 'meta-llama/...') that would fail against Anthropic API.
+    const rawDbModel =
+      botConfig?.ai_model ??
+      (botConfig?.product as Product | null)?.default_model ??
+      null;
+    const dbModel = rawDbModel?.startsWith('claude-') ? rawDbModel : null;
+
+    const llmOverride = (resolvedLlm?.validation_status === 'valid')
+      ? { provider: resolvedLlm.provider, apiKey: resolvedLlm.api_key, model: resolvedLlm.model, baseUrl: resolvedLlm.base_url ?? undefined }
+      : dbModel
+        ? { provider: 'anthropic', model: dbModel }
+        : undefined;
+
+    // ── Token quota check — enforce per-plan monthly limit ────────────────
+    const quota = await checkTokenQuota(tenantId, tenant?.plan ?? 'starter');
+    if (!quota.allowed) {
+      fastify.log.warn({ tenantId, used: quota.used, limit: quota.limit }, '[Webhook] token quota exceeded — dropping AI call');
+      await gateway.sendMessage(config.phone_number_id, config.access_token, {
+        type: 'text',
+        to:   incoming.from,
+        text: "Our AI assistant has reached its monthly limit. Please contact support to upgrade your plan.",
+      });
+      return;
+    }
+
+    // ── Generate AI response ──────────────────────────────────────────────
+    // bypass tier: KB confidence is high enough — skip LLM, serve top KB answer directly
+    let aiResult: Awaited<ReturnType<typeof getAIResponse>>;
+    if (reasoningTier === 'bypass' && kbResults[0]) {
+      fastify.log.info({ tenantId, kbTopScore }, '[Webhook] KB bypass — skipping LLM');
+      aiResult = {
+        content:         kbResults[0].answer,
+        confidenceScore: kbTopScore,
+        inputTokens:     0,
+        outputTokens:    0,
+        costInr:         0,
+      };
+    } else {
+    try {
+      aiResult = await getAIResponse(
+        systemPrompt,
+        recentMessages,
+        kbResults,
+        contactMemory,
+        llmOverride,
+        TIER_MAX_TOKENS[reasoningTier],
+      );
+    } catch (aiErr) {
+      const errMsg = aiErr instanceof Error ? aiErr.message : String(aiErr);
+
+      // If a tenant's custom API key caused an auth failure, retry with the platform key.
+      const isAuthError = /\b(401|403)\b|invalid.api.key|authentication_error|unauthorized/i.test(errMsg);
+      if (isAuthError && llmOverride?.apiKey) {
+        fastify.log.warn({ tenantId, errMsg }, '[Webhook] Custom API key auth failure — retrying with platform key');
+        try {
+          aiResult = await getAIResponse(
+            systemPrompt,
+            recentMessages,
+            kbResults,
+            contactMemory,
+            llmOverride.model ? { model: llmOverride.model } : undefined,
+            TIER_MAX_TOKENS[reasoningTier],
+          );
+        } catch (fallbackErr) {
+          fastify.log.error({ fallbackErr: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr), tenantId }, '[Webhook] Platform key fallback also failed');
+          await gateway.sendMessage(config.phone_number_id, config.access_token, {
+            type: 'text',
+            to: incoming.from,
+            text: "I'm having trouble responding right now. Please try again in a moment, or type 'agent' to speak with a human.",
+          });
+          fireForget(db.from('conversations').update({ processing_lock_expires_at: null }).eq('id', conversation.id), 'release-ai-lock-fallback-fail', fastify.log);
+          return;
+        }
+      } else {
+        fastify.log.error({ aiErr: errMsg, tenantId, productType, resolvedLlm: resolvedLlm ? `${resolvedLlm.tenant_id ?? 'platform'}/${resolvedLlm.product_slug ?? 'generic'}` : 'env-vars' }, '[Webhook] AI generation failed');
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to: incoming.from,
+          text: "I'm having trouble responding right now. Please try again in a moment, or type 'agent' to speak with a human.",
+        });
+        fireForget(db.from('conversations').update({ processing_lock_expires_at: null }).eq('id', conversation.id), 'release-ai-lock-ai-fail', fastify.log);
+        return;
+      }
+    }
+    } // end else (non-bypass)
+
+    // ── Parse AI response markers ─────────────────────────────────────────
+    const rawContent    = aiResult.content;
+    const isSalesLead     = rawContent.includes('[SALES_LEAD]');
+    const sendCatalogue   = rawContent.includes('[SEND_CATALOGUE]');
+    const isReturnRequest = rawContent.includes('[RETURN_REQUEST]');
+
+    // Feature: State Machine — extract [STAGE:x] and [ENTITY:key=value] markers
+    const stageMatch    = rawContent.match(/\[STAGE:(\w+)\]/);
+    const entityMatches = [...rawContent.matchAll(/\[ENTITY:(\w+)=([^\]]+)\]/g)];
+
+    // Intent signals — extract [SIGNAL:x] markers (explainable lead scoring)
+    const signalMatches  = [...rawContent.matchAll(/\[SIGNAL:([\w_]+)\]/g)];
+    const newSignals     = [...new Set(signalMatches.map(m => m[1]!))];
+
+    // Interactive buttons — extract [BUTTONS:template_name] marker
+    const buttonsMatch       = rawContent.match(/\[BUTTONS:([^\]]+)\]/);
+    const buttonTemplateName = buttonsMatch?.[1]?.trim().toLowerCase() ?? null;
+
+    // Inline options list — [OPTIONS: opt1 | opt2 | ...] (≤3 → buttons, 4-5 → list)
+    const optionsMatch  = rawContent.match(/\[OPTIONS:\s*([^\]]+)\]/);
+    const inlineOptions = optionsMatch
+      ? optionsMatch[1]!.split('|').map(s => s.trim()).filter(Boolean).slice(0, 5)
+      : null;
+
+    fastify.log.info({ buttonTemplateName, inlineOptions, signals: newSignals, rawSnippet: rawContent.slice(-120) }, '[Webhook] AI response markers');
+
+    // Strip all control markers before sending to customer
+    const cleanContent = rawContent
+      .replace(/\[SALES_LEAD\]/g, '')
+      .replace(/\[SIGNAL:[\w_]+\]/g, '')
+      .replace(/\[SEND_CATALOGUE\]/g, '')
+      .replace(/\[RETURN_REQUEST\]/g, '')
+      .replace(/\[STAGE:\w+\]/g, '')
+      .replace(/\[ENTITY:[^\]]+\]/g, '')
+      .replace(/\[BUTTONS:[^\]]+\]/g, '')
+      .replace(/\[OPTIONS:[^\]]+\]/g, '')
+      .trimEnd();
+
+    // Persist stage/entity updates non-blocking (after lock, before reply send)
+    if (stageMatch || entityMatches.length > 0) {
+      const stateUpdate: Record<string, unknown> = {};
+      if (stageMatch) stateUpdate['stage'] = stageMatch[1];
+      if (entityMatches.length > 0) {
+        const updatedVars = { ...convAiVars };
+        for (const match of entityMatches) {
+          updatedVars[match[1]!] = match[2]!;
+        }
+        stateUpdate['ai_vars'] = updatedVars;
+      }
+      fireForget(
+        db.from('conversations').update(stateUpdate).eq('id', conversation.id),
+        'update-conversation-state',
+        fastify.log,
+      );
+    }
+
+    // Log stage transition to funnel analytics table (non-blocking, only on actual change)
+    if (stageMatch && stageMatch[1] !== convStage) {
+      fireForget(
+        db.from('conversation_stage_events').insert({
+          conversation_id: conversation.id,
+          tenant_id:       tenantId,
+          product_type:    productType,
+          from_stage:      convStage,
+          to_stage:        stageMatch[1],
+          trigger:         'llm_marker',
+        }),
+        'log-stage-event',
+        fastify.log,
+      );
+    }
+
+    // Persist intent signals non-blocking — merge new signals into existing set
+    if (newSignals.length > 0) {
+      const convSignals = (conversation as Conversation & { intent_signals?: string[] }).intent_signals ?? [];
+      const mergedSignals = [...new Set([...convSignals, ...newSignals])];
+      fireForget(
+        db.from('conversations').update({ intent_signals: mergedSignals }).eq('id', conversation.id),
+        'update-intent-signals',
+        fastify.log,
+      );
+    }
+
+    // ── Lead scoring (sales_bot only, per-turn, non-blocking) ─────────────────
+    if (productType === 'sales_bot') {
+      const latestStage = (stageMatch ? stageMatch[1] : convStage) ?? 'greeting';
+      const latestVars  = entityMatches.length > 0
+        ? { ...convAiVars, ...Object.fromEntries(entityMatches.map(m => [m[1]!, m[2]!])) }
+        : convAiVars;
+      const newScore = calcLeadScore(latestVars, latestStage);
+      fireForget(
+        db.from('conversations').update({ lead_score: newScore }).eq('id', conversation.id),
+        'update-lead-score',
+        fastify.log,
+      );
+    }
+
+    // Guard: if AI only emitted markers with no actual reply content, skip reply entirely
+    if (!cleanContent.trim()) {
+      fastify.log.warn({ tenantId, conversationId: conversation.id }, '[Webhook] AI returned empty content after stripping tags — skipping reply');
+      if (isSalesLead && conversation.status === 'open') {
+        void sendLeadNotifications(conversation, 0);
+        const escalationResult = await escalateConversation(conversation, `Sales lead detected — customer expressed buying intent${buildEscalationContext(convStage, convAiVars)}`);
+        const latestVars = entityMatches.length > 0
+          ? { ...convAiVars, ...Object.fromEntries(entityMatches.map(m => [m[1]!, m[2]!])) }
+          : convAiVars;
+        const latestStage = (stageMatch ? stageMatch[1] : convStage) ?? 'greeting';
+        void generateLeadSummary(escalationResult.escalationId, conversation.id, latestVars, latestStage, fastify.log);
+      }
+      fireForget(db.from('conversations').update({ processing_lock_expires_at: null }).eq('id', conversation.id), 'release-ai-lock-empty', fastify.log);
+      return;
+    }
+
+    // Truncate to max_response_length guardrail
+    const replyText = cleanContent.length > effectiveMaxLength
+      ? cleanContent.substring(0, effectiveMaxLength).trimEnd() + '…'
+      : cleanContent;
+
+    // SHA-256 of the base system prompt — used for prompt A/B attribution.
+    // Hash only the stable portion (before dynamic KB/history context is appended).
+    const promptDigest = createHash('sha256').update(baseSystemPrompt).digest('hex').slice(0, 16);
+
+    // ── Store AI reply (capture ID for delivery status update) ────────────
+    const { data: storedMsg } = await db.from('messages').insert({
+      conversation_id:    conversation.id,
+      role:               'assistant',
+      content:            replyText,
+      confidence_score:   aiResult.confidenceScore,
+      message_kind:       'outbound',
+      system_prompt_digest: promptDigest,
+    }).select('id').single();
+
+    // Non-blocking: update rolling chat_summary every 5 turns
+    if (incoming.text) {
+      void maybeUpdateChatSummary(
+        conversation.id,
+        (conversation as Conversation & { chat_summary?: Record<string, unknown> }).chat_summary ?? null,
+        allHistory.length + 1,
+        incoming.text,
+        replyText,
+      );
+    }
+
+    // Fire-and-forget: extract contact facts from this exchange for richer future context
+    if (incoming.text && reasoningTier !== 'bypass') {
+      void extractAndMergeFacts(
+        contactData.id,
+        incoming.text,
+        replyText,
+        contactData.memory_json as unknown as Record<string, unknown> | null,
+      ).catch(() => {});
+    }
+
+    // Track token usage (DB insert triggers aggregate table update via trigger)
+    const totalTokens = aiResult.inputTokens + aiResult.outputTokens;
+    fireForget(
+      db.from('usage_events').insert({
+        tenant_id:     tenantId,
+        product_type:  productType,
+        event_type:    'ai_token_used',
+        token_count:   totalTokens,
+        input_tokens:  aiResult.inputTokens,
+        output_tokens: aiResult.outputTokens,
+        cost_inr:      aiResult.costInr,
+      }),
+      'track-token-usage',
+      fastify.log,
+    );
+    // Optimistically increment Redis counter so the next quota check is accurate
+    fireForget(incrementTokenCounter(tenantId, totalTokens), 'increment-token-counter', fastify.log);
+
+    // ── Auto-escalate on sales lead detection (confidence-gated) ────────────
+    // Only escalate when the heuristic lead score meets the bot's configured threshold.
+    // This prevents flooding human agents with low-quality or greeting-stage signals.
+    const escalationScoreThreshold =
+      (botConfig as unknown as { escalation_score_threshold?: number } | null)?.escalation_score_threshold ?? 40;
+    const latestVarsForScore = entityMatches.length > 0
+      ? { ...convAiVars, ...Object.fromEntries(entityMatches.map(m => [m[1]!, m[2]!])) }
+      : convAiVars;
+    const latestStageForScore = (stageMatch ? stageMatch[1] : convStage) ?? 'greeting';
+    const currentLeadScore = calcLeadScore(latestVarsForScore, latestStageForScore);
+
+    if (isSalesLead) {
+      void sendLeadNotifications(conversation, currentLeadScore);
+    }
+
+    if (isSalesLead && conversation.status === 'open' && currentLeadScore >= escalationScoreThreshold) {
+      fastify.log.info({ tenantId, conversationId: conversation.id, score: currentLeadScore, threshold: escalationScoreThreshold }, '[Webhook] Sales lead detected — escalating');
+      const escalationResult = await escalateConversation(conversation, `Sales lead detected — customer expressed buying intent${buildEscalationContext(convStage, convAiVars)}`);
+      void generateLeadSummary(escalationResult.escalationId, conversation.id, latestVarsForScore, latestStageForScore, fastify.log);
+    } else if (isSalesLead && currentLeadScore < escalationScoreThreshold) {
+      fastify.log.info({ tenantId, score: currentLeadScore, threshold: escalationScoreThreshold }, '[Webhook] Sales lead signal below threshold — continuing AI flow');
+    }
+    // ── Feature: Escalation Policy — confidence-based reprompt ladder ──────
+    // Replaces the old single-threshold hardcut with configurable per-bot policy:
+    // low confidence increments a counter; on exhaust the policy triggers escalation.
+    // A confident reply resets the counter so transient uncertainty doesn't escalate.
+    else if (conversation.status === 'open') {
+      const policy      = botConfig?.escalation_policy ?? null;
+      const threshold   = policy?.confidence_threshold    ?? confidenceThreshold;
+      const maxReprompts = policy?.max_low_confidence_reprompts ?? 2;
+      const onExhaust   = policy?.on_exhaust ?? 'escalate';
+
+      if (aiResult.confidenceScore < threshold) {
+        const currentCount = (conversation as Conversation & { low_confidence_count?: number }).low_confidence_count ?? 0;
+        const newCount     = currentCount + 1;
+        await db.from('conversations').update({ low_confidence_count: newCount }).eq('id', conversation.id);
+
+        fastify.log.info({ tenantId, conversationId: conversation.id, newCount, maxReprompts, threshold }, '[Webhook] Low-confidence turn');
+
+        if (newCount >= maxReprompts && onExhaust === 'escalate') {
+          const ctx = buildEscalationContext(convStage, convAiVars);
+          await escalateConversation(conversation, `AI confidence below ${threshold} for ${newCount} consecutive turns${ctx}`);
+        } else if (policy?.reprompt_message && newCount < maxReprompts) {
+          // Send configured reprompt message before escalating on next low-confidence turn
+          await gateway.sendMessage(config.phone_number_id, config.access_token, {
+            type: 'text',
+            to:   incoming.from,
+            text: policy.reprompt_message,
+          });
+        }
+      } else if (((conversation as Conversation & { low_confidence_count?: number }).low_confidence_count ?? 0) > 0) {
+        // Confident reply — reset counter non-blocking
+        fireForget(
+          db.from('conversations').update({ low_confidence_count: 0 }).eq('id', conversation.id),
+          'reset-low-confidence-count',
+          fastify.log,
+        );
+      }
+    }
+
+    // ── Resolve media attachment from the top matched KB collection ──────
+    // If the highest-ranked KB result came from a collection that has an active
+    // media attachment (image or document), send it inline with the reply text.
+    const topCollectionId = (kbResults[0] as { collection_id?: string | null } | undefined)?.collection_id ?? null;
+    type MediaAttachmentRow = { id: string; public_url: string; file_type: string; original_filename: string; send_count: number };
+    let kbAttachment: MediaAttachmentRow | null = null;
+
+    if (topCollectionId) {
+      const { data: attachmentRow } = await db
+        .from('kb_media_attachments')
+        .select('id, public_url, file_type, original_filename, send_count')
+        .eq('collection_id', topCollectionId)
+        .eq('tenant_id', tenantId)
+        .eq('active', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      kbAttachment = attachmentRow as MediaAttachmentRow | null;
+    }
+
+    // ── Send reply to WhatsApp ────────────────────────────────────────────
+    // WhatsApp caption limit: 1024 chars. For longer replies send text first,
+    // then media (so the customer reads the full answer before seeing the file).
+    const CAPTION_MAX = 1024;
+    let sendResult;
+
+    // Priority: inline options > saved button template > KB attachment > plain text.
+    if (inlineOptions && inlineOptions.length >= 2) {
+      // ≤3 items → reply buttons; 4-5 items → list
+      if (inlineOptions.length <= 3) {
+        sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'interactive',
+          interactiveType: 'button',
+          to: incoming.from,
+          body: replyText,
+          buttons: inlineOptions.map((opt, i) => ({
+            type: 'reply' as const,
+            reply: { id: `opt_${i}`, title: opt.slice(0, 20) },
+          })),
+        });
+      } else {
+        sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'interactive',
+          interactiveType: 'list',
+          to: incoming.from,
+          body: replyText,
+          listButtonLabel: 'Choose an option',
+          listSections: [{
+            title: 'Options',
+            rows: inlineOptions.map((opt, i) => ({
+              id: `opt_${i}`,
+              title: opt.slice(0, 24),
+            })),
+          }],
+        });
+      }
+    } else if (buttonTemplateName && buttonTemplates.length > 0) {
+      const tmpl = buttonTemplates.find(t => t.name.toLowerCase() === buttonTemplateName);
+      if (tmpl) {
+        fastify.log.info({ buttonTemplateName, type: tmpl.type }, '[Webhook] sending interactive button template');
+        sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token,
+          buildInteractiveFromTemplate(tmpl, incoming.from, replyText),
+        );
+      } else {
+        // Template name from AI doesn't match any saved template — fall back to text
+        fastify.log.warn({ buttonTemplateName }, '[Webhook] Button template not found, falling back to text');
+        sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text', to: incoming.from, text: replyText,
+        });
+      }
+    } else if (kbAttachment) {
+      fastify.log.info({ attachmentId: kbAttachment.id, fileType: kbAttachment.file_type }, '[Webhook] sending KB media attachment');
+
+      if (kbAttachment.file_type === 'image') {
+        if (replyText.length <= CAPTION_MAX) {
+          // One-shot: image with caption = bot reply
+          sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token, {
+            type: 'media', to: incoming.from,
+            mediaType: 'image', mediaUrl: kbAttachment.public_url, caption: replyText,
+          });
+        } else {
+          // Text first (full reply), then image without caption
+          sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token, {
+            type: 'text', to: incoming.from, text: replyText,
+          });
+          fireForget(
+            gateway.sendMessage(config.phone_number_id, config.access_token, {
+              type: 'media', to: incoming.from,
+              mediaType: 'image', mediaUrl: kbAttachment.public_url,
+            }),
+            'kb-image-followup',
+            fastify.log,
+          );
+        }
+      } else {
+        // Document: send with caption (truncated to limit) + filename
+        const caption = replyText.length > CAPTION_MAX
+          ? replyText.slice(0, CAPTION_MAX - 1) + '…'
+          : replyText;
+        sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'media', to: incoming.from,
+          mediaType: 'document', mediaUrl: kbAttachment.public_url,
+          caption, filename: kbAttachment.original_filename,
+        });
+        // If reply was truncated, send the remainder as a follow-up text
+        if (replyText.length > CAPTION_MAX) {
+          fireForget(
+            gateway.sendMessage(config.phone_number_id, config.access_token, {
+              type: 'text', to: incoming.from, text: replyText.slice(CAPTION_MAX - 1),
+            }),
+            'kb-document-followup-text',
+            fastify.log,
+          );
+        }
+      }
+
+      // Increment send_count non-blocking
+      fireForget(
+        db.from('kb_media_attachments')
+          .update({ send_count: kbAttachment.send_count + 1 })
+          .eq('id', kbAttachment.id),
+        'kb-media-send-count',
+        fastify.log,
+      );
+    } else {
+      sendResult = await gateway.sendMessage(config.phone_number_id, config.access_token, {
+        type: 'text', to: incoming.from, text: replyText,
+      });
+    }
+
+    fastify.log.info({ sendResult }, '[Webhook] sendMessage result');
+
+    // Feature: Status Ladder — mark outbound message as 'sent' and store Meta msg ID
+    if (storedMsg && sendResult.messageId) {
+      fireForget(
+        db.from('messages')
+          .update({ delivery_status: 'sent', whatsapp_msg_id: sendResult.messageId })
+          .eq('id', (storedMsg as { id: string }).id),
+        'update-delivery-status-sent',
+        fastify.log,
+      );
+    }
+
+    // ── Send formatted product catalogue if requested ────────────────────
+    if (sendCatalogue && productType === 'sales_bot') {
+      const catalogue = await getProductCatalogue(tenantId); // already in Redis
+      if (catalogue.length > 0) {
+        const lines: string[] = ['📦 *Our Products*\n'];
+        for (const p of catalogue) {
+          lines.push(`*${p.name}*${p.sku ? ` (SKU: ${p.sku})` : ''}`);
+          if (p.category)    lines.push(`🏷 ${p.category}`);
+          if (p.description) lines.push(p.description);
+          if (p.price_inr !== null) {
+            lines.push(`💰 ₹${Number(p.price_inr).toLocaleString('en-IN')}`);
+          }
+          lines.push('');
+        }
+        lines.push('_Reply with a product name for details or to place an order._');
+        fireForget(
+          gateway.sendMessage(config.phone_number_id, config.access_token, {
+            type: 'text',
+            to:   incoming.from,
+            text: lines.join('\n').trimEnd(),
+          }),
+          'send-catalogue-message',
+          fastify.log,
+        );
+      }
+    }
+
+    // ── Return / replacement request handler ─────────────────────────────
+    // Fires when the lifecycle bot appends [RETURN_REQUEST] to its reply.
+    // Inserts a return_requests row and sends a WhatsApp confirmation.
+    if (isReturnRequest && productType === 'lifecycle_bot') {
+      const returnType = incoming.text?.toLowerCase().includes('replac') ? 'replacement' : 'return';
+      fireForget(
+        (async () => {
+          const { data: inserted, error: insertErr } = await db
+            .from('return_requests')
+            .insert({
+              tenant_id:       tenantId,
+              conversation_id: conversation.id,
+              contact_id:      contact.id,
+              type:            returnType,
+              reason:          incoming.text ?? null,
+              status:          'pending',
+            })
+            .select('id')
+            .single();
+
+          if (insertErr) {
+            fastify.log.error({ insertErr, tenantId }, '[Webhook] Failed to insert return_request');
+            return;
+          }
+          fastify.log.info({ returnRequestId: (inserted as { id: string }).id, returnType }, '[Webhook] Return request logged');
+
+          // WhatsApp confirmation message to customer
+          const confirmMsg = returnType === 'replacement'
+            ? `✅ We've received your replacement request and our team will review it shortly.\n\nPlease share your *order ID* and *photos of the item* so we can process it faster. You'll hear from us within 1–2 business days.`
+            : `✅ We've received your return request and our team will review it shortly.\n\nPlease share your *order ID* and *photos of the item* if applicable. You'll hear from us within 1–2 business days.`;
+
+          await gateway.sendMessage(config.phone_number_id, config.access_token, {
+            type: 'text',
+            to:   incoming.from,
+            text: confirmMsg,
+          });
+        })(),
+        'handle-return-request',
+        fastify.log,
+      );
+    }
+
+    // ── Cancel enquiry follow-up when booking is made ────────────────────────
+    if (stageMatch?.[1] === 'booked') {
+      fireForget(
+        db.from('enquiry_followup_jobs')
+          .update({ cancelled_at: new Date().toISOString() })
+          .eq('conversation_id', conversation.id)
+          .is('fired_at', null)
+          .is('cancelled_at', null),
+        'cancel-enquiry-followup-on-booked',
+        fastify.log,
+      );
+    }
+
+    // ── Post-booking: directions to customer + notification to branch manager ──
+    // When the AI transitions to [STAGE:booked], fires two messages:
+    // 1. Directions to the customer (branch address, access, hours)
+    // 2. Booking summary to the branch manager's WhatsApp (if manager_phone is set)
+    if (stageMatch?.[1] === 'booked' && whatsappNumberId) {
+      fireForget(
+        (async () => {
+          const { data: wnForDirs } = await db
+            .from('whatsapp_numbers')
+            .select('routing_config')
+            .eq('id', whatsappNumberId)
+            .maybeSingle();
+          const branches = ((wnForDirs?.routing_config ?? {}) as RoutingConfig).branches;
+          if (!branches?.length) return;
+
+          // Merge any new entity captures from this turn
+          const latestVars = entityMatches.length > 0
+            ? { ...convAiVars, ...Object.fromEntries(entityMatches.map(m => [m[1]!, m[2]!])) }
+            : convAiVars;
+          const branchName = latestVars['branch'] ?? latestVars['location'] ?? '';
+          const branch = branches.find(b =>
+            branchName && b.name.toLowerCase().includes(branchName.toLowerCase()),
+          ) ?? branches[0]!;
+
+          // 1. Directions to customer
+          const dirLines: string[] = [`Here's how to find us! 📍`];
+          if (branch.address) dirLines.push(`*${branch.name}*\n${branch.address}`);
+          else                 dirLines.push(`*${branch.name}*`);
+          if (branch.access)   dirLines.push(`🏢 ${branch.access}`);
+          if (branch.hours)    dirLines.push(`🕐 Open ${branch.hours}`);
+          if (branch.phone)    dirLines.push(`📞 ${branch.phone}`);
+          dirLines.push(`\nSee you soon! 🙏`);
+
+          await gateway.sendMessage(config.phone_number_id, config.access_token, {
+            type: 'text', to: incoming.from, text: dirLines.join('\n'),
+          });
+          fastify.log.info({ tenantId, branch: branch.name }, '[Webhook] post-booking directions sent');
+
+          // 2. Notification to branch manager (if configured)
+          if (branch.manager_phone) {
+            const contactName = (contact as Contact).name ?? 'Guest';
+            const summaryParts = [`📋 *New Booking — ${branch.name}*`, `👤 ${contactName}`];
+            if (latestVars['date'])       summaryParts.push(`📅 ${latestVars['date']}`);
+            if (latestVars['time'])       summaryParts.push(`🕐 ${latestVars['time']}`);
+            if (latestVars['party_size']) summaryParts.push(`👥 ${latestVars['party_size']} guests`);
+            if (latestVars['occasion'])   summaryParts.push(`🎉 ${latestVars['occasion']}`);
+            if (latestVars['dietary'])    summaryParts.push(`🥗 Dietary: ${latestVars['dietary']}`);
+            summaryParts.push(`\n📱 Customer: ${phoneValue}`);
+
+            await gateway.sendMessage(config.phone_number_id, config.access_token, {
+              type: 'text', to: branch.manager_phone, text: summaryParts.join('\n'),
+            });
+            fastify.log.info({ tenantId, branch: branch.name, manager: branch.manager_phone }, '[Webhook] branch manager notified');
+          }
+        })(),
+        'post-booking-directions',
+        fastify.log,
+      );
+    }
+
+    // ── Escalate on booking — moves conversation to team Inbox for manual confirmation ──
+    if (stageMatch?.[1] === 'booked' && conversation.status === 'open') {
+      void escalateConversation(
+        conversation,
+        'Table booking received — awaiting manual confirmation by team',
+      ).catch(err => fastify.log.error({ err }, '[Webhook] booking escalation failed'));
+    }
+
+    // ── Check call triggers (keyword / sentiment) ─────────────────────────
+    // Runs after the WhatsApp reply is already sent — triggers a parallel voice call.
+    if (incoming.text && botConfig?.voice_config && conversation.status === 'open') {
+      const triggerCfg = botConfig.voice_config as import('@alphabot/shared').BotVoiceConfig;
+      const voiceEnabled = triggerCfg.enabled;
+
+      if (voiceEnabled && isWithinBusinessHours(triggerCfg)) {
+        const contactPhone = (contact as Contact).phone;
+        if (contactPhone) {
+          const delay = triggerCfg.call_delay_seconds ?? 0;
+          let triggerReason: string | null = null;
+
+          // Keyword trigger
+          if (triggerCfg.trigger_on_call_request) {
+            const keywords = triggerCfg.call_request_keywords?.length
+              ? triggerCfg.call_request_keywords
+              : ['call me', 'phone call', 'call back', 'call please', 'need a call'];
+            const lc = incoming.text.toLowerCase();
+            if (keywords.some(kw => lc.includes(kw.toLowerCase()))) {
+              triggerReason = 'Customer requested a call via WhatsApp';
+            }
+          }
+
+          // Sentiment trigger (only if keyword trigger didn't already fire)
+          if (!triggerReason && triggerCfg.trigger_on_negative_sentiment) {
+            const sentiment = await detectSentimentText(incoming.text);
+            const threshold = triggerCfg.negative_sentiment_threshold ?? 'frustrated';
+            const fires = threshold === 'negative'
+              ? ['negative', 'frustrated'].includes(sentiment)
+              : sentiment === 'frustrated';
+            if (fires) {
+              triggerReason = `Customer expressed ${sentiment} sentiment`;
+            }
+          }
+
+          if (triggerReason) {
+            const contactName = (contact as Contact).name ?? null;
+            fireForget(
+              dispatchCallTrigger(tenantId, productType, conversation.id, contactPhone, contactName, triggerReason, delay, db),
+              'call-trigger-dispatch',
+              fastify.log,
+            );
+          }
+        }
+      }
+    }
+
+    // ── Release optimistic lock ───────────────────────────────────────────
+    fireForget(
+      db.from('conversations').update({ processing_lock_expires_at: null }).eq('id', conversation.id),
+      'release-ai-lock',
+      fastify.log,
+    );
+
+    // ── Update conversation timestamp ─────────────────────────────────────
+    await db.from('conversations').update({ updated_at: new Date().toISOString() })
+      .eq('id', conversation.id);
+
+    } catch (err) {
+      fastify.log.error({ err, tenantId, productType }, '[Webhook] async processing failed');
+    }
+  }
+
+  // ─── POST: Legacy URL /:tenantId/:productType — backward-compatible ───────
+  fastify.post<{ Body: unknown }>('/:tenantId/:productType', async (request, reply) => {
+    reply.status(200).type('text/plain').send('');
+    const { tenantId, productType } = request.params as {
+      tenantId: string;
+      productType: ProductType;
+    };
+    await handleWebhookPost(tenantId, productType, request);
+  });
+
+  // ─── POST: New URL /:tenantId — bot routed by phone_number_id in payload ──
+  fastify.post<{ Body: unknown }>('/:tenantId', async (request, reply) => {
+    reply.status(200).type('text/plain').send('');
+    const { tenantId } = request.params as { tenantId: string };
+    const body = request.body as Record<string, unknown>;
+
+    // Extract phone_number_id from Meta payload metadata
+    let phoneNumberId: string | null = null;
+    try {
+      const entry = (body?.entry as Array<Record<string, unknown>>)?.[0];
+      const change = (entry?.changes as Array<Record<string, unknown>>)?.[0];
+      const value = change?.value as Record<string, unknown>;
+      phoneNumberId = (value?.metadata as Record<string, unknown>)?.phone_number_id as string ?? null;
+    } catch { /* ignore */ }
+
+    if (!phoneNumberId) {
+      fastify.log.warn({ tenantId }, '[Webhook] could not extract phone_number_id from Meta payload');
+      return;
+    }
+
+    const db = getServerClient();
+    const { data: wnRow } = await db
+      .from('whatsapp_numbers')
+      .select('id, product_slug, routing_mode, routing_config, config_json, provider')
+      .eq('tenant_id', tenantId)
+      .eq('active', true)
+      .filter('config_json->>phone_number_id', 'eq', phoneNumberId)
+      .maybeSingle();
+
+    if (!wnRow) {
+      fastify.log.warn({ tenantId, phoneNumberId }, '[Webhook] no active bot mapped to this phone_number_id');
+      return;
+    }
+
+    // ── Multi-bot routing layer ───────────────────────────────────────────
+    if (wnRow.routing_mode === 'multi') {
+      const gateway  = new WhatsAppGateway(wnRow.provider as WhatsAppProvider);
+      const wnConfig = wnRow.config_json as { phone_number_id: string; access_token: string };
+
+      // Parse incoming message to extract the sender's phone number
+      const incoming = gateway.parseIncoming(body);
+      if (!incoming) {
+        // Delivery receipts or unsupported — fall through to legacy handler for receipt processing
+        await handleWebhookPost(tenantId, (wnRow.product_slug ?? 'support_bot') as ProductType, request, phoneNumberId, wnRow.id as string);
+        return;
+      }
+
+      const senderPhone = incoming.from.startsWith('+') ? incoming.from : `+${incoming.from}`;
+
+      // ── Location message: find nearest branch and offer as interactive choices ──
+      if (incoming.type === 'location' && incoming.location) {
+        const routingCfg = (wnRow.routing_config ?? {}) as RoutingConfig;
+        const branches = routingCfg.branches;
+        if (branches && branches.length > 0) {
+          const { latitude, longitude } = incoming.location;
+          const sorted = (branches as BranchLocation[])
+            .map(b => ({ ...b, distKm: haversineKm(latitude, longitude, b.latitude, b.longitude) }))
+            .sort((a, b) => a.distKm - b.distKm)
+            .slice(0, 3);
+
+          const bodyLines = sorted.map(b => `• ${b.name} — ${b.distKm.toFixed(1)} km`).join('\n');
+          const msgBody = `Based on your location, here are the nearest branches:\n${bodyLines}`;
+
+          await gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
+            type: 'interactive',
+            interactiveType: sorted.length <= 3 ? 'button' : 'list',
+            to: senderPhone,
+            body: msgBody,
+            buttons: sorted.length <= 3
+              ? sorted.map((b, i) => ({ type: 'reply' as const, reply: { id: `branch_${i}`, title: b.name.slice(0, 20) } }))
+              : undefined,
+            listSections: sorted.length > 3
+              ? [{ title: 'Nearby Branches', rows: sorted.map((b, i) => ({ id: `branch_${i}`, title: b.name.slice(0, 24), description: `${b.distKm.toFixed(1)} km away` })) }]
+              : undefined,
+          });
+          fastify.log.info({ tenantId, senderPhone, nearest: sorted[0]?.name }, '[Routing] location → nearest branch sent');
+          return;
+        }
+        // No branches configured — fall through to normal routing, treating as no-text message
+      }
+
+      const routingResult = await resolveMultiBotRouting({
+        tenantId,
+        phone:             senderPhone,
+        incomingText:      incoming.text ?? null,
+        interactiveReplyId: incoming.interactiveReplyId ?? null,
+        gateway,
+        config:            wnConfig,
+        routingConfig:     (wnRow.routing_config ?? {}) as RoutingConfig,
+        log:               fastify.log,
+      });
+
+      if (routingResult.handled) return; // routing consumed the message
+
+      // Routing complete — forward to the chosen bot, passing both phoneNumberId (for
+      // getBotContext fallback) and wnRow.id (for conversation stamping).
+      await handleWebhookPost(tenantId, routingResult.productType as ProductType, request, phoneNumberId, wnRow.id as string);
+      return;
+    }
+
+    await handleWebhookPost(tenantId, wnRow.product_slug as ProductType, request, undefined, wnRow.id as string);
+  });
+}

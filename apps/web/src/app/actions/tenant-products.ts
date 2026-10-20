@@ -1,0 +1,204 @@
+'use server';
+
+import { revalidatePath }         from 'next/cache';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getSession }             from '@/lib/session';
+import { randomUUID }             from 'crypto';
+
+type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot';
+type WaProvider  = 'meta_cloud' | 'twilio' | 'interakt' | 'wati' | 'gupshup';
+
+const DEFAULT_BOT_CONFIG = {
+  confidence_threshold: 0.6,
+  escalation_triggers: [
+    'speak to human', 'talk to agent', 'human please', 'escalate',
+    'complaint', 'refund', 'dispute', 'urgent',
+  ],
+  guardrails_json: {
+    blocked_topics: [], blocked_keywords: [], max_response_length: 1000,
+    tone: 'professional',
+    content_filters: { no_personal_data: false, no_external_links: false, no_phone_numbers_in_response: false },
+    on_blocked_topic: 'escalate',
+  },
+};
+
+async function ensureBotConfig(adminClient: ReturnType<typeof getSupabaseAdminClient>, tenantId: string, productSlug: string) {
+  const { data: existing } = await adminClient
+    .from('bot_configs')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('product_slug', productSlug)
+    .maybeSingle();
+
+  if (!existing) {
+    await adminClient.from('bot_configs').insert({
+      tenant_id:    tenantId,
+      product_slug: productSlug,
+      ...DEFAULT_BOT_CONFIG,
+    });
+  }
+}
+
+// Activate the default (first) instance of a bot type.
+// Uses product_slug = product_type for backward compatibility.
+export async function activateTenantProductAction(productType: ProductType) {
+  const session = await getSession();
+  if (!session) return { error: 'Not authenticated' };
+  if (!['admin', 'client_manager'].includes(session.role)) return { error: 'Admins only' };
+
+  const admin = getSupabaseAdminClient();
+
+  await admin.from('tenant_products').upsert(
+    {
+      tenant_id:     session.tenantId,
+      product_type:  productType,
+      product_slug:  productType,      // default instance slug = type
+      instance_name: 'Default',
+      active:        true,
+      tier:          'base',
+    },
+    { onConflict: 'tenant_id,product_slug' },
+  );
+
+  await ensureBotConfig(admin, session.tenantId, productType);
+
+  revalidatePath('/settings');
+  return { success: true };
+}
+
+// Add an additional named instance of any bot type.
+// Generates a unique product_slug = '{type}_{6hex}'.
+export async function addBotInstanceAction(productType: ProductType, instanceName: string) {
+  const session = await getSession();
+  if (!session) return { error: 'Not authenticated' };
+  if (!['admin', 'client_manager'].includes(session.role)) return { error: 'Admins only' };
+
+  const uid         = randomUUID().replace(/-/g, '').slice(0, 6);
+  const productSlug = `${productType}_${uid}`;
+  const label       = instanceName.trim() || `Instance ${uid}`;
+
+  const admin = getSupabaseAdminClient();
+  const { error } = await admin.from('tenant_products').insert({
+    tenant_id:     session.tenantId,
+    product_type:  productType,
+    product_slug:  productSlug,
+    instance_name: label,
+    active:        true,
+    tier:          'base',
+  });
+
+  if (error) return { error: error.message };
+
+  await ensureBotConfig(admin, session.tenantId, productSlug);
+
+  revalidatePath('/settings');
+  return { success: true, productSlug };
+}
+
+// Deactivate a specific bot instance by its product_slug.
+export async function deactivateTenantProductAction(productSlug: string) {
+  const session = await getSession();
+  if (!session) return { error: 'Not authenticated' };
+  if (!['admin', 'client_manager'].includes(session.role)) return { error: 'Admins only' };
+
+  const admin = getSupabaseAdminClient();
+  await admin
+    .from('tenant_products')
+    .update({ active: false })
+    .eq('tenant_id', session.tenantId)
+    .eq('product_slug', productSlug);
+
+  revalidatePath('/settings');
+  return { success: true };
+}
+
+export async function assignNumberToBotAction(numberId: string, productSlug: ProductType | null) {
+  const session = await getSession();
+  if (!session) return { error: 'Not authenticated' };
+  if (!['admin', 'client_manager'].includes(session.role)) return { error: 'Admins only' };
+
+  const admin = getSupabaseAdminClient();
+  await admin
+    .from('whatsapp_numbers')
+    .update({ product_slug: productSlug })
+    .eq('id', numberId)
+    .eq('tenant_id', session.tenantId);
+
+  revalidatePath('/settings');
+  return { success: true };
+}
+
+export interface AddWhatsAppNumberInput {
+  provider:      WaProvider;
+  phoneNumber:   string;
+  label:         string;
+  productSlug:   ProductType;
+  phoneNumberId?: string;
+  accessToken?:  string;
+  accountSid?:   string;
+  authToken?:    string;
+  fromNumber?:   string;
+}
+
+export async function addTenantWhatsAppNumberAction(input: AddWhatsAppNumberInput) {
+  const session = await getSession();
+  if (!session) return { error: 'Not authenticated' };
+  if (!['admin', 'client_manager'].includes(session.role)) return { error: 'Admins only' };
+
+  const verifyToken = randomUUID();
+  let configJson: Record<string, string> = { verify_token: verifyToken };
+
+  if (input.provider === 'meta_cloud') {
+    if (!input.phoneNumberId?.trim()) return { error: 'Phone Number ID is required for Meta Cloud API' };
+    if (!input.accessToken?.trim())   return { error: 'Access Token is required for Meta Cloud API' };
+    configJson = { verify_token: verifyToken, phone_number_id: input.phoneNumberId.trim(), access_token: input.accessToken.trim() };
+  } else if (input.provider === 'twilio') {
+    if (!input.accessToken?.trim()) return { error: 'Account SID:Auth Token is required for Twilio' };
+    configJson = { verify_token: verifyToken, phone_number_id: input.phoneNumber.trim(), access_token: input.accessToken.trim() };
+  } else if (['interakt', 'wati', 'gupshup'].includes(input.provider)) {
+    if (!input.accessToken?.trim()) return { error: 'API Key / Access Token is required' };
+    configJson = {
+      verify_token: verifyToken,
+      access_token: input.accessToken.trim(),
+      ...(input.fromNumber ? { from_number: input.fromNumber.trim() } : {}),
+    };
+  }
+
+  const admin = getSupabaseAdminClient();
+
+  // Reject if another row already owns this phone_number_id (globally unique per Meta)
+  if (input.provider === 'meta_cloud' && input.phoneNumberId?.trim()) {
+    const { data: conflict } = await admin
+      .from('whatsapp_numbers')
+      .select('id, tenant_id')
+      .eq('provider', 'meta_cloud')
+      .filter('config_json->>phone_number_id', 'eq', input.phoneNumberId.trim())
+      .maybeSingle();
+
+    if (conflict && conflict.tenant_id !== session.tenantId) {
+      return { error: 'This Phone Number ID is already registered by another account.' };
+    }
+  }
+
+  const { data, error } = await admin
+    .from('whatsapp_numbers')
+    .upsert(
+      {
+        tenant_id:    session.tenantId,
+        phone_number: input.phoneNumber.trim(),
+        provider:     input.provider,
+        label:        input.label.trim() || null,
+        product_slug: input.productSlug,
+        config_json:  configJson,
+        active:       true,
+      },
+      { onConflict: 'tenant_id,phone_number' },
+    )
+    .select('id')
+    .single();
+
+  if (error) return { error: error.message };
+
+  revalidatePath('/settings');
+  return { success: true, numberId: data.id, verifyToken };
+}

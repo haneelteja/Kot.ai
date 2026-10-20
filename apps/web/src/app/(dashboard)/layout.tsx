@@ -1,0 +1,133 @@
+import { cache }    from 'react';
+import { redirect } from 'next/navigation';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseAdminClient }  from '@/lib/supabase/admin';
+import { DashboardShell } from '@/components/dashboard-shell';
+import { CopilotWidgetMount } from '@/components/dashboard/CopilotWidgetMount';
+import type { CopilotMessage } from '@/components/dashboard/CopilotWidget';
+
+// React.cache() deduplicates within a single server request — the layout and
+// any child server components share one DB round-trip instead of making N.
+const getTenantContext = cache(async () => {
+  const supabase = await getSupabaseServerClient();
+  const { data: { user }, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !user) return null;
+
+  const admin = getSupabaseAdminClient();
+  const { data: tenantUser } = await admin
+    .from('tenant_users')
+    .select('role, tenant_id, tour_completed_at, tenants(name, copilot_config)')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!tenantUser) return null;
+
+  const tenantId  = tenantUser.tenant_id ?? '';
+  const tenantsRaw = tenantUser.tenants as unknown;
+  const tenantObj  = Array.isArray(tenantsRaw)
+    ? (tenantsRaw[0] as { name: string; copilot_config?: Record<string, unknown> })
+    : (tenantsRaw as { name: string; copilot_config?: Record<string, unknown> } | null);
+
+  const rawCfg      = tenantObj?.copilot_config ?? {};
+  const copilotEnabled = typeof rawCfg['enabled'] === 'boolean' ? rawCfg['enabled'] : true;
+
+  const [{ data: activeProducts }, { data: tenantMeta }] = await Promise.all([
+    admin.from('tenant_products').select('product_type, product_slug, instance_name').eq('tenant_id', tenantId).eq('active', true),
+    admin.from('tenants').select('is_agency').eq('id', tenantId).single(),
+  ]);
+
+  const BOT_NAME: Record<string, string> = {
+    support_bot:   'Support Bot',
+    sales_bot:     'Sales Bot',
+    lifecycle_bot: 'Lifecycle Bot',
+  };
+  const activeBots = (activeProducts ?? [])
+    .filter(p => BOT_NAME[p.product_type])
+    .map(p => {
+      const slug = (p as { product_slug?: string | null }).product_slug ?? p.product_type;
+      const baseName = BOT_NAME[p.product_type]!;
+      const instanceName = (p as { instance_name?: string | null }).instance_name;
+      const isDefault = slug === p.product_type;
+      const name = isDefault || !instanceName ? baseName : `${baseName} — ${instanceName}`;
+      return { slug, name };
+    });
+
+  const hasLifecycleBot = activeBots.some(b => b.slug === 'lifecycle_bot');
+
+  return {
+    user,
+    tenantName:      tenantObj?.name ?? 'Dashboard',
+    userRole:        tenantUser.role ?? '',
+    tenantId,
+    copilotEnabled,
+    hasLifecycleBot,
+    isAgency:        !!(tenantMeta as { is_agency?: boolean } | null)?.is_agency,
+    activeBots,
+    tourCompleted:   !!(tenantUser as { tour_completed_at?: string | null }).tour_completed_at,
+  };
+});
+
+export { getTenantContext };
+
+// Cached copilot history loader — only called when copilot is enabled.
+// React.cache() ensures that if the layout and a child both call this, it runs once.
+const getCopilotHistory = cache(async (userId: string, tenantId: string) => {
+  const admin = getSupabaseAdminClient();
+  const { data } = await admin
+    .from('copilot_messages')
+    .select('id, role, content, pending_action, action_status')
+    .eq('user_id', userId)
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  return data ?? [];
+});
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const ctx = await getTenantContext();
+  if (!ctx) redirect('/login');
+
+  // Skip the 30-row message fetch entirely when copilot is disabled.
+  const historyRows = ctx.copilotEnabled
+    ? await getCopilotHistory(ctx.user.id, ctx.tenantId).catch(() => [])
+    : [];
+
+  const initialMessages: CopilotMessage[] = (historyRows as Array<{
+    id:             string;
+    role:           string;
+    content:        string;
+    pending_action: Record<string, unknown> | null;
+    action_status:  string | null;
+  }>).reverse().map(m => ({
+    id:           m.id,
+    role:         m.role as 'user' | 'assistant',
+    content:      m.content,
+    type:         m.pending_action ? 'action_pending' : 'message',
+    toolName:     (m.pending_action?.['toolName']  as string | undefined),
+    toolInput:    (m.pending_action?.['toolInput']  as Record<string, unknown> | undefined),
+    toolUseId:    (m.pending_action?.['toolUseId'] as string | undefined),
+    actionStatus: m.action_status as CopilotMessage['actionStatus'],
+  }));
+
+  return (
+    <>
+      <DashboardShell
+        tenantName={ctx.tenantName}
+        email={ctx.user.email ?? ''}
+        tenantId={ctx.tenantId}
+        userRole={ctx.userRole}
+        hasLifecycleBot={ctx.hasLifecycleBot}
+        isAgency={ctx.isAgency}
+        activeBots={ctx.activeBots}
+        tourCompleted={ctx.tourCompleted}
+      >
+        {children}
+      </DashboardShell>
+      {ctx.copilotEnabled && <CopilotWidgetMount initialMessages={initialMessages} />}
+    </>
+  );
+}

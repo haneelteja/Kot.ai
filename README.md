@@ -1,6 +1,8 @@
-# Alphabot — WhatsApp AI Agent Platform
+# KOT.ai — WhatsApp Ordering & Table Booking for Restaurants
 
-A multi-tenant WhatsApp AI platform that lets businesses deploy intelligent bots (support, sales, and lifecycle) on top of Meta WhatsApp Cloud API. Built as an npm workspaces monorepo with a Fastify API backend and a Next.js 14 dashboard.
+A multi-tenant WhatsApp ordering and table-booking product for restaurants. Bootstrapped from the Alphabot WhatsApp AI platform (see `KOTAI_BUILD_BRIEF.md` and `docs/AUDIT.md` for what was kept, extended, or replaced). Built as an npm workspaces monorepo with a Fastify API backend and a Next.js 14 dashboard.
+
+The sections below describe the inherited platform layer (multi-tenancy, WhatsApp gateway, AI pipeline, dashboard shell) this product is built on top of.
 
 ---
 

@@ -2,17 +2,13 @@ import cron from 'node-cron';
 import { getServerClient } from '@alphabot/database';
 import { runDailyReports } from '../lib/email/daily-report.js';
 import { WhatsAppGateway } from '../services/whatsapp/gateway.js';
-import { dispatchPendingVoiceCalls, processCampaignContacts } from '../services/campaign/index.js';
-import { processScheduledBroadcasts } from '../services/broadcast/index.js';
 import { processScheduledMessages } from '../services/scheduled-messages/sender.js';
-import { isWithinBusinessHours } from '../lib/business-hours.js';
 import { runInsightsForAllTenants } from '../services/insights/generator.js';
 import { withJobLock } from '../lib/redis.js';
 import { businessDaysCutoff } from '../lib/business-days.js';
 import { resetAllDailyCounts } from '../lib/sender-capacity.js';
-import { classifyAndPersistOutcome } from '../lib/outcome-classifier.js';
 import { captureException } from '../lib/sentry.js';
-import type { BotVoiceConfig, Conversation, SalesConfig, WhatsAppProvider } from '@alphabot/shared';
+import type { Conversation, WhatsAppProvider } from '@alphabot/shared';
 import type { RoutingConfig } from '../services/routing/router.js';
 import { escalateConversation } from '../services/escalation/index.js';
 
@@ -150,213 +146,6 @@ async function processFollowUps(): Promise<void> {
   }
 }
 
-/**
- * Fires voice calls for conversations where the customer went silent for N hours.
- * Checks bot_configs for trigger_on_no_reply and only fires if:
- * - Voice is enabled for the bot
- * - No active/recent call already exists for the conversation
- * - Within business hours (if configured)
- */
-async function processNoReplyTriggers(): Promise<void> {
-  const db = getServerClient();
-
-  // Load all bot_configs that have no-reply trigger enabled
-  const { data: botCfgs } = await db
-    .from('bot_configs')
-    .select('tenant_id, product_slug, voice_config')
-    .not('voice_config', 'is', null);
-
-  if (!botCfgs?.length) return;
-
-  const { dispatchCall } = await import('../services/voice/call-manager.js');
-
-  for (const row of botCfgs) {
-    const voiceCfg = row.voice_config as BotVoiceConfig;
-    if (!voiceCfg?.enabled || !voiceCfg?.trigger_on_no_reply) continue;
-    if (!isWithinBusinessHours(voiceCfg)) continue;
-
-    const hoursDelay = voiceCfg.no_reply_after_hours ?? 2;
-    const cutoff     = new Date(Date.now() - hoursDelay * 60 * 60 * 1000).toISOString();
-
-    // Single SQL RPC replaces 3 sequential per-conversation queries (last msg + call check + contact)
-    const { data: candidates } = await db.rpc('get_no_reply_candidates', {
-      p_tenant_id:    row.tenant_id,
-      p_product_slug: row.product_slug,
-      p_cutoff:       cutoff,
-    }) as { data: Array<{ conversation_id: string; contact_phone: string; contact_name: string | null }> | null };
-
-    if (!candidates?.length) continue;
-
-    const convIds = candidates.map(c => c.conversation_id);
-    const { data: recentCalls } = await db
-      .from('voice_calls')
-      .select('conversation_id')
-      .in('conversation_id', convIds)
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-
-    const recentlyCalledConvIds = new Set(
-      (recentCalls ?? []).map(c => (c as { conversation_id: string }).conversation_id),
-    );
-    const deduped = candidates.filter(c => !recentlyCalledConvIds.has(c.conversation_id));
-
-    if (!deduped.length) continue;
-
-    for (const cand of deduped) {
-      try {
-        await dispatchCall({
-          tenant_id:       row.tenant_id,
-          product_slug:    row.product_slug,
-          to_number:       cand.contact_phone,
-          conversation_id: cand.conversation_id,
-          triggered_by:    'escalation',
-          call_context: {
-            customer_name:     cand.contact_name ?? '',
-            trigger_reason:    `Customer has not replied for ${hoursDelay} hours`,
-            greeting_override: `Hello${cand.contact_name ? ` ${cand.contact_name}` : ''}! I noticed we haven't heard back from you. I'm calling to check if you need any further assistance. How can I help?`,
-          },
-        });
-      } catch (err) {
-        console.error(`[NoReplyTrigger] Failed for conversation ${cand.conversation_id}:`, err instanceof Error ? err.message : String(err));
-      }
-    }
-  }
-}
-
-async function processLeadFollowUps(): Promise<void> {
-  const db = getServerClient();
-
-  // Load sales_bot configs that have follow-up enabled
-  const { data: botCfgs } = await db
-    .from('bot_configs')
-    .select('tenant_id, product_slug, sales_config')
-    .eq('product_slug', 'sales_bot');
-
-  if (!botCfgs?.length) return;
-
-  for (const row of botCfgs) {
-    const salesCfg = (row.sales_config ?? {}) as Partial<SalesConfig>;
-    if (!salesCfg.lead_follow_up_enabled) continue;
-
-    const delayHours = salesCfg.lead_follow_up_delay_hours ?? 4;
-    const messages   = salesCfg.lead_follow_up_messages ?? [
-      'Hi! Just checking in — do you have any questions about our products? We\'d love to help.',
-      'Following up on your enquiry. Our team is ready. Can we schedule a quick call?',
-      'Last follow-up from us — our offer still stands. Let us know if you\'d like to proceed!',
-    ];
-
-    // Use business-days: delay hours are treated as business hours (Mon-Fri only)
-    const delayDays = Math.ceil(delayHours / 8); // 1 business day ≈ 8 working hours
-    const cutoff    = businessDaysCutoff(Math.max(1, delayDays));
-
-    const { data: escalationRows } = await db
-      .from('escalations')
-      .select('conversation_id')
-      .eq('tenant_id', row.tenant_id)
-      .ilike('trigger_reason', '%sales lead%');
-
-    const escalatedConvIds = (escalationRows ?? []).map(
-      e => (e as { conversation_id: string }).conversation_id,
-    );
-    if (!escalatedConvIds.length) continue;
-
-    const { data: convs } = await db
-      .from('conversations')
-      .select('id, contact_id, lead_follow_up_count')
-      .eq('tenant_id', row.tenant_id)
-      .eq('product_type', 'sales_bot')
-      .in('status', ['open', 'escalated'])
-      .lt('lead_follow_up_count', 3)
-      .lt('updated_at', cutoff)
-      .in('id', escalatedConvIds);
-
-    if (!convs?.length) continue;
-
-    const { data: wn } = await db
-      .from('whatsapp_numbers')
-      .select('config_json, provider')
-      .eq('tenant_id', row.tenant_id)
-      .eq('product_slug', row.product_slug)
-      .eq('active', true)
-      .limit(1)
-      .single();
-
-    if (!wn) continue;
-
-    const gateway  = new WhatsAppGateway(wn.provider as WhatsAppProvider);
-    const wnConfig = wn.config_json as { phone_number_id: string; access_token: string };
-
-    const contactIds = [...new Set(convs.map(c => c.contact_id))];
-    const { data: contacts } = await db
-      .from('contacts')
-      .select('id, phone, name')
-      .in('id', contactIds);
-    const contactMap = new Map(
-      (contacts ?? []).map(c => [(c as { id: string }).id, c as { id: string; phone: string; name: string | null }]),
-    );
-
-    // Fan-out sends with bounded concurrency — previously sequential (100 convs ≈ 50s).
-    const results = await Promise.allSettled(
-      convs.map(conv => sendLeadFollowUp(conv, contactMap, messages, gateway, wnConfig)),
-    );
-
-    const newMessages: object[] = [];
-    const convUpdates: { id: string; count: number }[] = [];
-    for (const r of results) {
-      if (r.status === 'fulfilled' && r.value) {
-        newMessages.push(r.value.messageRow);
-        convUpdates.push(r.value.update);
-        if (r.value.isLast) {
-          void classifyAndPersistOutcome(r.value.update.id, 'system', 'unresponsive');
-        }
-      }
-    }
-
-    if (newMessages.length) await db.from('messages').insert(newMessages);
-
-    // Single RPC replaces the old per-row UPDATE loop — one round-trip for N conversations
-    if (convUpdates.length) {
-      await db.rpc('batch_update_lead_followup_count', {
-        p_ids:        convUpdates.map(u => u.id),
-        p_counts:     convUpdates.map(u => u.count),
-        p_updated_at: new Date().toISOString(),
-      });
-    }
-  }
-}
-
-async function sendLeadFollowUp(
-  conv: { id: string; contact_id: string; lead_follow_up_count: unknown },
-  contactMap: Map<string, { id: string; phone: string; name: string | null }>,
-  messages: string[],
-  gateway: WhatsAppGateway,
-  wnConfig: { phone_number_id: string; access_token: string },
-): Promise<{ messageRow: object; update: { id: string; count: number }; isLast: boolean } | null> {
-  try {
-    const contact = contactMap.get(conv.contact_id);
-    if (!contact?.phone) return null;
-
-    const followUpIdx = (conv.lead_follow_up_count as number) ?? 0;
-    const template    = messages[followUpIdx] ?? messages[messages.length - 1]!;
-    const name        = contact.name?.split(' ')[0] ?? 'there';
-    const message     = template.replace(/\{name\}/gi, name);
-
-    await gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
-      type: 'text', to: contact.phone, text: message,
-    });
-
-    const newCount = followUpIdx + 1;
-    console.log(`[LeadFollowUp] Sent follow-up #${newCount} to conversation ${conv.id}`);
-    return {
-      messageRow: { conversation_id: conv.id, role: 'assistant', content: message },
-      update:     { id: conv.id, count: newCount },
-      isLast:     newCount >= messages.length,
-    };
-  } catch (err) {
-    console.error(`[LeadFollowUp] Failed for conversation ${conv.id}:`, err instanceof Error ? err.message : String(err));
-    return null;
-  }
-}
-
 async function processPaymentReminders(): Promise<void> {
   const db = getServerClient();
 
@@ -443,137 +232,6 @@ async function processPaymentReminders(): Promise<void> {
   }
 }
 
-async function processLifecycleSequences(): Promise<void> {
-  const db = getServerClient();
-
-  const { data: sequences } = await db
-    .from('lifecycle_sequences')
-    .select('*')
-    .eq('enabled', true);
-
-  if (!sequences?.length) return;
-
-  for (const seq of sequences) {
-    try {
-      const cutoff = new Date(
-        Date.now() - seq.delay_days * 24 * 60 * 60 * 1000,
-      ).toISOString();
-
-      let contactsQuery = db
-        .from('contacts')
-        .select('id, phone, name')
-        .eq('tenant_id', seq.tenant_id)
-        .not('phone', 'is', null)
-        .gte('created_at', seq.created_at)
-        .lt('created_at', cutoff);
-
-      if (seq.trigger_event === 'lead_created') {
-        const { data: leadConvs } = await db
-          .from('conversations')
-          .select('contact_id')
-          .eq('tenant_id', seq.tenant_id)
-          .eq('product_type', seq.product_slug)
-          .not('lead_score', 'is', null)
-          .gte('lead_score', 50);
-
-        const leadContactIds = (leadConvs ?? []).map((r: { contact_id: string }) => r.contact_id);
-        if (!leadContactIds.length) continue;
-        contactsQuery = contactsQuery.in('id', leadContactIds);
-      } else if (seq.trigger_event === 'conversation_resolved') {
-        const { data: resolvedConvs } = await db
-          .from('conversations')
-          .select('contact_id')
-          .eq('tenant_id', seq.tenant_id)
-          .eq('product_type', seq.product_slug)
-          .eq('status', 'resolved')
-          .lt('updated_at', cutoff);
-
-        const resolvedContactIds = (resolvedConvs ?? []).map((r: { contact_id: string }) => r.contact_id);
-        if (!resolvedContactIds.length) continue;
-        contactsQuery = contactsQuery.in('id', resolvedContactIds);
-      } else if (seq.trigger_event === 'order_delivered') {
-        // Loyalty / reorder: fire N days after order was delivered
-        const { data: deliveredOrders } = await db
-          .from('orders')
-          .select('contact_id')
-          .eq('tenant_id', seq.tenant_id)
-          .eq('status', 'delivered')
-          .lt('updated_at', cutoff);
-
-        const deliveredContactIds = [...new Set(
-          (deliveredOrders ?? []).map((r: { contact_id: string }) => r.contact_id),
-        )];
-        if (!deliveredContactIds.length) continue;
-        contactsQuery = contactsQuery.in('id', deliveredContactIds);
-      }
-
-      const { data: candidates } = await contactsQuery;
-      if (!candidates?.length) continue;
-
-      const candidateIds = candidates.map((c: { id: string }) => c.id);
-      const { data: alreadySent } = await db
-        .from('lifecycle_sends')
-        .select('contact_id')
-        .eq('sequence_id', seq.id)
-        .in('contact_id', candidateIds);
-
-      const sentSet = new Set((alreadySent ?? []).map((r: { contact_id: string }) => r.contact_id));
-      const eligible = (candidates as Array<{ id: string; phone: string; name: string | null }>)
-        .filter(c => !sentSet.has(c.id));
-
-      if (!eligible.length) continue;
-
-      const { data: wn } = await db
-        .from('whatsapp_numbers')
-        .select('config_json, provider')
-        .eq('tenant_id', seq.tenant_id)
-        .eq('product_slug', seq.product_slug)
-        .eq('active', true)
-        .limit(1)
-        .maybeSingle();
-
-      const wnFinal = wn ?? (await db
-        .from('whatsapp_numbers')
-        .select('config_json, provider')
-        .eq('tenant_id', seq.tenant_id)
-        .eq('active', true)
-        .limit(1)
-        .maybeSingle()).data;
-
-      if (!wnFinal) continue;
-
-      const gateway  = new WhatsAppGateway((wnFinal as { provider: string }).provider as WhatsAppProvider);
-      const wnConfig = (wnFinal as { config_json: { phone_number_id: string; access_token: string } }).config_json;
-
-      // Fan-out sends concurrently — previously sequential (100 contacts ≈ 50s).
-      const sendResults = await Promise.allSettled(
-        eligible.map(async (contact) => {
-          const name    = contact.name?.split(' ')[0] ?? 'there';
-          const message = seq.message_template.replace(/\{name\}/gi, name);
-          await gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
-            type: 'text', to: contact.phone, text: message,
-          });
-          console.log(`[Lifecycle] Sent "${seq.name}" to contact ${contact.id}`);
-          return { tenant_id: seq.tenant_id, sequence_id: seq.id, contact_id: contact.id };
-        }),
-      );
-
-      const newSends = sendResults
-        .filter(r => r.status === 'fulfilled')
-        .map(r => (r as PromiseFulfilledResult<{ tenant_id: string; sequence_id: string; contact_id: string }>).value);
-
-      const failCount = sendResults.filter(r => r.status === 'rejected').length;
-      if (failCount) console.error(`[Lifecycle] ${failCount} send(s) failed for sequence ${seq.id}`);
-
-      if (newSends.length) {
-        await db.from('lifecycle_sends').insert(newSends);
-      }
-    } catch (seqErr) {
-      console.error(`[Lifecycle] Failed processing sequence ${seq.id}:`, seqErr);
-    }
-  }
-}
-
 async function processEnquiryFollowups(): Promise<void> {
   const db = getServerClient();
   const now = new Date().toISOString();
@@ -657,25 +315,6 @@ async function processEnquiryFollowups(): Promise<void> {
   }
 }
 
-async function recoverStaleCampaigns(): Promise<void> {
-  const db = getServerClient();
-  const staleThreshold = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-
-  const { data: stale } = await db
-    .from('campaigns')
-    .select('*')
-    .eq('status', 'running')
-    .lt('updated_at', staleThreshold);
-
-  if (!stale?.length) return;
-
-  for (const campaign of stale) {
-    console.warn(`[CampaignRecovery] Resuming stale campaign ${campaign.id}`);
-    void processCampaignContacts(campaign as Parameters<typeof processCampaignContacts>[0], campaign.tenant_id)
-      .catch((err: unknown) => console.error(`[CampaignRecovery] Resume failed for ${campaign.id}:`, (err as Error).message));
-  }
-}
-
 async function processAutoEscalate(): Promise<void> {
   const db = getServerClient();
 
@@ -744,34 +383,6 @@ export function startScheduler(): void {
     );
   });
 
-  // Campaign voice dispatch — every 15 min  [TTL: 840s = 14min]
-  cron.schedule('*/15 * * * *', () => {
-    void withJobLock('voice_dispatch', 840, () => dispatchPendingVoiceCalls()).catch(err =>
-      alertJobFailure('voice_dispatch', err)
-    );
-  });
-
-  // No-reply call triggers — every 30 min  [TTL: 1740s = 29min]
-  cron.schedule('*/30 * * * *', () => {
-    void withJobLock('no_reply_triggers', 1740, () => processNoReplyTriggers()).catch(err =>
-      alertJobFailure('no_reply_triggers', err)
-    );
-  });
-
-  // Sales lead follow-up — every 2 hours  [TTL: 7140s = 119min]
-  cron.schedule('0 */2 * * *', () => {
-    void withJobLock('lead_follow_ups', 7140, () => processLeadFollowUps()).catch(err =>
-      alertJobFailure('lead_follow_ups', err)
-    );
-  });
-
-  // Scheduled broadcasts — every minute  [TTL: 55s]
-  cron.schedule('* * * * *', () => {
-    void withJobLock('scheduled_broadcasts', 55, () => processScheduledBroadcasts()).catch(err =>
-      alertJobFailure('scheduled_broadcasts', err)
-    );
-  });
-
   // Scheduled messages — every minute  [TTL: 55s]
   cron.schedule('* * * * *', () => {
     void withJobLock('scheduled_messages_dispatch', 55, () => processScheduledMessages()).catch(err =>
@@ -786,24 +397,10 @@ export function startScheduler(): void {
     );
   });
 
-  // Campaign recovery — every 10 min  [TTL: 540s = 9min]
-  cron.schedule('*/10 * * * *', () => {
-    void withJobLock('campaign_recovery', 540, () => recoverStaleCampaigns()).catch(err =>
-      alertJobFailure('campaign_recovery', err)
-    );
-  });
-
   // Payment reminders — daily at 11:30 UTC (5:00 PM IST)  [TTL: 82800s = 23h]
   cron.schedule('30 11 * * *', () => {
     void withJobLock('payment_reminders', 82800, () => processPaymentReminders()).catch(err =>
       alertJobFailure('payment_reminders', err)
-    );
-  }, { timezone: 'UTC' });
-
-  // Lifecycle sequences — daily at 10:00 UTC  [TTL: 82800s = 23h]
-  cron.schedule('0 10 * * *', () => {
-    void withJobLock('lifecycle_sequences', 82800, () => processLifecycleSequences()).catch(err =>
-      alertJobFailure('lifecycle_sequences', err)
     );
   }, { timezone: 'UTC' });
 

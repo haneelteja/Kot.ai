@@ -14,7 +14,6 @@ import { InviteUserForm } from '@/components/platform/InviteUserForm';
 import { ContactEmailEditor } from '@/components/platform/ContactEmailEditor';
 import { WhatsAppNumberSection } from '@/components/platform/WhatsAppNumberSection';
 import { BillingManager } from '@/components/platform/BillingManager';
-import { TenantVoiceConfigCard, type TenantVoiceConfigRow } from '@/components/platform/TenantVoiceConfigCard';
 import { CopilotSettingsCard } from '@/components/platform/CopilotSettingsCard';
 import { getCopilotConfigAction } from '@/app/actions/copilot-settings';
 import { ClientDangerZone } from '@/components/platform/ClientDangerZone';
@@ -186,33 +185,6 @@ export default async function ClientDetailPage({
           tenantId={tenantId}
           activeBots={tpRows.filter(p => p.active)}
           waNumbers={(waNumbers ?? []) as { id: string; phone_number: string; provider: string; label: string | null; config_json: Record<string, string>; product_slug: string | null }[]}
-        />
-      </CollapsibleSection>
-
-      {/* Voice Config */}
-      <CollapsibleSection
-        icon={<Phone size={15} className="text-violet-500" />}
-        title="Voice Configuration"
-        rightContent={
-          <span className="text-[11px] px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full font-medium border border-violet-100">
-            Per-client
-          </span>
-        }
-      >
-        <p className="text-xs text-slate-400 mb-5">
-          Configure this client&apos;s outbound caller ID and monthly/daily call limits. The caller ID
-          overrides the platform-level number so each client has their own Exotel number.
-        </p>
-        <TenantVoiceConfigCard
-          tenantId={tenantId}
-          initial={tenantVoiceConfigRow ? (() => {
-            const r = tenantVoiceConfigRow as TenantVoiceConfigRow & { exotel_api_key?: string | null };
-            return {
-              ...r,
-              exotel_api_key:   r.exotel_api_key ? '****' + r.exotel_api_key.slice(-4) : null,
-              exotel_api_token: null,
-            } as TenantVoiceConfigRow;
-          })() : null}
         />
       </CollapsibleSection>
 

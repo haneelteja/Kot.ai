@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Building2, Phone, Bot, Link2, Bell, CreditCard, ChevronRight,
   Users, Mail, Clock, Trash2, Info, Cpu, MessageSquare, ShieldOff,
-  UserCircle2, Wrench, Tag, MapPin,
+  UserCircle2, Wrench, MapPin,
 } from 'lucide-react';
 import { WhatsAppSetupSection }  from '@/components/dashboard/WhatsAppSetupSection';
 import { NotificationSettings }  from '@/components/dashboard/NotificationSettings';
@@ -17,17 +17,12 @@ import { TeamInviteForm }        from '@/components/dashboard/TeamInviteForm';
 import { removeTeamMemberAction } from '@/app/actions/tenant-team';
 import { LlmConfigCard }         from '@/components/LlmConfigCard';
 import type { LlmConfigCardProps } from '@/components/LlmConfigCard';
-import { ClientVoiceConfigCard, type BotVoiceConfigRow, type ExotelConfigRow } from '@/components/dashboard/ClientVoiceConfigCard';
-import { VoiceWorkingHoursCard, type WorkingHoursInitial } from '@/components/dashboard/VoiceWorkingHoursCard';
-import { VoiceCallSummaryCard, type CallSummaryInitial } from '@/components/dashboard/VoiceCallSummaryCard';
 import { InternalNumbersManager } from '@/components/dashboard/InternalNumbersManager';
 import { DashboardCollapsibleSection } from '@/components/dashboard/DashboardCollapsibleSection';
 import { PersonaEditor } from '@/components/dashboard/PersonaEditor';
 import { getBotPersonasAction } from '@/app/actions/bot-persona';
 import { ToolManifestEditor } from '@/components/dashboard/ToolManifestEditor';
 import { getBotToolsAction } from '@/app/actions/bot-tools';
-import { DispositionCategoryManager } from '@/components/dashboard/DispositionCategoryManager';
-import { getDispositionCategoriesAction } from '@/app/actions/disposition';
 import { BotsTabContent } from '@/components/dashboard/BotsTabContent';
 import { BranchManagerEditor } from '@/components/dashboard/BranchManagerEditor';
 import type { BranchInput } from '@/app/actions/whatsapp-numbers';
@@ -84,7 +79,6 @@ const TABS = [
   { key: 'bots',         label: 'Bots'          },
   { key: 'team',         label: 'Team'          },
   { key: 'models',       label: 'AI Models'     },
-  { key: 'voice',        label: 'Voice'         },
   { key: 'notifications',label: 'Notifications' },
 ] as const;
 
@@ -125,11 +119,10 @@ export default async function SettingsPage({
 
   if (activeTab === 'workspace') {
     const apiBase = process.env['NEXT_PUBLIC_API_URL'] ?? 'https://your-api.onrender.com';
-    const [tenantRes, numbersRes, productsRes, dispCategories] = await Promise.all([
+    const [tenantRes, numbersRes, productsRes] = await Promise.all([
       admin.from('tenants').select('*').eq('id', tenantId).single(),
       admin.from('whatsapp_numbers').select('*').eq('tenant_id', tenantId),
       admin.from('tenant_products').select('*').eq('tenant_id', tenantId),
-      getDispositionCategoriesAction(),
     ]);
     tenant   = tenantRes.data as Record<string, unknown> | null;
     numbers  = (numbersRes.data ?? []) as Record<string, unknown>[];
@@ -228,16 +221,6 @@ export default async function SettingsPage({
             </DashboardCollapsibleSection>
           )}
 
-          {/* Lead Disposition Categories */}
-          <DashboardCollapsibleSection
-            icon={<Tag size={16} />}
-            title="Lead Disposition Categories"
-            hint="Custom labels for unresponsive contacts. Use these to track why a lead went cold and what to do next."
-          >
-            <div className="px-5 py-4">
-              <DispositionCategoryManager initialCategories={dispCategories} />
-            </div>
-          </DashboardCollapsibleSection>
         </div>
       </SettingsShell>
     );
@@ -555,124 +538,6 @@ export default async function SettingsPage({
               <PersonaEditor activeSlugs={activeSlugs} personas={personas} />
             </div>
           )}
-        </div>
-      </SettingsShell>
-    );
-  }
-
-  // ── Voice data ──────────────────────────────────────────────────────────────
-  if (activeTab === 'voice') {
-    const [{ data: voiceProducts }, { data: botCfgs }, { data: tvc }, { data: voiceNumRows }] = await Promise.all([
-      admin.from('tenant_products').select('product_type').eq('tenant_id', tenantId).eq('active', true),
-      admin.from('bot_configs').select('product_slug, voice_config').eq('tenant_id', tenantId),
-      admin.from('tenant_voice_configs')
-        .select('from_number, exotel_api_key, exotel_account_sid, timezone, working_hours_enabled, working_hours_json, call_summary_enabled, call_summary_wa_numbers, bridge_mode_enabled, bridge_default_agent_number')
-        .eq('tenant_id', tenantId)
-        .maybeSingle(),
-      admin.from('tenant_voice_numbers')
-        .select('id, number, label, provider, is_default, active, created_at')
-        .eq('tenant_id', tenantId)
-        .eq('active', true)
-        .order('is_default', { ascending: false })
-        .order('created_at', { ascending: true }),
-    ]);
-
-    const BOT_NAMES: Record<string, string> = {
-      support_bot:   'Support Bot',
-      sales_bot:     'Sales Bot',
-      lifecycle_bot: 'Lifecycle Bot',
-    };
-
-    const voiceBots: BotVoiceConfigRow[] = (voiceProducts ?? []).map(p => ({
-      product_slug:  p.product_type,
-      product_name:  BOT_NAMES[p.product_type] ?? p.product_type,
-      voice_config:  ((botCfgs ?? []).find(bc => bc.product_slug === p.product_type)?.voice_config ?? null) as BotVoiceConfigRow['voice_config'],
-    }));
-
-    const tvcRow = tvc as {
-      from_number:                  string;
-      exotel_api_key:               string | null;
-      exotel_account_sid:           string | null;
-      timezone:                     string | null;
-      working_hours_enabled:        boolean | null;
-      working_hours_json:           WorkingHoursInitial['working_hours_json'] | null;
-      call_summary_enabled:         boolean | null;
-      call_summary_wa_numbers:      string[] | null;
-      bridge_mode_enabled:          boolean | null;
-      bridge_default_agent_number:  string | null;
-    } | null;
-
-    const settingsVoiceNumbers = (voiceNumRows ?? []) as {
-      id: string; number: string; label: string; provider: string; is_default: boolean; active: boolean; created_at: string;
-    }[];
-
-    const exotelInitial: ExotelConfigRow | null = tvcRow
-      ? {
-          from_number:        tvcRow.from_number,
-          has_exotel_creds:   !!tvcRow.exotel_api_key,
-          exotel_account_sid: tvcRow.exotel_account_sid,
-        }
-      : null;
-
-    const workingHoursInitial: WorkingHoursInitial | null = tvcRow?.working_hours_json
-      ? {
-          timezone:              tvcRow.timezone ?? 'Asia/Kolkata',
-          working_hours_enabled: tvcRow.working_hours_enabled ?? false,
-          working_hours_json:    tvcRow.working_hours_json,
-        }
-      : null;
-
-    const callSummaryInitial: CallSummaryInitial | null = tvcRow
-      ? {
-          call_summary_enabled:    tvcRow.call_summary_enabled    ?? false,
-          call_summary_wa_numbers: tvcRow.call_summary_wa_numbers ?? [],
-        }
-      : null;
-
-    return (
-      <SettingsShell activeTab={activeTab}>
-        <div className="space-y-5">
-          <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Phone size={15} className="text-emerald-600" />
-              <h3 className="text-sm font-semibold text-gray-800">Voice Calling</h3>
-            </div>
-            <p className="text-xs text-gray-400 mb-6">
-              Enable voice calls for each bot. When enabled, your bot can make AI-powered outbound calls —
-              on escalation, on demand, or via campaign. Platform voice (Twilio) is managed for you.
-            </p>
-            <ClientVoiceConfigCard
-              bots={voiceBots}
-              exotel={exotelInitial}
-              voiceNumbers={settingsVoiceNumbers}
-              bridgeModeEnabled={tvcRow?.bridge_mode_enabled ?? false}
-              defaultAgentNumber={tvcRow?.bridge_default_agent_number ?? ''}
-            />
-          </div>
-
-          <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Clock size={15} className="text-emerald-600" />
-              <h3 className="text-sm font-semibold text-gray-800">Working Hours</h3>
-            </div>
-            <p className="text-xs text-gray-400 mb-6">
-              Set the days and times when outbound voice calls are allowed. Calls triggered outside
-              these hours — manual, campaign, or escalation — will be blocked automatically.
-            </p>
-            <VoiceWorkingHoursCard initial={workingHoursInitial} />
-          </div>
-
-          <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <MessageSquare size={15} className="text-emerald-600" />
-              <h3 className="text-sm font-semibold text-gray-800">Call Summary Notifications</h3>
-            </div>
-            <p className="text-xs text-gray-400 mb-6">
-              After each completed call, send a WhatsApp summary to your internal team — including
-              call outcome, customer intent, sentiment, and recommended next steps.
-            </p>
-            <VoiceCallSummaryCard initial={callSummaryInitial} />
-          </div>
         </div>
       </SettingsShell>
     );

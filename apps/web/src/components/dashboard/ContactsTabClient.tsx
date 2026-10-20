@@ -1,10 +1,7 @@
 'use client';
 
-import { useState }  from 'react';
 import Link          from 'next/link';
 import { Phone, MessageSquare, AlertCircle } from 'lucide-react';
-import { ContactsGroupBar, ContactGroupBadges } from './ContactsGroupManager';
-import type { GroupOption, AssignedGroup }      from './ContactsGroupManager';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,7 +22,6 @@ export type ContactRowData = {
   updated_at:  string;
   conv_count:  number;
   latest_conv_id: string | null;
-  assigned:    AssignedGroup[];
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -57,20 +53,11 @@ function displayName(c: ContactRowData) {
 
 export function ContactsTabClient({
   contacts,
-  initialGroups,
 }: {
-  contacts:      ContactRowData[];
-  initialGroups: GroupOption[];
+  contacts: ContactRowData[];
 }) {
-  const [allGroups, setAllGroups] = useState<GroupOption[]>(initialGroups);
-
   return (
     <div className="space-y-4">
-      {/* Groups bar — create new group inline, see all groups */}
-      <div className="bg-white rounded-xl border border-slate-200 px-5 py-4">
-        <ContactsGroupBar initialGroups={initialGroups} onGroupsChange={setAllGroups} />
-      </div>
-
       {/* Contact list */}
       {contacts.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
@@ -138,13 +125,6 @@ export function ContactsTabClient({
                       {openIssues.length > 1 && <span className="text-xs text-slate-400">+{openIssues.length - 1}</span>}
                     </div>
                   )}
-
-                  {/* Group badges — always visible, live state */}
-                  <ContactGroupBadges
-                    contactId={contact.id}
-                    allGroups={allGroups}
-                    initialAssigned={contact.assigned}
-                  />
                 </div>
 
                 {/* Right column */}

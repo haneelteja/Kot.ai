@@ -1,6 +1,4 @@
 import Fastify, { type FastifyError } from 'fastify';
-import { WebSocketServer } from 'ws';
-import { handleStreamSession } from './services/voice/stream-pipeline.js';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -16,13 +14,8 @@ import { escalationRoutes } from './routes/escalations/index.js';
 import { orderRoutes, easebuzzCallbackRoute } from './routes/orders/index.js';
 import { subscriptionRoutes } from './routes/subscriptions/index.js';
 import { settingsRoutes } from './routes/settings/index.js';
-import { voiceRoutes } from './routes/voice/index.js';
-import { campaignRoutes } from './routes/campaigns/index.js';
-import { inboundRoutes } from './routes/inbound/index.js';
 import { buttonTemplateRoutes } from './routes/button-templates/index.js';
-import { broadcastRoutes }      from './routes/broadcast/index.js';
 import { scheduledMessageRoutes } from './routes/scheduled-messages/index.js';
-import { integrationRoutes }   from './routes/integrations/index.js';
 import { startScheduler } from './jobs/scheduler.js';
 import { runInsightsForAllTenants } from './services/insights/generator.js';
 import { getServerClient } from '@alphabot/database';
@@ -106,13 +99,8 @@ await server.register(orderRoutes,          { prefix: '/api/orders' });
 await server.register(easebuzzCallbackRoute,  { prefix: '/api/payments' });
 await server.register(subscriptionRoutes,   { prefix: '/api/subscriptions' });
 await server.register(settingsRoutes,       { prefix: '/api/settings' });
-await server.register(voiceRoutes,          { prefix: '/api/voice' });
-await server.register(campaignRoutes,       { prefix: '/api/campaigns' });
-await server.register(inboundRoutes,          { prefix: '/api/inbound' });
 await server.register(buttonTemplateRoutes,   { prefix: '/api/button-templates' });
-await server.register(broadcastRoutes,        { prefix: '/api/broadcast' });
 await server.register(scheduledMessageRoutes, { prefix: '/api/scheduled-messages' });
-await server.register(integrationRoutes,      { prefix: '/api/integrations' });
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 server.get('/health', async () => {
@@ -153,21 +141,7 @@ const host = '0.0.0.0';
 
 try {
   await server.listen({ port, host });
-  server.log.info(`Alphabot API listening on ${host}:${port}`);
-
-  // Attach WebSocket server for Twilio Media Streams on the same port.
-  // Twilio connects to wss://<host>/api/voice/stream/<voiceCallId>
-  const wss = new WebSocketServer({ server: server.server });
-  wss.on('connection', (ws, req) => {
-    const match = req.url?.match(/\/api\/voice\/stream\/([^/?#]+)/);
-    if (!match) { ws.close(); return; }
-    const voiceCallId = match[1]!;
-    handleStreamSession(ws, voiceCallId, server.log).catch(err => {
-      server.log.error({ err, voiceCallId }, '[Stream] Unhandled error in stream session');
-      ws.close();
-    });
-  });
-  server.log.info('Voice Media Streams WebSocket server attached');
+  server.log.info(`KOT.ai API listening on ${host}:${port}`);
 
   startScheduler();
 } catch (err) {

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: alphabot-api
+    name: kotai-api
     runtime: node
     region: singapore
     plan: free

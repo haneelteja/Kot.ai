@@ -16,9 +16,6 @@ import { extractAndMergeFacts } from '../../services/contact/fact-extractor.js';
 import { cacheGet, cacheSet } from '../../lib/redis.js';
 import { resolveMultiBotRouting } from '../../services/routing/router.js';
 import type { BranchLocation, RoutingConfig } from '../../services/routing/router.js';
-import { detectSentimentText } from '../../services/sentiment/detector.js';
-import { isWithinBusinessHours } from '../../lib/business-hours.js';
-import { dispatchCall } from '../../services/voice/call-manager.js';
 import { getProductCatalogue } from '../../lib/product-cache.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
@@ -249,54 +246,6 @@ function buildEscalationContext(stage: string, aiVars: Record<string, string>): 
   const pairs = Object.entries(aiVars);
   if (pairs.length > 0) parts.push(pairs.map(([k, v]) => `${k}=${v}`).join(', '));
   return parts.length > 0 ? ` [${parts.join(' | ')}]` : '';
-}
-
-// ─── Call Trigger Helpers ─────────────────────────────────────────────────────
-
-async function dispatchCallTrigger(
-  tenantId: string,
-  productType: string,
-  conversationId: string,
-  contactPhone: string,
-  contactName: string | null,
-  triggerReason: string,
-  delaySeconds: number,
-  db: ReturnType<typeof import('@alphabot/database').getServerClient>,
-): Promise<void> {
-  // Skip if there's already an active call for this conversation
-  const { count } = await db
-    .from('voice_calls')
-    .select('*', { count: 'exact', head: true })
-    .eq('conversation_id', conversationId)
-    .in('status', ['initiated', 'ringing', 'in_progress']);
-
-  if ((count ?? 0) > 0) return;
-
-  const doDispatch = async () => {
-    try {
-      await dispatchCall({
-        tenant_id:       tenantId,
-        product_slug:    productType,
-        to_number:       contactPhone,
-        conversation_id: conversationId,
-        triggered_by:    'escalation',
-        call_context: {
-          customer_name:     contactName ?? '',
-          trigger_reason:    triggerReason,
-          greeting_override: `Hello${contactName ? ` ${contactName}` : ''}! I noticed you might need some help. I am calling to assist you. How can I help?`,
-        },
-      });
-    } catch (err) {
-      console.error('[CallTrigger] dispatch failed:', err instanceof Error ? err.message : String(err));
-    }
-  };
-
-  if (delaySeconds > 0) {
-    // Schedule without blocking — setTimeout callback fires in the background
-    setTimeout(() => { void doDispatch(); }, delaySeconds * 1000);
-  } else {
-    await doDispatch();
-  }
 }
 
 export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
@@ -1663,53 +1612,6 @@ Which branch works best for you?
         conversation,
         'Table booking received — awaiting manual confirmation by team',
       ).catch(err => fastify.log.error({ err }, '[Webhook] booking escalation failed'));
-    }
-
-    // ── Check call triggers (keyword / sentiment) ─────────────────────────
-    // Runs after the WhatsApp reply is already sent — triggers a parallel voice call.
-    if (incoming.text && botConfig?.voice_config && conversation.status === 'open') {
-      const triggerCfg = botConfig.voice_config as import('@alphabot/shared').BotVoiceConfig;
-      const voiceEnabled = triggerCfg.enabled;
-
-      if (voiceEnabled && isWithinBusinessHours(triggerCfg)) {
-        const contactPhone = (contact as Contact).phone;
-        if (contactPhone) {
-          const delay = triggerCfg.call_delay_seconds ?? 0;
-          let triggerReason: string | null = null;
-
-          // Keyword trigger
-          if (triggerCfg.trigger_on_call_request) {
-            const keywords = triggerCfg.call_request_keywords?.length
-              ? triggerCfg.call_request_keywords
-              : ['call me', 'phone call', 'call back', 'call please', 'need a call'];
-            const lc = incoming.text.toLowerCase();
-            if (keywords.some(kw => lc.includes(kw.toLowerCase()))) {
-              triggerReason = 'Customer requested a call via WhatsApp';
-            }
-          }
-
-          // Sentiment trigger (only if keyword trigger didn't already fire)
-          if (!triggerReason && triggerCfg.trigger_on_negative_sentiment) {
-            const sentiment = await detectSentimentText(incoming.text);
-            const threshold = triggerCfg.negative_sentiment_threshold ?? 'frustrated';
-            const fires = threshold === 'negative'
-              ? ['negative', 'frustrated'].includes(sentiment)
-              : sentiment === 'frustrated';
-            if (fires) {
-              triggerReason = `Customer expressed ${sentiment} sentiment`;
-            }
-          }
-
-          if (triggerReason) {
-            const contactName = (contact as Contact).name ?? null;
-            fireForget(
-              dispatchCallTrigger(tenantId, productType, conversation.id, contactPhone, contactName, triggerReason, delay, db),
-              'call-trigger-dispatch',
-              fastify.log,
-            );
-          }
-        }
-      }
     }
 
     // ── Release optimistic lock ───────────────────────────────────────────

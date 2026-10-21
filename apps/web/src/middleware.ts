@@ -23,10 +23,22 @@ const PROTECTED_PREFIXES = [
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env['NEXT_PUBLIC_SUPABASE_URL']!,
-    process.env['NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY']!,
-    {
+  const pathname = request.nextUrl.pathname;
+  const isProtected = PROTECTED_PREFIXES.some(prefix => pathname.startsWith(prefix));
+
+  const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL'];
+  const supabaseKey = process.env['NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'];
+
+  // Supabase isn't configured (or is unreachable) — never let that 500 the
+  // whole site. Fall back to treating the request as unauthenticated: public
+  // routes still render, protected routes still redirect to /login.
+  if (!supabaseUrl || !supabaseKey) {
+    if (isProtected) return NextResponse.redirect(new URL('/login', request.url));
+    return supabaseResponse;
+  }
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -39,24 +51,26 @@ export async function middleware(request: NextRequest) {
           );
         },
       },
+    });
+
+    // Refresh session cookie AND retrieve the user for the auth guard below.
+    // Do not remove this await — required by @supabase/ssr.
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Redirect unauthenticated users away from protected routes at the edge,
+    // before any Server Component renders. Saves one full server round-trip
+    // per page visit compared to delegating the redirect to individual pages.
+    if (!user && isProtected) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
-  );
 
-  // Refresh session cookie AND retrieve the user for the auth guard below.
-  // Do not remove this await — required by @supabase/ssr.
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // Redirect unauthenticated users away from protected routes at the edge,
-  // before any Server Component renders. Saves one full server round-trip per
-  // page visit compared to delegating the redirect to individual page files.
-  const pathname = request.nextUrl.pathname;
-  const isProtected = PROTECTED_PREFIXES.some(prefix => pathname.startsWith(prefix));
-
-  if (!user && isProtected) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return supabaseResponse;
+  } catch {
+    // Supabase reachable-but-erroring (outage, bad key, etc.) — same
+    // graceful fallback as the not-configured case above.
+    if (isProtected) return NextResponse.redirect(new URL('/login', request.url));
+    return supabaseResponse;
   }
-
-  return supabaseResponse;
 }
 
 export const config = {

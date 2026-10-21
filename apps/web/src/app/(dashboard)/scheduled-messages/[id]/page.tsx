@@ -9,20 +9,20 @@ import { getScheduledMessageAction, getRecipientLogAction } from '@/app/actions/
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 
 const STATUS_STYLES: Record<string, { label: string; cls: string; icon: React.ElementType }> = {
-  scheduled: { label: 'Scheduled', cls: 'bg-violet-50 text-violet-700 border-violet-200', icon: Clock        },
-  running:   { label: 'Sending',   cls: 'bg-sky-50 text-sky-700 border-sky-200',          icon: RefreshCw    },
-  completed: { label: 'Done',      cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
-  failed:    { label: 'Failed',    cls: 'bg-red-50 text-red-700 border-red-200',           icon: AlertCircle  },
-  cancelled: { label: 'Cancelled', cls: 'bg-gray-50 text-gray-500 border-gray-200',        icon: XCircle      },
+  scheduled: { label: 'Scheduled', cls: 'bg-waiting-bg text-waiting border-transparent', icon: Clock        },
+  running:   { label: 'Sending',   cls: 'bg-progress-bg text-progress border-transparent', icon: RefreshCw    },
+  completed: { label: 'Done',      cls: 'bg-done-bg text-done border-transparent', icon: CheckCircle2 },
+  failed:    { label: 'Failed',    cls: 'bg-problem-bg text-problem border-transparent',           icon: AlertCircle  },
+  cancelled: { label: 'Cancelled', cls: 'bg-neutral-bg text-neutral border-transparent',        icon: XCircle      },
 };
 
 const REC_STATUS: Record<string, { label: string; cls: string }> = {
-  pending:   { label: 'Pending',   cls: 'bg-slate-50 text-slate-600 border-slate-200'       },
-  sent:      { label: 'Sent',      cls: 'bg-sky-50 text-sky-700 border-sky-200'             },
-  delivered: { label: 'Delivered', cls: 'bg-violet-50 text-violet-700 border-violet-200'    },
-  read:      { label: 'Read',      cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  failed:    { label: 'Failed',    cls: 'bg-red-50 text-red-700 border-red-200'             },
-  skipped:   { label: 'Skipped',   cls: 'bg-amber-50 text-amber-700 border-amber-200'       },
+  pending:   { label: 'Pending',   cls: 'bg-waiting-bg text-waiting border-transparent'       },
+  sent:      { label: 'Sent',      cls: 'bg-progress-bg text-progress border-transparent'             },
+  delivered: { label: 'Delivered', cls: 'bg-ready-bg text-ready border-transparent'    },
+  read:      { label: 'Read',      cls: 'bg-done-bg text-done border-transparent' },
+  failed:    { label: 'Failed',    cls: 'bg-problem-bg text-problem border-transparent'             },
+  skipped:   { label: 'Skipped',   cls: 'bg-neutral-bg text-neutral border-transparent'       },
 };
 
 function recurrenceLabel(rec: { type: string; days_of_week?: number[]; day_of_month?: number }): string {
@@ -67,34 +67,34 @@ export default async function ScheduledMessageDetailPage({ params }: { params: P
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       {/* Back */}
-      <Link href="/scheduled-messages" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+      <Link href="/scheduled-messages" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-text transition-colors">
         <ChevronLeft size={15} /> Scheduled Messages
       </Link>
 
       {/* Header card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="bg-surface rounded-2xl border border-line shadow-float p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-brand-strong flex items-center justify-center shrink-0">
               <CalendarClock size={18} className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">{msg.name}</h1>
+              <h1 className="text-lg font-bold text-text">{msg.name}</h1>
               <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                 <span className={`inline-flex items-center gap-1 text-[11px] font-semibold border px-2 py-0.5 rounded-full ${meta.cls}`}>
                   <Icon size={10} /> {meta.label}
                 </span>
-                <span className="text-xs text-gray-400 flex items-center gap-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock size={11} />
                   {new Date(msg.scheduled_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
                 {rec.type !== 'once' && (
-                  <span className="text-xs text-indigo-600 flex items-center gap-1">
+                  <span className="text-xs text-brand-strong flex items-center gap-1">
                     <Repeat2 size={11} /> {recurrenceLabel(rec)}
                   </span>
                 )}
                 {msg.bot_handles_replies && (
-                  <span className="text-xs text-emerald-600 flex items-center gap-1">
+                  <span className="text-xs text-done flex items-center gap-1">
                     <Bot size={11} /> Bot handles replies
                   </span>
                 )}
@@ -106,16 +106,16 @@ export default async function ScheduledMessageDetailPage({ params }: { params: P
         {/* Message preview */}
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {msg.message_body && (
-            <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1"><MessageSquare size={10} /> Free-form</p>
-              <p className="text-xs text-gray-700 whitespace-pre-wrap line-clamp-4">{msg.message_body}</p>
+            <div className="p-3 bg-sunken rounded-xl border border-line">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1"><MessageSquare size={10} /> Free-form</p>
+              <p className="text-xs text-text whitespace-pre-wrap line-clamp-4">{msg.message_body}</p>
             </div>
           )}
           {msg.template_name && (
-            <div className="p-3 bg-violet-50 rounded-xl border border-violet-100">
-              <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-wider mb-1">Template fallback</p>
-              <p className="text-xs font-semibold text-violet-800">{msg.template_name}</p>
-              <p className="text-[10px] text-violet-500 mt-0.5">{msg.template_language}</p>
+            <div className="p-3 bg-brand-wash rounded-xl border border-line">
+              <p className="text-[10px] font-semibold text-brand-strong/70 uppercase tracking-wider mb-1">Template fallback</p>
+              <p className="text-xs font-semibold text-brand-strong">{msg.template_name}</p>
+              <p className="text-[10px] text-brand-strong/70 mt-0.5">{msg.template_language}</p>
             </div>
           )}
         </div>
@@ -123,77 +123,77 @@ export default async function ScheduledMessageDetailPage({ params }: { params: P
         {/* Stats */}
         <div className="mt-4 grid grid-cols-3 gap-3">
           {[
-            { label: 'Sent',    value: sentCount,    icon: CheckCircle2, cls: 'text-emerald-600' },
-            { label: 'Failed',  value: failedCount,  icon: AlertCircle,  cls: 'text-red-500'     },
-            { label: 'Pending', value: pendingCount, icon: Clock,        cls: 'text-gray-400'    },
+            { label: 'Sent',    value: sentCount,    icon: CheckCircle2, cls: 'text-done' },
+            { label: 'Failed',  value: failedCount,  icon: AlertCircle,  cls: 'text-problem'     },
+            { label: 'Pending', value: pendingCount, icon: Clock,        cls: 'text-muted-foreground'    },
           ].map(({ label, value, icon: Ic, cls }) => (
-            <div key={label} className="text-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div key={label} className="text-center p-3 bg-sunken rounded-xl border border-line">
               <Ic size={14} className={`${cls} mx-auto mb-1`} />
               <p className={`text-lg font-bold ${cls}`}>{value}</p>
-              <p className="text-[10px] text-gray-400">{label}</p>
+              <p className="text-[10px] text-muted-foreground">{label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Recipient log */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-gray-50 flex items-center gap-2">
-          <Users size={14} className="text-gray-400" />
-          <h2 className="text-sm font-semibold text-gray-800">Recipients</h2>
-          <span className="ml-auto text-xs text-gray-400">{total} total</span>
+      <div className="bg-surface rounded-2xl border border-line shadow-float overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-line flex items-center gap-2">
+          <Users size={14} className="text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-text">Recipients</h2>
+          <span className="ml-auto text-xs text-muted-foreground">{total} total</span>
         </div>
 
         {recipients.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-10">No recipients logged yet.</p>
+          <p className="text-sm text-muted-foreground text-center py-10">No recipients logged yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-50 text-left">
-                  <th className="px-5 py-3 font-semibold text-gray-400 font-variant-numeric">Contact</th>
-                  <th className="px-3 py-3 font-semibold text-gray-400">Session</th>
-                  <th className="px-3 py-3 font-semibold text-gray-400">Type</th>
-                  <th className="px-3 py-3 font-semibold text-gray-400">Status</th>
-                  <th className="px-3 py-3 font-semibold text-gray-400">Sent at</th>
-                  {isWaba && <th className="px-3 py-3 font-semibold text-gray-400">Conversation</th>}
-                  <th className="px-3 py-3 font-semibold text-gray-400">Error</th>
+                <tr className="border-b border-line text-left">
+                  <th className="px-5 py-3 font-semibold text-muted-foreground font-variant-numeric">Contact</th>
+                  <th className="px-3 py-3 font-semibold text-muted-foreground">Session</th>
+                  <th className="px-3 py-3 font-semibold text-muted-foreground">Type</th>
+                  <th className="px-3 py-3 font-semibold text-muted-foreground">Status</th>
+                  <th className="px-3 py-3 font-semibold text-muted-foreground">Sent at</th>
+                  {isWaba && <th className="px-3 py-3 font-semibold text-muted-foreground">Conversation</th>}
+                  <th className="px-3 py-3 font-semibold text-muted-foreground">Error</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-line">
                 {recipients.map(r => {
                   const st = REC_STATUS[r.status] ?? REC_STATUS['pending']!;
                   return (
-                    <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={r.id} className="hover:bg-sunken/50 transition-colors">
                       <td className="px-5 py-3">
-                        <p className="font-medium text-gray-800">{r.contact_name ?? r.phone}</p>
-                        {r.contact_name && <p className="text-gray-400">{r.phone}</p>}
+                        <p className="font-medium text-text">{r.contact_name ?? r.phone}</p>
+                        {r.contact_name && <p className="text-muted-foreground">{r.phone}</p>}
                       </td>
                       <td className="px-3 py-3">
                         {r.session_status ? (
                           <span className={`inline-block px-1.5 py-0.5 rounded-full font-medium ${
-                            r.session_status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                            r.session_status === 'active' ? 'bg-progress-bg text-progress' : 'bg-neutral-bg text-neutral'
                           }`}>{r.session_status}</span>
-                        ) : <span className="text-gray-300">—</span>}
+                        ) : <span className="text-muted-foreground">—</span>}
                       </td>
-                      <td className="px-3 py-3 text-gray-500 capitalize">{r.message_type ?? '—'}</td>
+                      <td className="px-3 py-3 text-muted-foreground capitalize">{r.message_type ?? '—'}</td>
                       <td className="px-3 py-3">
                         <span className={`inline-flex px-1.5 py-0.5 rounded-full border font-semibold ${st.cls}`}>{st.label}</span>
                       </td>
-                      <td className="px-3 py-3 text-gray-400">
+                      <td className="px-3 py-3 text-muted-foreground">
                         {r.sent_at ? new Date(r.sent_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}
                       </td>
                       {isWaba && (
                         <td className="px-3 py-3">
                           {r.conversation_id ? (
                             <Link href={`/conversations?id=${r.conversation_id}`}
-                              className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-800 font-medium">
+                              className="inline-flex items-center gap-1 text-brand-strong hover:underline font-medium">
                               View <ExternalLink size={10} />
                             </Link>
-                          ) : <span className="text-gray-300">—</span>}
+                          ) : <span className="text-muted-foreground">—</span>}
                         </td>
                       )}
-                      <td className="px-3 py-3 text-red-500 max-w-xs truncate">{r.error_message ?? '—'}</td>
+                      <td className="px-3 py-3 text-problem max-w-xs truncate">{r.error_message ?? '—'}</td>
                     </tr>
                   );
                 })}

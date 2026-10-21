@@ -23,14 +23,14 @@ export function CollapsibleSection({
   rightContent,
   children,
   defaultOpen = false,
-  containerClass = 'bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden',
+  containerClass = 'bg-white rounded-2xl border border-line shadow-sm overflow-hidden',
   headerClass,
-  titleClass = 'text-sm font-semibold text-slate-800',
+  titleClass = 'text-sm font-semibold text-text',
   contentClass = 'px-6 py-5',
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
 
-  const defaultHeaderClass = `w-full flex items-center gap-2.5 px-6 py-4 text-left hover:bg-slate-50/70 transition-colors ${open ? 'border-b border-slate-100' : ''}`;
+  const defaultHeaderClass = `w-full flex items-center gap-2.5 px-6 py-4 text-left hover:bg-sunken transition-colors ${open ? 'border-b border-line' : ''}`;
 
   return (
     <div className={containerClass}>
@@ -43,13 +43,13 @@ export function CollapsibleSection({
         {icon}
         <div className="min-w-0">
           <span className={titleClass}>{title}</span>
-          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
         </div>
         <span className="ml-auto flex items-center gap-2 shrink-0">
           {rightContent}
           <ChevronDown
             size={14}
-            className={`text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            className={`text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           />
         </span>
       </button>

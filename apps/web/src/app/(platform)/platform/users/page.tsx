@@ -6,7 +6,7 @@ import { PlatformUserActions } from '@/components/platform/PlatformUserActions';
 
 const ROLE_BADGE: Record<string, string> = {
   manager: 'bg-indigo-100 text-indigo-700 border border-indigo-200',
-  admin:   'bg-slate-100 text-slate-600 border border-slate-200',
+  admin:   'bg-sunken text-muted-foreground border border-line',
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -55,20 +55,20 @@ export default async function PlatformTeamPage() {
           { role: 'admin',   desc: 'View and configure all platform settings, clients, and bots.' },
           { role: 'manager', desc: 'Everything Admin can do, plus invite platform team members.' },
         ].map(r => (
-          <div key={r.role} className="bg-white border border-slate-100 rounded-xl p-4 space-y-1.5 shadow-sm">
+          <div key={r.role} className="bg-white border border-line rounded-xl p-4 space-y-1.5 shadow-sm">
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[r.role]}`}>
               {ROLE_LABEL[r.role]}
             </span>
-            <p className="text-xs text-slate-500">{r.desc}</p>
+            <p className="text-xs text-muted-foreground">{r.desc}</p>
           </div>
         ))}
       </div>
 
       {/* Invite form */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100 bg-slate-50/60">
+      <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line bg-sunken">
           <Users size={14} className="text-indigo-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Invite Team Member</h3>
+          <h3 className="text-sm font-semibold text-text">Invite Team Member</h3>
         </div>
         <div className="px-5 py-5">
           <InvitePlatformUserForm />
@@ -76,32 +76,32 @@ export default async function PlatformTeamPage() {
       </div>
 
       {/* Team table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/60">
+      <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-line bg-sunken">
           <div className="flex items-center gap-2.5">
-            <Shield size={14} className="text-slate-400" />
-            <h3 className="text-sm font-semibold text-slate-800">Team Members</h3>
+            <Shield size={14} className="text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-text">Team Members</h3>
           </div>
-          <span className="text-xs text-slate-400 font-medium">{members.length} member{members.length !== 1 ? 's' : ''}</span>
+          <span className="text-xs text-muted-foreground font-medium">{members.length} member{members.length !== 1 ? 's' : ''}</span>
         </div>
 
         {members.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-slate-400">No platform users found.</p>
+            <p className="text-sm text-muted-foreground">No platform users found.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-50">
+                <tr className="border-b border-line">
                   {['Member', 'Role', 'Last Sign In', 'Joined', ''].map(h => (
-                    <th key={h} className="text-left px-4 first:px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                    <th key={h} className="text-left px-4 first:px-5 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-line">
                 {members.map(m => {
                   const initials = m.name
                     ? m.name.slice(0, 2).toUpperCase()
@@ -114,15 +114,15 @@ export default async function PlatformTeamPage() {
                     : 'Never';
 
                   return (
-                    <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
+                    <tr key={m.id} className="hover:bg-sunken transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0">
                             {initials}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-800 leading-tight">{m.name || m.email.split('@')[0]}</p>
-                            <p className="text-[11px] text-slate-400">{m.email}</p>
+                            <p className="font-semibold text-text leading-tight">{m.name || m.email.split('@')[0]}</p>
+                            <p className="text-[11px] text-muted-foreground">{m.email}</p>
                           </div>
                         </div>
                       </td>
@@ -131,8 +131,8 @@ export default async function PlatformTeamPage() {
                           {ROLE_LABEL[m.role] ?? m.role}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-xs text-slate-400 whitespace-nowrap">{lastSeen}</td>
-                      <td className="px-4 py-4 text-xs text-slate-400 whitespace-nowrap">{joinedAt}</td>
+                      <td className="px-4 py-4 text-xs text-muted-foreground whitespace-nowrap">{lastSeen}</td>
+                      <td className="px-4 py-4 text-xs text-muted-foreground whitespace-nowrap">{joinedAt}</td>
                       <td className="px-4 py-4 text-right">
                         <PlatformUserActions
                           userId={m.user_id}

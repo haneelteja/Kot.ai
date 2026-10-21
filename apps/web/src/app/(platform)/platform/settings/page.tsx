@@ -25,8 +25,8 @@ export default async function PlatformSettingsPage() {
       </div>
 
       {/* Platform Info */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-50">
+      <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
           <Globe size={16} className="text-indigo-500" />
           <h3 className="text-sm font-semibold text-gray-700">Platform Info</h3>
         </div>
@@ -44,7 +44,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-sm text-gray-400 shrink-0">{label}</span>
-      <span className={mono ? 'font-mono text-xs text-gray-600 bg-slate-50 px-2 py-0.5 rounded-md truncate max-w-[60%]' : 'text-sm text-gray-700'}>
+      <span className={mono ? 'font-mono text-xs text-gray-600 bg-sunken px-2 py-0.5 rounded-md truncate max-w-[60%]' : 'text-sm text-gray-700'}>
         {value}
       </span>
     </div>

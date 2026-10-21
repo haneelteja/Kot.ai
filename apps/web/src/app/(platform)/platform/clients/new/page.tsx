@@ -88,17 +88,17 @@ function StepIndicator({ current }: { current: number }) {
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                   done   ? 'bg-indigo-600 text-white' :
                   active ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' :
-                           'bg-slate-100 text-slate-400'
+                           'bg-sunken text-muted-foreground'
                 }`}
               >
                 {done ? <Check size={15} /> : <Icon size={15} />}
               </div>
-              <span className={`text-[11px] font-semibold ${active ? 'text-indigo-600' : done ? 'text-slate-500' : 'text-slate-300'}`}>
+              <span className={`text-[11px] font-semibold ${active ? 'text-indigo-600' : done ? 'text-muted-foreground' : 'text-line'}`}>
                 {step.label}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`h-px w-16 mx-2 mb-4 transition-colors ${i < current ? 'bg-indigo-400' : 'bg-slate-200'}`} />
+              <div className={`h-px w-16 mx-2 mb-4 transition-colors ${i < current ? 'bg-indigo-400' : 'bg-sunken'}`} />
             )}
           </div>
         );
@@ -168,21 +168,21 @@ export default function NewClientPage() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         {step === 0 ? (
-          <Link href="/platform/clients" className="text-slate-400 hover:text-slate-600 transition-colors">
+          <Link href="/platform/clients" className="text-muted-foreground hover:text-text transition-colors">
             <ArrowLeft size={18} />
           </Link>
         ) : (
           <button
             type="button"
             onClick={() => setStep(s => s - 1)}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-muted-foreground hover:text-text transition-colors"
           >
             <ArrowLeft size={18} />
           </button>
         )}
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Add New Client</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Onboard a new client onto the KOT.ai platform</p>
+          <h2 className="text-xl font-bold text-text">Add New Client</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Onboard a new client onto the KOT.ai platform</p>
         </div>
       </div>
 
@@ -191,23 +191,23 @@ export default function NewClientPage() {
       {/* Step 0 — Company details */}
       {step === 0 && (
         <div className="space-y-5">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-5">
-            <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-3">Company Details</h3>
+          <div className="bg-white rounded-2xl border border-line p-6 space-y-5">
+            <h3 className="text-sm font-semibold text-text border-b border-line pb-3">Company Details</h3>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Company Name <span className="text-red-400">*</span>
               </label>
               <input
                 value={state.name}
                 onChange={e => update('name', e.target.value)}
                 placeholder="e.g. Acme Corp"
-                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300"
+                className="w-full px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-line"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Contact Email <span className="text-red-400">*</span>
               </label>
               <input
@@ -215,7 +215,7 @@ export default function NewClientPage() {
                 onChange={e => update('contactEmail', e.target.value)}
                 type="email"
                 placeholder="e.g. admin@acmecorp.com"
-                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300"
+                className="w-full px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-line"
               />
             </div>
 
@@ -225,26 +225,26 @@ export default function NewClientPage() {
               className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border-2 transition-all text-left ${
                 state.isAgency
                   ? 'border-indigo-400 bg-indigo-50/60'
-                  : 'border-slate-200 hover:border-slate-300'
+                  : 'border-line hover:border-brand/40'
               }`}
             >
               <div>
-                <p className={`text-sm font-semibold ${state.isAgency ? 'text-indigo-700' : 'text-slate-700'}`}>
+                <p className={`text-sm font-semibold ${state.isAgency ? 'text-indigo-700' : 'text-text'}`}>
                   Agency Account
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   This tenant manages sub-clients and gets a &ldquo;My Clients&rdquo; tab in their dashboard
                 </p>
               </div>
-              <div className={`w-10 h-5 rounded-full transition-colors shrink-0 ml-4 ${state.isAgency ? 'bg-indigo-500' : 'bg-slate-200'}`}>
+              <div className={`w-10 h-5 rounded-full transition-colors shrink-0 ml-4 ${state.isAgency ? 'bg-indigo-500' : 'bg-sunken'}`}>
                 <div className={`w-4 h-4 bg-white rounded-full shadow mt-0.5 transition-transform ${state.isAgency ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </div>
             </button>
           </div>
 
           {/* Plan picker */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-3">Choose Plan</h3>
+          <div className="bg-white rounded-2xl border border-line p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-text border-b border-line pb-3">Choose Plan</h3>
             <div className="grid grid-cols-3 gap-3">
               {PLANS.map(plan => (
                 <button
@@ -254,16 +254,16 @@ export default function NewClientPage() {
                   className={`flex flex-col items-start p-4 rounded-xl border-2 text-left transition-all ${
                     state.plan === plan.value
                       ? 'border-indigo-500 bg-indigo-50/60'
-                      : 'border-slate-200 hover:border-slate-300'
+                      : 'border-line hover:border-brand/40'
                   }`}
                 >
-                  <span className={`text-base font-bold tabular-nums ${state.plan === plan.value ? 'text-indigo-700' : 'text-slate-700'}`}>
+                  <span className={`text-base font-bold tabular-nums ${state.plan === plan.value ? 'text-indigo-700' : 'text-text'}`}>
                     {plan.price}
                   </span>
-                  <span className={`text-xs font-semibold mt-0.5 ${state.plan === plan.value ? 'text-indigo-600' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-semibold mt-0.5 ${state.plan === plan.value ? 'text-indigo-600' : 'text-muted-foreground'}`}>
                     {plan.label}
                   </span>
-                  <span className="text-[10px] text-slate-400 mt-1 leading-tight">{plan.desc}</span>
+                  <span className="text-[10px] text-muted-foreground mt-1 leading-tight">{plan.desc}</span>
                 </button>
               ))}
             </div>
@@ -273,10 +273,10 @@ export default function NewClientPage() {
 
       {/* Step 1 — Products */}
       {step === 1 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-semibold text-slate-700">Assign Products</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Select one or more bots to activate for this client</p>
+        <div className="bg-white rounded-2xl border border-line p-6 space-y-4">
+          <div className="border-b border-line pb-3">
+            <h3 className="text-sm font-semibold text-text">Assign Products</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Select one or more bots to activate for this client</p>
           </div>
           <div className="space-y-3">
             {PRODUCTS.map(p => {
@@ -289,17 +289,17 @@ export default function NewClientPage() {
                   className={`flex items-start gap-3 w-full p-4 rounded-xl border-2 text-left transition-all ${
                     selected
                       ? `border-2 ${p.border.replace('border-', 'border-')} ${p.bg.replace('/60 hover:', ' ')}`
-                      : 'border-slate-200 hover:border-slate-300'
+                      : 'border-line hover:border-brand/40'
                   }`}
                 >
                   <div className={`w-4 h-4 mt-0.5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
-                    selected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'
+                    selected ? 'bg-indigo-600 border-indigo-600' : 'border-line'
                   }`}>
                     {selected && <Check size={10} className="text-white" />}
                   </div>
                   <div>
-                    <p className={`text-sm font-semibold ${selected ? p.accent : 'text-slate-600'}`}>{p.name}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{p.desc}</p>
+                    <p className={`text-sm font-semibold ${selected ? p.accent : 'text-muted-foreground'}`}>{p.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{p.desc}</p>
                   </div>
                 </button>
               );
@@ -312,29 +312,29 @@ export default function NewClientPage() {
       {step === 2 && (
         <div className="space-y-4">
           {/* Summary card */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-3">Review</h3>
+          <div className="bg-white rounded-2xl border border-line p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-text border-b border-line pb-3">Review</h3>
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <dt className="text-slate-400 font-medium">Company</dt>
-                <dd className="font-semibold text-slate-800">{state.name}</dd>
+                <dt className="text-muted-foreground font-medium">Company</dt>
+                <dd className="font-semibold text-text">{state.name}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-slate-400 font-medium">Contact email</dt>
-                <dd className="font-semibold text-slate-800">{state.contactEmail}</dd>
+                <dt className="text-muted-foreground font-medium">Contact email</dt>
+                <dd className="font-semibold text-text">{state.contactEmail}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-slate-400 font-medium">Plan</dt>
-                <dd className="font-semibold text-slate-800 capitalize">{selectedPlan.label} ({selectedPlan.price}/mo)</dd>
+                <dt className="text-muted-foreground font-medium">Plan</dt>
+                <dd className="font-semibold text-text capitalize">{selectedPlan.label} ({selectedPlan.price}/mo)</dd>
               </div>
               {state.isAgency && (
                 <div className="flex justify-between">
-                  <dt className="text-slate-400 font-medium">Account type</dt>
+                  <dt className="text-muted-foreground font-medium">Account type</dt>
                   <dd className="font-semibold text-indigo-700">Agency</dd>
                 </div>
               )}
               <div className="flex justify-between items-start">
-                <dt className="text-slate-400 font-medium">Products</dt>
+                <dt className="text-muted-foreground font-medium">Products</dt>
                 <dd className="flex flex-col items-end gap-1">
                   {selectedProds.map(p => (
                     <span key={p.slug} className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.bg.split(' ')[0]} ${p.accent}`}>
@@ -347,21 +347,21 @@ export default function NewClientPage() {
           </div>
 
           {/* Trial duration */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-3">Free Trial</h3>
+          <div className="bg-white rounded-2xl border border-line p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-text border-b border-line pb-3">Free Trial</h3>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Duration</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Duration</label>
               <select
                 value={state.trialDays}
                 onChange={e => update('trialDays', e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-all"
+                className="w-full px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-all"
               >
                 {TRIAL_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted-foreground">
               An invitation email with workspace access link will be sent to {state.contactEmail} automatically.
             </p>
           </div>
@@ -377,7 +377,7 @@ export default function NewClientPage() {
       <div className="flex items-center justify-between mt-6">
         <Link
           href="/platform/clients"
-          className="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+          className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-text transition-colors"
         >
           Cancel
         </Link>
@@ -386,7 +386,7 @@ export default function NewClientPage() {
             <button
               type="button"
               onClick={() => setStep(s => s - 1)}
-              className="px-4 py-2.5 text-sm font-semibold text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+              className="px-4 py-2.5 text-sm font-semibold text-muted-foreground border border-line rounded-xl hover:bg-sunken transition-colors"
             >
               Back
             </button>

@@ -37,12 +37,12 @@ export function InviteUserForm({ tenantId }: { tenantId: string }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="client@company.com"
-          className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+          className="text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
         >
           <option value="client_manager">Manager</option>
           <option value="client_admin">Admin</option>
@@ -63,23 +63,23 @@ export function InviteUserForm({ tenantId }: { tenantId: string }) {
       )}
 
       {result?.inviteUrl && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2">
+        <div className="bg-done-bg border border-done rounded-xl p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Mail size={14} className="text-emerald-600 shrink-0" />
-            <p className="text-sm font-semibold text-emerald-800">Invite sent!</p>
+            <Mail size={14} className="text-done shrink-0" />
+            <p className="text-sm font-semibold text-done">Invite sent!</p>
           </div>
-          <p className="text-xs text-emerald-600">
+          <p className="text-xs text-done">
             Email sent to <strong>{email || 'the client'}</strong>. Share the link below if email doesn&apos;t arrive.
           </p>
-          <div className="flex items-center gap-2 bg-white border border-emerald-200 rounded-lg px-3 py-2">
-            <code className="flex-1 text-xs text-slate-600 truncate font-mono">{result.inviteUrl}</code>
+          <div className="flex items-center gap-2 bg-white border border-done rounded-lg px-3 py-2">
+            <code className="flex-1 text-xs text-muted-foreground truncate font-mono">{result.inviteUrl}</code>
             <button
               type="button"
               onClick={copyLink}
-              className="shrink-0 text-slate-400 hover:text-slate-700 transition-colors"
+              className="shrink-0 text-muted-foreground hover:text-text transition-colors"
               title="Copy link"
             >
-              {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+              {copied ? <Check size={14} className="text-done" /> : <Copy size={14} />}
             </button>
           </div>
         </div>

@@ -52,7 +52,7 @@ export function ContactEmailEditor({
   if (editing) {
     return (
       <div className="flex items-center gap-1.5 mt-1">
-        <Mail size={12} className="text-slate-400 shrink-0" />
+        <Mail size={12} className="text-muted-foreground shrink-0" />
         <input
           ref={inputRef}
           type="email"
@@ -67,7 +67,7 @@ export function ContactEmailEditor({
           type="button"
           onClick={save}
           disabled={isPending}
-          className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 transition-colors"
+          className="p-1 rounded-md text-done hover:bg-done-bg disabled:opacity-50 transition-colors"
           title="Save"
         >
           <Check size={13} />
@@ -76,7 +76,7 @@ export function ContactEmailEditor({
           type="button"
           onClick={cancel}
           disabled={isPending}
-          className="p-1 rounded-md text-slate-400 hover:bg-slate-100 disabled:opacity-50 transition-colors"
+          className="p-1 rounded-md text-muted-foreground hover:bg-sunken disabled:opacity-50 transition-colors"
           title="Cancel"
         >
           <X size={13} />
@@ -88,21 +88,21 @@ export function ContactEmailEditor({
 
   return (
     <div className="flex items-center gap-1.5 mt-1 group/email">
-      <Mail size={12} className="text-slate-400 shrink-0" />
+      <Mail size={12} className="text-muted-foreground shrink-0" />
       {saved ? (
         <a
           href={`mailto:${saved}`}
-          className="text-xs text-slate-500 hover:text-indigo-600 transition-colors"
+          className="text-xs text-muted-foreground hover:text-indigo-600 transition-colors"
         >
           {saved}
         </a>
       ) : (
-        <span className="text-xs text-slate-300 italic">No email set</span>
+        <span className="text-xs text-line italic">No email set</span>
       )}
       <button
         type="button"
         onClick={startEdit}
-        className="p-0.5 rounded text-slate-300 hover:text-slate-500 opacity-0 group-hover/email:opacity-100 transition-all"
+        className="p-0.5 rounded text-line hover:text-muted-foreground opacity-0 group-hover/email:opacity-100 transition-all"
         title="Edit email"
       >
         <Pencil size={11} />

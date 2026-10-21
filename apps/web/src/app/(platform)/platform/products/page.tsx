@@ -40,7 +40,7 @@ const BOT_META: Record<string, {
 };
 
 const PALETTE = [
-  { color: 'text-teal-600',   bg: 'bg-teal-50',   border: 'border-teal-200',   modelBg: 'bg-teal-50 text-teal-700 border-teal-200'   },
+  { color: 'text-done',   bg: 'bg-done-bg',   border: 'border-done',   modelBg: 'bg-done-bg text-done border-done'   },
   { color: 'text-rose-600',   bg: 'bg-rose-50',   border: 'border-rose-200',   modelBg: 'bg-rose-50 text-rose-700 border-rose-200'   },
   { color: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-200',  modelBg: 'bg-amber-50 text-amber-700 border-amber-200'  },
   { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', modelBg: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
@@ -73,10 +73,10 @@ export default async function ProductsPage() {
       </div>
 
       {/* Info banner */}
-      <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4">
-        <Info size={14} className="text-slate-400 shrink-0 mt-0.5" />
-        <div className="space-y-1 text-xs text-slate-500">
-          <p className="font-semibold text-slate-600">How defaults work</p>
+      <div className="flex items-start gap-3 bg-sunken border border-line rounded-2xl p-4">
+        <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+        <div className="space-y-1 text-xs text-muted-foreground">
+          <p className="font-semibold text-muted-foreground">How defaults work</p>
           <ul className="list-disc ml-4 space-y-0.5">
             <li>Default prompt is used when a client hasn&apos;t configured their own system prompt</li>
             <li>Default model is used when no per-client or per-bot AI Model is configured</li>
@@ -109,12 +109,12 @@ export default async function ProductsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-sm font-semibold ${meta.color}`}>{meta.name}</span>
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${p.active ? `${meta.color} ${meta.border} bg-white` : 'text-slate-400 border-slate-200 bg-white'}`}>
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${p.active ? `${meta.color} ${meta.border} bg-white` : 'text-muted-foreground border-line bg-white'}`}>
                     {p.active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="text-[11px] text-slate-400 truncate max-w-[240px]" title={p.default_prompt}>
+                  <span className="text-[11px] text-muted-foreground truncate max-w-[240px]" title={p.default_prompt}>
                     {promptPreview}
                   </span>
                 </div>
@@ -143,7 +143,7 @@ export default async function ProductsPage() {
       </div>
 
       {(!products || products.length === 0) && (
-        <div className="text-center py-12 text-sm text-slate-400">
+        <div className="text-center py-12 text-sm text-muted-foreground">
           No products found. Click &ldquo;Add Product&rdquo; to create your first bot type.
         </div>
       )}

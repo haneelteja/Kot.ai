@@ -71,26 +71,26 @@ export function ClientProductsManager({
             className={`rounded-xl border p-4 transition-all ${
               isActive
                 ? `${meta.bg} ${meta.border}`
-                : 'bg-slate-50 border-slate-200 opacity-60'
+                : 'bg-sunken border-line opacity-60'
             }`}
           >
             <div className="flex items-start justify-between mb-3">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-white border border-white/50' : 'bg-slate-100'}`}>
-                <Bot size={14} className={isActive ? meta.color : 'text-slate-400'} />
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-white border border-white/50' : 'bg-sunken'}`}>
+                <Bot size={14} className={isActive ? meta.color : 'text-muted-foreground'} />
               </div>
               {isNew ? (
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sunken text-muted-foreground">
                   Not assigned
                 </span>
               ) : (
-                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/80 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/80 text-done' : 'bg-sunken text-muted-foreground'}`}>
                   {isActive ? 'Active' : 'Inactive'}
                 </span>
               )}
             </div>
 
-            <p className={`text-sm font-semibold ${isActive ? meta.color : 'text-slate-500'}`}>{meta.name}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{meta.desc}</p>
+            <p className={`text-sm font-semibold ${isActive ? meta.color : 'text-muted-foreground'}`}>{meta.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{meta.desc}</p>
 
             <button
               type="button"
@@ -99,7 +99,7 @@ export function ClientProductsManager({
               className={`mt-4 w-full flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
                 isActive
                   ? 'bg-white/80 text-red-500 hover:bg-red-50 border border-red-100'
-                  : 'bg-white text-emerald-600 hover:bg-emerald-50 border border-emerald-200'
+                  : 'bg-white text-done hover:bg-done-bg border border-done'
               }`}
             >
               {isLoading ? (

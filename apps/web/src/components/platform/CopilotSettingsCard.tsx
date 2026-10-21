@@ -45,12 +45,12 @@ export function CopilotSettingsCard({
       {/* Enable / Disable */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-800">Enable AI Copilot</p>
-          <p className="text-xs text-slate-400 mt-0.5">When disabled, the ✨ chat bubble is hidden for all users of this tenant</p>
+          <p className="text-sm font-medium text-text">Enable AI Copilot</p>
+          <p className="text-xs text-muted-foreground mt-0.5">When disabled, the ✨ chat bubble is hidden for all users of this tenant</p>
         </div>
         <button
           onClick={() => { setCfg(prev => ({ ...prev, enabled: !prev.enabled })); setSaved(false); }}
-          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${cfg.enabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${cfg.enabled ? 'bg-done' : 'bg-sunken'}`}
         >
           <span className={`inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform duration-200 ${cfg.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
         </button>
@@ -58,24 +58,24 @@ export function CopilotSettingsCard({
 
       {/* Custom instructions */}
       <div>
-        <label className="block text-sm font-medium text-slate-800 mb-1.5">
+        <label className="block text-sm font-medium text-text mb-1.5">
           Custom instructions
-          <span className="text-slate-400 font-normal ml-1.5">(injected into Copilot system prompt)</span>
+          <span className="text-muted-foreground font-normal ml-1.5">(injected into Copilot system prompt)</span>
         </label>
         <textarea
           value={cfg.instructions}
           onChange={e => { setCfg(prev => ({ ...prev, instructions: e.target.value })); setSaved(false); }}
           rows={4}
           placeholder="e.g. Always respond in Hindi. Refer to the bot as 'Elma'. Never discuss competitor products."
-          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+          className="w-full rounded-xl border border-line px-3.5 py-2.5 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
         />
-        <p className="text-[11px] text-slate-400 mt-1">These instructions are appended to the copilot&apos;s context on every request.</p>
+        <p className="text-[11px] text-muted-foreground mt-1">These instructions are appended to the copilot&apos;s context on every request.</p>
       </div>
 
       {/* Allowed actions */}
       <div>
-        <p className="text-sm font-medium text-slate-800 mb-2">Allowed write actions</p>
-        <p className="text-xs text-slate-400 mb-3">
+        <p className="text-sm font-medium text-text mb-2">Allowed write actions</p>
+        <p className="text-xs text-muted-foreground mb-3">
           Unchecked actions will not be available to the Copilot — users won&apos;t be prompted for approval on those.
         </p>
         <div className="space-y-2">
@@ -90,8 +90,8 @@ export function CopilotSettingsCard({
                 />
               </div>
               <div>
-                <p className="text-sm text-slate-700 font-medium group-hover:text-slate-900">{label}</p>
-                <p className="text-xs text-slate-400">{desc}</p>
+                <p className="text-sm text-text font-medium group-hover:text-text">{label}</p>
+                <p className="text-xs text-muted-foreground">{desc}</p>
               </div>
             </label>
           ))}
@@ -107,7 +107,7 @@ export function CopilotSettingsCard({
         >
           {pending ? 'Saving…' : 'Save'}
         </button>
-        {saved && <span className="text-sm text-emerald-600 font-medium">✓ Saved</span>}
+        {saved && <span className="text-sm text-done font-medium">✓ Saved</span>}
       </div>
     </div>
   );

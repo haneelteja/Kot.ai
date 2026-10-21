@@ -31,7 +31,7 @@ const GROUP_ORDER = ['Trial & Onboarding', 'Escalations', 'System'];
 const GROUP_STYLE: Record<string, { icon: string; badge: string }> = {
   'Trial & Onboarding': { icon: '🚀', badge: 'bg-sky-50 text-sky-700 border-sky-200' },
   'Escalations':        { icon: '🔔', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-  'System':             { icon: '⚙️', badge: 'bg-slate-100 text-slate-600 border-slate-200' },
+  'System':             { icon: '⚙️', badge: 'bg-sunken text-muted-foreground border-line' },
 };
 
 export default async function PlatformNotificationsPage() {
@@ -73,11 +73,11 @@ export default async function PlatformNotificationsPage() {
       </div>
 
       {/* Summary bar */}
-      <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+      <div className="flex items-center gap-3 bg-sunken border border-line rounded-xl px-4 py-3">
         <Bell size={14} className="text-indigo-500 shrink-0" />
-        <p className="text-xs text-slate-600">
-          <span className="font-semibold text-slate-800">{totalEnabled}</span> of{' '}
-          <span className="font-semibold text-slate-800">{Object.keys(EVENT_META).length}</span> notification types are enabled.
+        <p className="text-xs text-muted-foreground">
+          <span className="font-semibold text-text">{totalEnabled}</span> of{' '}
+          <span className="font-semibold text-text">{Object.keys(EVENT_META).length}</span> notification types are enabled.
           Recipients shown as role tags — click <strong>Edit</strong> on any row to change them.
         </p>
       </div>
@@ -92,22 +92,22 @@ export default async function PlatformNotificationsPage() {
             <div key={group.name}>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-sm">{style.icon}</span>
-                <h3 className="text-sm font-semibold text-slate-700">{group.name}</h3>
+                <h3 className="text-sm font-semibold text-text">{group.name}</h3>
                 <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full border ${style.badge}`}>
                   {onCount}/{group.events.length} on
                 </span>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+              <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden divide-y divide-line">
                 {group.events.map(evt => {
                   if (!evt.row) {
                     return (
                       <div key={evt.eventType} className="px-5 py-4 flex items-center gap-3">
-                        <div className="w-9 h-5 rounded-full bg-slate-200 shrink-0" />
+                        <div className="w-9 h-5 rounded-full bg-sunken shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-slate-600">{evt.label}</p>
-                          <p className="text-xs text-slate-400">{evt.desc}</p>
-                          <p className="text-[11px] text-slate-300 mt-0.5 italic">Not seeded — run migration 002.</p>
+                          <p className="text-sm font-semibold text-muted-foreground">{evt.label}</p>
+                          <p className="text-xs text-muted-foreground">{evt.desc}</p>
+                          <p className="text-[11px] text-line mt-0.5 italic">Not seeded — run migration 002.</p>
                         </div>
                       </div>
                     );

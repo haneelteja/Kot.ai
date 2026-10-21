@@ -15,7 +15,7 @@ const ROLE_OPTIONS: { value: string; label: string }[] = [
 
 const ROLE_BADGE: Record<string, string> = {
   platform_manager: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  platform_admin:   'bg-slate-100 text-slate-600 border-slate-200',
+  platform_admin:   'bg-sunken text-muted-foreground border-line',
   client_manager:   'bg-violet-50 text-violet-700 border-violet-200',
   client_admin:     'bg-sky-50 text-sky-700 border-sky-200',
 };
@@ -94,7 +94,7 @@ export function NotificationToggleRow({ id, label, desc, enabled: initEnabled, r
           aria-checked={enabled}
           onClick={handleToggle}
           disabled={pending}
-          className={`relative shrink-0 mt-0.5 w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:ring-offset-1 ${enabled ? 'bg-indigo-500' : 'bg-slate-200'} disabled:opacity-50`}
+          className={`relative shrink-0 mt-0.5 w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:ring-offset-1 ${enabled ? 'bg-indigo-500' : 'bg-sunken'} disabled:opacity-50`}
         >
           <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
         </button>
@@ -102,21 +102,21 @@ export function NotificationToggleRow({ id, label, desc, enabled: initEnabled, r
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-slate-800">{label}</span>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+            <span className="text-sm font-semibold text-text">{label}</span>
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${enabled ? 'bg-done-bg text-done' : 'bg-sunken text-muted-foreground'}`}>
               {enabled ? 'On' : 'Off'}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
 
           {/* Recipients */}
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             {recipients.length === 0 ? (
-              <span className="text-[11px] text-slate-300 italic">No recipients</span>
+              <span className="text-[11px] text-line italic">No recipients</span>
             ) : recipients.map((r, i) => (
               <span
                 key={i}
-                className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${r.role ? (ROLE_BADGE[r.role] ?? 'bg-slate-100 text-slate-600 border-slate-200') : 'bg-amber-50 text-amber-700 border-amber-200'}`}
+                className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${r.role ? (ROLE_BADGE[r.role] ?? 'bg-sunken text-muted-foreground border-line') : 'bg-amber-50 text-amber-700 border-amber-200'}`}
               >
                 {r.role ? (ROLE_OPTIONS.find(o => o.value === r.role)?.label ?? r.role) : r.email}
               </span>
@@ -133,7 +133,7 @@ export function NotificationToggleRow({ id, label, desc, enabled: initEnabled, r
 
           {/* Inline editor */}
           {editing && (
-            <div className="mt-3 bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-3">
+            <div className="mt-3 bg-sunken border border-line rounded-xl p-3 space-y-3">
               <div className="grid grid-cols-2 gap-1.5">
                 {ROLE_OPTIONS.map(opt => (
                   <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
@@ -143,14 +143,14 @@ export function NotificationToggleRow({ id, label, desc, enabled: initEnabled, r
                       onChange={() => toggleRole(opt.value)}
                       className="w-3.5 h-3.5 rounded text-indigo-500 accent-indigo-500"
                     />
-                    <span className="text-xs text-slate-700">{opt.label}</span>
+                    <span className="text-xs text-text">{opt.label}</span>
                   </label>
                 ))}
               </div>
 
               {/* Custom emails */}
               <div>
-                <p className="text-[11px] font-semibold text-slate-500 mb-1.5">Custom emails</p>
+                <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">Custom emails</p>
                 <div className="flex flex-wrap gap-1 mb-1.5">
                   {customEmails.map(e => (
                     <span key={e} className="flex items-center gap-1 text-[10px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">
@@ -168,12 +168,12 @@ export function NotificationToggleRow({ id, label, desc, enabled: initEnabled, r
                     onChange={e => setCustomEmail(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addEmail())}
                     placeholder="email@example.com"
-                    className="flex-1 text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    className="flex-1 text-xs border border-line rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                   />
                   <button
                     type="button"
                     onClick={addEmail}
-                    className="text-xs px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-medium transition-colors"
+                    className="text-xs px-2.5 py-1.5 bg-sunken hover:bg-line text-muted-foreground rounded-lg font-medium transition-colors"
                   >
                     Add
                   </button>
@@ -193,7 +193,7 @@ export function NotificationToggleRow({ id, label, desc, enabled: initEnabled, r
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                  className="text-xs text-muted-foreground hover:text-text transition-colors"
                 >
                   Cancel
                 </button>

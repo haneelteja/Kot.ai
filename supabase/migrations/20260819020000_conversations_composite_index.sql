@@ -9,6 +9,6 @@
 --
 -- CONCURRENTLY avoids a full table lock on production.
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_conversations_scheduler
+CREATE INDEX IF NOT EXISTS idx_conversations_scheduler
   ON conversations (tenant_id, product_type, status, updated_at)
   WHERE status = 'open';

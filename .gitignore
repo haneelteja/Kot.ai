@@ -27,3 +27,6 @@ coverage/
 *.pptx
 *.zip
 logs/
+
+# Supabase CLI local linking state — machine/session-specific, never commit
+supabase/.temp/

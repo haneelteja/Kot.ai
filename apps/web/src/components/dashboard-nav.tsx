@@ -63,7 +63,6 @@ export function DashboardNav({
 
   const ADMIN_ONLY_HREFS = new Set(['/audit']);
   const AGENT_HREFS      = new Set(['/dashboard', '/conversations', '/inbox']);
-  const SUPERVISOR_HREFS = new Set(['/dashboard', '/conversations', '/inbox', '/integrations', '/knowledge-base', '/orders', '/returns', '/scheduled-messages', '/settings']);
 
   const navItems = (() => {
     const items = [...BASE_NAV];
@@ -73,13 +72,13 @@ export function DashboardNav({
       const guardrailsIdx = items.findIndex(i => i.href === '/guardrails');
       items.splice(guardrailsIdx + 1, 0, ORDERS_ITEM, RETURNS_ITEM);
     }
-    // Audit log — admin and client_manager only
-    if (['admin', 'client_manager'].includes(userRole)) {
+    // Audit log — client_admin and client_manager only.
+    // tenant_users.role is constrained to 'client_admin' | 'client_manager' | 'agent'.
+    if (['client_admin', 'client_manager'].includes(userRole)) {
       const settingsIdx = items.findIndex(i => i.href === '/settings');
       items.splice(settingsIdx, 0, { href: '/audit', label: 'Activity Log', icon: ClipboardList });
     }
     if (userRole === 'agent') return items.filter(i => !ADMIN_ONLY_HREFS.has(i.href) && AGENT_HREFS.has(i.href));
-    if (userRole === 'supervisor') return items.filter(i => !ADMIN_ONLY_HREFS.has(i.href) && SUPERVISOR_HREFS.has(i.href));
     return items;
   })();
 

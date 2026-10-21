@@ -110,7 +110,9 @@ export default async function SettingsPage({
 
   if (!callerTU) redirect('/dashboard');
   const tenantId = callerTU.tenant_id;
-  const isAdmin  = ['admin', 'client_manager', 'supervisor'].includes(callerTU.role);
+  // tenant_users.role is constrained to 'client_admin' | 'client_manager' | 'agent' —
+  // 'admin'/'supervisor' are not valid values and never matched here.
+  const isAdmin  = ['client_admin', 'client_manager'].includes(callerTU.role);
 
   // ── Workspace data ──────────────────────────────────────────────────────────
   let tenant: Record<string, unknown> | null = null;

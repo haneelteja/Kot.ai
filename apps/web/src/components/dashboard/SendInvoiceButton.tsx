@@ -28,7 +28,7 @@ export function SendInvoiceButton({ orderId }: { orderId: string }) {
 
   if (state === 'done') {
     return (
-      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">
+      <span className="flex items-center gap-1 text-[10px] font-semibold text-done bg-done-bg px-2 py-1 rounded-full">
         <CheckCircle size={11} /> {label ?? 'Sent'}
       </span>
     );
@@ -48,7 +48,7 @@ export function SendInvoiceButton({ orderId }: { orderId: string }) {
       onClick={() => void handleClick()}
       disabled={state === 'loading'}
       title="Generate and send invoice via WhatsApp"
-      className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 disabled:opacity-50"
+      className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-orange-600 transition-colors shrink-0 disabled:opacity-50"
     >
       {state === 'loading'
         ? <Loader2 size={13} className="animate-spin" />

@@ -27,8 +27,8 @@ export type ContactRowData = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const SENTIMENT_STYLES: Record<string, { label: string; dot: string; badge: string }> = {
-  positive:   { label: 'Positive',   dot: 'bg-emerald-400', badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-  neutral:    { label: 'Neutral',    dot: 'bg-slate-300',   badge: 'bg-slate-50 text-slate-600 ring-1 ring-slate-200' },
+  positive:   { label: 'Positive',   dot: 'bg-done', badge: 'bg-done-bg text-done ring-1 ring-done/30' },
+  neutral:    { label: 'Neutral',    dot: 'bg-gray-300',   badge: 'bg-gray-50 text-gray-600 ring-1 ring-gray-200' },
   negative:   { label: 'Negative',   dot: 'bg-orange-400',  badge: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200' },
   frustrated: { label: 'Frustrated', dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
 };
@@ -60,11 +60,11 @@ export function ContactsTabClient({
     <div className="space-y-4">
       {/* Contact list */}
       {contacts.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <p className="text-slate-500 font-medium">No contacts found</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <p className="text-gray-500 font-medium">No contacts found</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
           {contacts.map(contact => {
             const mem       = contact.memory_json ?? {};
             const sentiment = mem.sentiment ?? 'neutral';
@@ -74,16 +74,16 @@ export function ContactsTabClient({
             const prefEntries = Object.entries(preferences).slice(0, 3);
 
             return (
-              <div key={contact.id} className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50/70 transition-colors">
+              <div key={contact.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50/70 transition-colors">
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-700 font-semibold text-sm">
+                <div className="w-10 h-10 rounded-full bg-brand-wash flex items-center justify-center shrink-0 text-brand-strong font-semibold text-sm">
                   {displayName(contact).charAt(0).toUpperCase()}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-slate-900 text-sm">{displayName(contact)}</span>
+                    <span className="font-semibold text-gray-900 text-sm">{displayName(contact)}</span>
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${sentStyle.badge}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${sentStyle.dot}`} />
                       {sentStyle.label}
@@ -98,20 +98,20 @@ export function ContactsTabClient({
 
                   {contact.phone && (
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <Phone size={11} className="text-slate-400" />
-                      <span className="text-xs text-slate-500">{contact.phone}</span>
+                      <Phone size={11} className="text-gray-400" />
+                      <span className="text-xs text-gray-500">{contact.phone}</span>
                     </div>
                   )}
 
                   {prefEntries.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {prefEntries.map(([k, v]) => (
-                        <span key={k} className="px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-600">
-                          <span className="text-slate-400">{k}:</span> {v}
+                        <span key={k} className="px-2 py-0.5 rounded-md text-xs bg-gray-100 text-gray-600">
+                          <span className="text-gray-400">{k}:</span> {v}
                         </span>
                       ))}
                       {Object.keys(preferences).length > 3 && (
-                        <span className="px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-400">
+                        <span className="px-2 py-0.5 rounded-md text-xs bg-gray-100 text-gray-400">
                           +{Object.keys(preferences).length - 3} more
                         </span>
                       )}
@@ -122,22 +122,22 @@ export function ContactsTabClient({
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <AlertCircle size={11} className="text-orange-400 shrink-0" />
                       <span className="text-xs text-orange-600 truncate">{openIssues[0]}</span>
-                      {openIssues.length > 1 && <span className="text-xs text-slate-400">+{openIssues.length - 1}</span>}
+                      {openIssues.length > 1 && <span className="text-xs text-gray-400">+{openIssues.length - 1}</span>}
                     </div>
                   )}
                 </div>
 
                 {/* Right column */}
                 <div className="shrink-0 flex flex-col items-end gap-1.5 text-right">
-                  <span className="text-xs text-slate-400" suppressHydrationWarning>{formatRelative(contact.updated_at)}</span>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
-                    <MessageSquare size={11} className="text-slate-400" />
+                  <span className="text-xs text-gray-400" suppressHydrationWarning>{formatRelative(contact.updated_at)}</span>
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <MessageSquare size={11} className="text-gray-400" />
                     <span>{contact.conv_count} conv{contact.conv_count !== 1 ? 's' : ''}</span>
                   </div>
                   {contact.latest_conv_id && (
                     <Link
                       href={`/conversations/${contact.latest_conv_id}`}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 font-medium hover:underline"
+                      className="text-xs text-brand-strong hover:opacity-80 font-medium hover:underline"
                     >
                       View chat →
                     </Link>

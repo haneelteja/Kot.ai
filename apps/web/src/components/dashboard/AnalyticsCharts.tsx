@@ -5,7 +5,7 @@ import {
   Legend, ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 
-const PRODUCT_COLORS = ['#10b981', '#6366f1', '#f59e0b'];
+const PRODUCT_COLORS = ['#C2410C', '#6366f1', '#f59e0b'];
 
 type DailyData   = { date: string; conversations: number; messages: number };
 type ProductData = { name: string; value: number };
@@ -23,30 +23,30 @@ export function AnalyticsCharts({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Daily activity — 2/3 */}
-      <div className="lg:col-span-2 bg-white rounded-2xl border border-green-100 shadow-sm p-6">
+      <div className="lg:col-span-2 bg-white rounded-2xl border border-line shadow-sm p-6">
         <h3 className="text-sm font-semibold text-gray-800">Activity — Last 7 Days</h3>
         <p className="text-xs text-gray-400 mt-0.5">Conversations started and messages sent</p>
         {hasDaily ? (
           <ResponsiveContainer width="100%" height={240} className="mt-4">
             <BarChart data={dailyData} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0fdf4" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
-              <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #d1fae5', fontSize: '12px' }} />
+              <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }} />
               <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Bar dataKey="conversations" name="Conversations" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="conversations" name="Conversations" fill="#C2410C" radius={[4, 4, 0, 0]} />
               <Bar dataKey="messages"      name="Messages"      fill="#6366f1" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[240px] mt-4 rounded-xl bg-green-50/50">
+          <div className="flex items-center justify-center h-[240px] mt-4 rounded-xl bg-sunken/50">
             <p className="text-sm text-gray-400">No activity in the last 7 days</p>
           </div>
         )}
       </div>
 
       {/* Product breakdown — 1/3 */}
-      <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-line shadow-sm p-6">
         <h3 className="text-sm font-semibold text-gray-800">Messages by Bot</h3>
         <p className="text-xs text-gray-400 mt-0.5">Last 30 days</p>
         {hasProduct ? (
@@ -80,7 +80,7 @@ export function AnalyticsCharts({
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-center h-[160px] mt-4 rounded-xl bg-green-50/50">
+          <div className="flex items-center justify-center h-[160px] mt-4 rounded-xl bg-sunken/50">
             <p className="text-sm text-gray-400">No data yet</p>
           </div>
         )}

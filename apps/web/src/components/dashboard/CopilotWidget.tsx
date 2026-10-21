@@ -60,13 +60,13 @@ function ActionCard({ msg, onAction }: { msg: CopilotMessage; onAction: (m: Copi
       <div className="flex gap-2">
         <button
           onClick={() => onAction(msg, true)}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors"
+          className="flex-1 bg-brand-strong hover:opacity-90 active:opacity-80 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors"
         >
           ✓ Approve
         </button>
         <button
           onClick={() => onAction(msg, false)}
-          className="flex-1 bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium py-1.5 rounded-lg border border-slate-200 transition-colors"
+          className="flex-1 bg-white hover:bg-gray-50 text-gray-600 text-xs font-medium py-1.5 rounded-lg border border-gray-200 transition-colors"
         >
           ✗ Cancel
         </button>
@@ -79,7 +79,7 @@ function MessageBubble({ msg, onAction }: { msg: CopilotMessage; onAction: (m: C
   if (msg.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="bg-emerald-500 text-white rounded-2xl rounded-tr-sm px-3.5 py-2 max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap break-words">
+        <div className="bg-brand-strong text-white rounded-2xl rounded-tr-sm px-3.5 py-2 max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap break-words">
           {msg.content}
         </div>
       </div>
@@ -92,12 +92,12 @@ function MessageBubble({ msg, onAction }: { msg: CopilotMessage; onAction: (m: C
 
   return (
     <div className="flex items-start gap-2">
-      <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-[13px] flex-shrink-0 mt-0.5 select-none">
+      <div className="w-6 h-6 bg-brand-wash rounded-full flex items-center justify-center text-[13px] flex-shrink-0 mt-0.5 select-none">
         ✨
       </div>
       <div className="flex-1 min-w-0 space-y-1.5">
         {textParts && (
-          <div className="bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl rounded-tl-sm px-3.5 py-2 max-w-[90%] text-sm leading-relaxed whitespace-pre-wrap break-words">
+          <div className="bg-gray-50 border border-gray-100 text-gray-800 rounded-2xl rounded-tl-sm px-3.5 py-2 max-w-[90%] text-sm leading-relaxed whitespace-pre-wrap break-words">
             {textParts}
           </div>
         )}
@@ -107,7 +107,7 @@ function MessageBubble({ msg, onAction }: { msg: CopilotMessage; onAction: (m: C
               <Link
                 key={i}
                 href={nav.path!}
-                className="inline-flex items-center gap-1 text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-1 hover:bg-emerald-100 transition-colors font-medium"
+                className="inline-flex items-center gap-1 text-[11px] bg-brand-wash text-brand-strong border border-brand/20 rounded-full px-2.5 py-1 hover:opacity-80 transition-colors font-medium"
               >
                 {nav.label} →
               </Link>
@@ -117,8 +117,8 @@ function MessageBubble({ msg, onAction }: { msg: CopilotMessage; onAction: (m: C
         {msg.type === 'action_pending' && msg.actionStatus === 'pending' && (
           <ActionCard msg={msg} onAction={onAction} />
         )}
-        {msg.actionStatus === 'approved'  && <p className="text-[11px] text-emerald-600">✓ Executing…</p>}
-        {msg.actionStatus === 'cancelled' && <p className="text-[11px] text-slate-400">✗ Cancelled</p>}
+        {msg.actionStatus === 'approved'  && <p className="text-[11px] text-done">✓ Executing…</p>}
+        {msg.actionStatus === 'cancelled' && <p className="text-[11px] text-gray-400">✗ Cancelled</p>}
       </div>
     </div>
   );
@@ -353,15 +353,15 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
           style={panelBelow
             ? { position: 'absolute', top: BTN_HEIGHT + 8, right: 0 }
             : { position: 'absolute', bottom: BTN_HEIGHT + 8, right: 0 }}
-          className="w-[380px] h-[520px] bg-white rounded-2xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-200"
+          className="w-[380px] h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-200"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="bg-brand-strong px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2.5">
               <span className="text-lg leading-none">✨</span>
               <div>
                 <p className="text-white font-semibold text-sm leading-tight">AI Copilot</p>
-                <p className="text-emerald-100 text-[10px] leading-tight">Ask about your bot config</p>
+                <p className="text-white/70 text-[10px] leading-tight">Ask about your bot config</p>
               </div>
             </div>
             <button
@@ -376,7 +376,7 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.length === 0 && (
-              <div className="text-center text-slate-400 text-sm mt-10 px-4">
+              <div className="text-center text-gray-400 text-sm mt-10 px-4">
                 <p className="text-3xl mb-3">✨</p>
                 <p className="leading-relaxed">
                   Hi! Ask me anything about your bot config — I can answer questions, guide you to the right page, and make changes with your approval.
@@ -388,24 +388,24 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
             ))}
             {loading && (
               <div className="flex items-center gap-1 pl-8">
-                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:300ms]" />
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:0ms]" />
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:300ms]" />
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
           {/* Input */}
-          <div className="border-t border-slate-100 p-3 flex flex-col gap-2 flex-shrink-0">
+          <div className="border-t border-gray-100 p-3 flex flex-col gap-2 flex-shrink-0">
             {/* Attached file chip */}
             {attachedFile && (
-              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
-                <Paperclip size={11} className="text-emerald-600 shrink-0" />
-                <span className="text-xs text-emerald-700 font-medium truncate flex-1">{attachedFile.name}</span>
+              <div className="flex items-center gap-2 bg-brand-wash border border-brand/20 rounded-lg px-2.5 py-1.5">
+                <Paperclip size={11} className="text-brand-strong shrink-0" />
+                <span className="text-xs text-brand-strong font-medium truncate flex-1">{attachedFile.name}</span>
                 <button
                   onClick={() => setAttachedFile(null)}
-                  className="text-emerald-400 hover:text-emerald-700 shrink-0"
+                  className="text-brand hover:text-brand-strong shrink-0"
                   aria-label="Remove attachment"
                 >
                   <XIcon size={12} />
@@ -430,10 +430,10 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
                 disabled={loading || fileLoading}
                 aria-label="Attach file"
                 title="Attach a file (CSV, PDF, TXT…)"
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 transition-colors disabled:opacity-40 shrink-0"
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:text-brand-strong hover:border-brand/40 hover:bg-brand-wash transition-colors disabled:opacity-40 shrink-0"
               >
                 {fileLoading
-                  ? <span className="w-3 h-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                  ? <span className="w-3 h-3 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                   : <Paperclip size={14} />
                 }
               </button>
@@ -448,13 +448,13 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
                 placeholder="Ask anything… (Enter to send)"
                 rows={1}
                 disabled={loading}
-                className="flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent disabled:opacity-50 leading-relaxed"
+                className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent disabled:opacity-50 leading-relaxed"
               />
               <button
                 onClick={() => sendMessage(input)}
                 disabled={loading || (!input.trim() && !attachedFile)}
                 aria-label="Send"
-                className="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl w-10 flex items-center justify-center transition-colors text-base font-bold shrink-0"
+                className="bg-brand-strong hover:opacity-90 active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl w-10 flex items-center justify-center transition-colors text-base font-bold shrink-0"
               >
                 ↑
               </button>
@@ -467,7 +467,7 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
       <button
         onPointerDown={onPointerDown}
         aria-label="AI Copilot"
-        className={`bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-full shadow-lg px-4 py-2.5 flex items-center gap-2 transition-shadow duration-150 select-none touch-none ${
+        className={`bg-brand-strong hover:opacity-90 text-white rounded-full shadow-lg px-4 py-2.5 flex items-center gap-2 transition-shadow duration-150 select-none touch-none ${
           dragging ? 'shadow-2xl scale-105 cursor-grabbing' : 'cursor-grab active:scale-95'
         }`}
       >

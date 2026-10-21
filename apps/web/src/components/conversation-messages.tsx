@@ -28,7 +28,7 @@ export function ConversationMessages({
   initialMessages: Message[];
   productType?: string;
 }) {
-  const botAvatar = BOT_AVATAR[productType ?? ''] ?? { label: 'AI', bg: 'bg-emerald-500', text: 'text-white' };
+  const botAvatar = BOT_AVATAR[productType ?? ''] ?? { label: 'AI', bg: 'bg-brand-strong', text: 'text-white' };
   const [messages,  setMessages]  = useState<Message[]>(initialMessages);
   const [flagged,   setFlagged]   = useState<Set<string>>(new Set());
   const [, startTransition]       = useTransition();
@@ -73,7 +73,7 @@ export function ConversationMessages({
       if (msg.role === 'system') {
         return (
           <div key={msg.id} className="flex justify-center">
-            <span className="text-[11px] text-slate-400 bg-white border border-slate-200 rounded-full px-3 py-1 italic">
+            <span className="text-[11px] text-gray-400 bg-white border border-gray-200 rounded-full px-3 py-1 italic">
               {msg.content}
             </span>
           </div>
@@ -86,7 +86,7 @@ export function ConversationMessages({
       return (
         <div key={msg.id} className={`flex ${isBot ? 'justify-end' : 'justify-start'} group`}>
           {!isBot && (
-            <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold shrink-0 mt-1 mr-2">
+            <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0 mt-1 mr-2">
               U
             </div>
           )}
@@ -94,18 +94,18 @@ export function ConversationMessages({
             <div
               className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 isBot
-                  ? 'bg-emerald-600 text-white rounded-tr-md'
-                  : 'bg-white text-slate-800 border border-slate-200 shadow-sm rounded-tl-md'
+                  ? 'bg-brand-strong text-white rounded-tr-md'
+                  : 'bg-white text-gray-800 border border-gray-200 shadow-sm rounded-tl-md'
               }`}
             >
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
             <div className={`flex items-center gap-1.5 mt-1 px-1 ${isBot ? 'flex-row-reverse' : ''}`}>
-              <span className="text-[10px] text-slate-400" suppressHydrationWarning>
+              <span className="text-[10px] text-gray-400" suppressHydrationWarning>
                 {new Date(msg.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
               </span>
               {isBot && msg.confidence_score !== null && (
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-gray-400">
                   · {Math.round(msg.confidence_score * 100)}% conf.
                 </span>
               )}
@@ -118,7 +118,7 @@ export function ConversationMessages({
                   className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md ${
                     isFlagged
                       ? 'text-amber-600 bg-amber-50 opacity-100'
-                      : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50'
+                      : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'
                   }`}
                 >
                   <Flag size={10} />
@@ -139,9 +139,9 @@ export function ConversationMessages({
   );
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4 bg-slate-50">
+    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4 bg-gray-50">
       {messages.length === 0 && (
-        <p className="text-sm text-slate-400 text-center mt-12">No messages yet in this conversation.</p>
+        <p className="text-sm text-gray-400 text-center mt-12">No messages yet in this conversation.</p>
       )}
       {renderedMessages}
       <div ref={bottomRef} />

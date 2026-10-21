@@ -134,8 +134,8 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-          {/* Gradient header */}
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 px-8 pt-10 pb-8 text-center relative">
+          {/* Header */}
+          <div className="bg-brand-strong px-8 pt-10 pb-8 text-center relative">
             <button type="button" onClick={skip}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white/80 hover:bg-white/30 transition-colors"
               aria-label="Skip tour">
@@ -145,7 +145,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
               <Sparkles size={28} className="text-white" />
             </div>
             <h1 className="text-2xl font-bold text-white">Welcome to KOT.ai</h1>
-            <p className="text-emerald-100 text-sm mt-1">Orders, straight to the kitchen.</p>
+            <p className="text-white/70 text-sm mt-1">Orders, straight to the kitchen.</p>
           </div>
 
           <div className="px-8 py-6">
@@ -163,7 +163,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
                 { icon: BarChart2,     label: 'Analytics'          },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
-                  <Icon size={13} className="text-emerald-600 shrink-0" />
+                  <Icon size={13} className="text-brand-strong shrink-0" />
                   <span className="text-xs font-medium text-slate-600">{label}</span>
                 </div>
               ))}
@@ -175,7 +175,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
                 Skip tour
               </button>
               <button type="button" onClick={startSpotlight}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors">
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-brand-strong rounded-xl hover:opacity-90 transition-colors">
                 Start tour <ArrowRight size={14} />
               </button>
             </div>
@@ -254,9 +254,9 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
 
         <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4 border-b border-emerald-100">
+          <div className="bg-brand-wash px-5 py-4 border-b border-brand/20">
             <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+              <span className="text-[10px] font-bold text-brand-strong uppercase tracking-widest">
                 Step {stepIdx + 1} of {STEPS.length}
               </span>
               <button type="button" onClick={skip}
@@ -266,8 +266,8 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
               </button>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                <StepIcon size={16} className="text-emerald-700" />
+              <div className="w-9 h-9 rounded-xl bg-brand-wash flex items-center justify-center shrink-0">
+                <StepIcon size={16} className="text-brand-strong" />
               </div>
               <h3 className="text-sm font-bold text-slate-800">{step.title}</h3>
             </div>
@@ -280,7 +280,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
             <div className="flex items-center gap-1 mt-4 mb-4">
               {STEPS.map((_, i) => (
                 <div key={i} className={`rounded-full transition-all duration-200 ${
-                  i === stepIdx ? 'w-5 h-1.5 bg-emerald-500' : 'w-1.5 h-1.5 bg-slate-200'
+                  i === stepIdx ? 'w-5 h-1.5 bg-brand-strong' : 'w-1.5 h-1.5 bg-slate-200'
                 }`} />
               ))}
             </div>
@@ -297,7 +297,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
                 </button>
               )}
               <button type="button" onClick={next}
-                className="flex items-center gap-1.5 text-xs font-semibold px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                className="flex items-center gap-1.5 text-xs font-semibold px-4 py-1.5 bg-brand-strong text-white rounded-lg hover:opacity-90 transition-colors">
                 {stepIdx === STEPS.length - 1 ? 'Finish' : 'Next'}
                 {stepIdx < STEPS.length - 1 && <ChevronRight size={12} />}
               </button>

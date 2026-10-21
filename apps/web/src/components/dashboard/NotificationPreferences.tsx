@@ -20,8 +20,8 @@ function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50 ${
-        checked ? 'bg-emerald-500' : 'bg-gray-200'
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50 ${
+        checked ? 'bg-ready' : 'bg-gray-200'
       }`}
     >
       <span
@@ -89,7 +89,7 @@ export function NotificationPreferences({
       <div className="flex items-center justify-between gap-3 px-5 py-3 bg-gray-50/60">
         {error && <p className="text-xs text-red-500 flex-1">{error}</p>}
         {saved && !error && (
-          <p className="text-xs text-emerald-600 flex items-center gap-1 flex-1">
+          <p className="text-xs text-done flex items-center gap-1 flex-1">
             <Check size={11} /> Saved
           </p>
         )}
@@ -98,7 +98,7 @@ export function NotificationPreferences({
           type="button"
           onClick={save}
           disabled={isPending}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 shrink-0"
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-strong hover:opacity-90 text-white transition-colors disabled:opacity-50 shrink-0"
         >
           {isPending ? 'Saving…' : 'Save preferences'}
         </button>

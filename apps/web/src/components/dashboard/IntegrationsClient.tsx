@@ -22,7 +22,7 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
     <button type="button" title="Copy"
       onClick={() => { void navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
       className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
-        copied ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
+        copied ? 'bg-done-bg text-done' : 'bg-gray-100 text-gray-600 hover:bg-done-bg hover:text-done'
       } ${className}`}
     >
       {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -33,29 +33,29 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
 
 function MonoField({ value, hidden }: { value: string; hidden: boolean }) {
   return (
-    <code className="text-xs font-mono text-slate-700 flex-1 break-all">
+    <code className="text-xs font-mono text-gray-700 flex-1 break-all">
       {hidden ? value.replace(/./g, '•') : value}
     </code>
   );
 }
 
 const INBOUND_STATUS: Record<string, { icon: React.ReactNode; cls: string; label: string }> = {
-  sent:      { icon: <CheckCircle2 size={11} />, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Sent' },
+  sent:      { icon: <CheckCircle2 size={11} />, cls: 'bg-done-bg text-done border-done/30', label: 'Sent' },
   failed:    { icon: <XCircle     size={11} />, cls: 'bg-red-50 text-red-700 border-red-200',             label: 'Failed' },
   duplicate: { icon: <Clock       size={11} />, cls: 'bg-amber-50 text-amber-700 border-amber-200',       label: 'Duplicate' },
-  skipped:   { icon: <Clock       size={11} />, cls: 'bg-slate-50 text-slate-600 border-slate-200',       label: 'Skipped' },
+  skipped:   { icon: <Clock       size={11} />, cls: 'bg-gray-50 text-gray-600 border-gray-200',       label: 'Skipped' },
 };
 
 const OUTBOUND_STATUS: Record<string, { icon: React.ReactNode; cls: string }> = {
-  delivered: { icon: <CheckCircle2 size={11} />, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  delivered: { icon: <CheckCircle2 size={11} />, cls: 'bg-done-bg text-done border-done/30' },
   failed:    { icon: <XCircle     size={11} />, cls: 'bg-red-50 text-red-700 border-red-200' },
-  skipped:   { icon: <Clock       size={11} />, cls: 'bg-slate-50 text-slate-600 border-slate-200' },
+  skipped:   { icon: <Clock       size={11} />, cls: 'bg-gray-50 text-gray-600 border-gray-200' },
 };
 
 function LogTable({ children, empty }: { children: React.ReactNode; empty: string }) {
   return (
-    <div className="divide-y divide-slate-50">
-      {children ?? <div className="px-5 py-10 text-center"><p className="text-sm text-slate-400 font-medium">{empty}</p></div>}
+    <div className="divide-y divide-gray-50">
+      {children ?? <div className="px-5 py-10 text-center"><p className="text-sm text-gray-400 font-medium">{empty}</p></div>}
     </div>
   );
 }
@@ -96,34 +96,34 @@ export function IntegrationsClient({
 
       {/* ── Status banner ───────────────────────────────────────────────────── */}
       <div className={`flex items-center justify-between px-5 py-3.5 rounded-xl border ${
-        enabled ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'
+        enabled ? 'bg-ready-bg border-ready/30' : 'bg-gray-50 border-gray-200'
       }`}>
         <div className="flex items-center gap-2.5">
-          <div className={`w-2.5 h-2.5 rounded-full ${enabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-          <span className="text-sm font-semibold text-slate-800">
-            Integrations are <span className={enabled ? 'text-emerald-700' : 'text-slate-500'}>{enabled ? 'active' : 'disabled'}</span>
+          <div className={`w-2.5 h-2.5 rounded-full ${enabled ? 'bg-ready animate-pulse' : 'bg-gray-300'}`} />
+          <span className="text-sm font-semibold text-gray-800">
+            Integrations are <span className={enabled ? 'text-ready' : 'text-gray-500'}>{enabled ? 'active' : 'disabled'}</span>
           </span>
           {toggleErr && <span className="text-xs text-red-600 ml-2">{toggleErr}</span>}
         </div>
         <button type="button" onClick={handleToggle} disabled={toggling}
           className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-            enabled ? 'border-slate-300 text-slate-600 hover:bg-slate-100' : 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+            enabled ? 'border-gray-300 text-gray-600 hover:bg-gray-100' : 'border-ready/30 text-ready bg-ready-bg hover:bg-ready-bg/70'
           }`}>
           {toggling ? 'Saving…' : enabled ? 'Disable all' : 'Enable'}
         </button>
       </div>
 
       {/* ── Tab switcher ────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit shadow-sm">
+      <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 w-fit shadow-sm">
         <button type="button" onClick={() => setTab('inbound')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-            tab === 'inbound' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
+            tab === 'inbound' ? 'bg-brand-strong text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
           }`}>
           <ArrowDownCircle size={14} /> Inbound
         </button>
         <button type="button" onClick={() => setTab('outbound')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-            tab === 'outbound' ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
+            tab === 'outbound' ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
           }`}>
           <ArrowUpCircle size={14} /> Outbound
         </button>
@@ -216,29 +216,29 @@ Body (JSON):
       <div className="space-y-5">
 
         {/* Endpoint */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Plug size={14} className="text-emerald-600" /> Webhook endpoint
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+            <Plug size={14} className="text-brand-strong" /> Webhook endpoint
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             Point your CRM, Zapier, or Make to this URL. Every call triggers a personalised WhatsApp welcome message.
           </p>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-2.5 border border-slate-200">
-            <code className="text-xs font-mono text-slate-700 flex-1 break-all">{webhookUrl}</code>
+          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-200">
+            <code className="text-xs font-mono text-gray-700 flex-1 break-all">{webhookUrl}</code>
             <CopyButton text={webhookUrl} />
           </div>
         </div>
 
         {/* API key */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Inbound API key</h3>
-          <p className="text-xs text-slate-500">
-            External systems pass this in the <code className="bg-slate-100 px-1 rounded">x-api-key</code> header to authenticate their requests to your webhook.
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800">Inbound API key</h3>
+          <p className="text-xs text-gray-500">
+            External systems pass this in the <code className="bg-gray-100 px-1 rounded">x-api-key</code> header to authenticate their requests to your webhook.
           </p>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-2.5 border border-slate-200">
+          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-200">
             <MonoField value={apiKey} hidden={keyHidden} />
             <button type="button" onClick={() => setKeyHidden(h => !h)}
-              className="text-slate-400 hover:text-slate-700 p-1 transition-colors">
+              className="text-gray-400 hover:text-gray-700 p-1 transition-colors">
               {keyHidden ? <Eye size={14} /> : <EyeOff size={14} />}
             </button>
             <CopyButton text={apiKey} />
@@ -258,29 +258,29 @@ Body (JSON):
               <RefreshCw size={11} className={regen ? 'animate-spin' : ''} />
               {regen ? 'Regenerating…' : 'Regenerate key'}
             </button>
-            <span className="text-slate-300 text-xs">· breaks existing integrations</span>
+            <span className="text-gray-300 text-xs">· breaks existing integrations</span>
           </div>
           {regenErr && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={11} />{regenErr}</p>}
         </div>
 
         {/* Welcome template */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Welcome message template</h3>
-          <p className="text-xs text-slate-500">
-            Use <code className="bg-slate-100 px-1 rounded">{'{name}'}</code> for the contact&apos;s first name. Sent once per contact (30-day deduplication).
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800">Welcome message template</h3>
+          <p className="text-xs text-gray-500">
+            Use <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> for the contact&apos;s first name. Sent once per contact (30-day deduplication).
           </p>
           <textarea value={template} rows={5} maxLength={1024}
             onChange={e => { setTemplate(e.target.value); setSaveMsg(null); setSaveErr(null); }}
-            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300 font-mono"
+            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-brand font-mono"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-slate-400">{template.length} / 1024</span>
+            <span className="text-[11px] text-gray-400">{template.length} / 1024</span>
             <div className="flex items-center gap-2">
-              {saveMsg && <span className="text-xs text-emerald-600 flex items-center gap-1"><Check size={11} />{saveMsg}</span>}
+              {saveMsg && <span className="text-xs text-done flex items-center gap-1"><Check size={11} />{saveMsg}</span>}
               {saveErr && <span className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={11} />{saveErr}</span>}
               <button type="button" disabled={saving}
                 onClick={() => { setSaveMsg(null); setSaveErr(null); startSave(async () => { const r = await saveWelcomeTemplate(template); if (r.error) { setSaveErr(r.error); return; } setSaveMsg('Saved.'); setTimeout(() => setSaveMsg(null), 3000); }); }}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50">
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-brand-strong text-white rounded-lg hover:opacity-90 disabled:opacity-50">
                 <Save size={11} />
                 {saving ? 'Saving…' : 'Save template'}
               </button>
@@ -289,23 +289,23 @@ Body (JSON):
         </div>
 
         {/* Test */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Send a test message</h3>
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800">Send a test message</h3>
           <div className="flex gap-2">
             <input value={testName} onChange={e => setTestName(e.target.value)} placeholder="Name (optional)"
-              className="flex-1 text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+              className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand" />
             <input value={testPhone} onChange={e => setTestPhone(e.target.value)} placeholder="+91 98765 43210"
-              className="flex-1 text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+              className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand" />
           </div>
           <div className="flex items-center gap-3">
             <button type="button" disabled={testing || !testPhone.trim()}
               onClick={() => { setTestResult(null); startTest(async () => { const r = await sendTestMessage(testPhone, testName); setTestResult({ ok: !r.error, msg: r.error ?? 'Welcome message sent!' }); }); }}
-              className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50">
+              className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 bg-brand-strong text-white rounded-xl hover:opacity-90 disabled:opacity-50">
               <Send size={13} />
               {testing ? 'Sending…' : 'Send test'}
             </button>
             {testResult && (
-              <span className={`text-xs flex items-center gap-1.5 ${testResult.ok ? 'text-emerald-600' : 'text-red-600'}`}>
+              <span className={`text-xs flex items-center gap-1.5 ${testResult.ok ? 'text-done' : 'text-red-600'}`}>
                 {testResult.ok ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
                 {testResult.msg}
               </span>
@@ -318,22 +318,22 @@ Body (JSON):
       <div className="space-y-5">
 
         {/* Integration guides */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
             <Zap size={14} className="text-amber-500" /> Integration guides
           </h3>
-          <div className="flex gap-1 border-b border-slate-100 pb-2">
+          <div className="flex gap-1 border-b border-gray-100 pb-2">
             {(['curl', 'zapier', 'make'] as const).map(g => (
               <button key={g} type="button" onClick={() => setOpenGuide(g)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors capitalize ${
-                  openGuide === g ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  openGuide === g ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}>
                 {g === 'curl' ? 'cURL / REST' : g === 'zapier' ? 'Zapier' : 'Make'}
               </button>
             ))}
           </div>
           <div className="relative">
-            <pre className="bg-slate-950 text-green-300 text-[11px] font-mono rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">
+            <pre className="bg-gray-950 text-green-300 text-[11px] font-mono rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">
               {openGuide === 'curl' ? curlExample : openGuide === 'zapier' ? zapierExample : makeExample}
             </pre>
             <div className="absolute top-2 right-2">
@@ -342,43 +342,43 @@ Body (JSON):
           </div>
           <div className="flex flex-wrap gap-1.5 pt-1">
             {['HubSpot', 'Zoho CRM', 'Salesforce', 'Zapier', 'Make', 'n8n', 'Pabbly', 'Webflow', 'Typeform', 'Google Sheets'].map(s => (
-              <span key={s} className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{s}</span>
+              <span key={s} className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s}</span>
             ))}
           </div>
         </div>
 
         {/* Request / response format */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Request format</h3>
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800">Request format</h3>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <p className="font-semibold text-slate-500 uppercase tracking-wide text-[10px] mb-2">Headers</p>
-              <div className="bg-slate-50 rounded-xl p-3 font-mono space-y-1">
-                <p><span className="text-amber-600">x-api-key</span>: <span className="text-slate-500">your_key</span></p>
-                <p><span className="text-amber-600">Content-Type</span>: <span className="text-slate-500">application/json</span></p>
+              <p className="font-semibold text-gray-500 uppercase tracking-wide text-[10px] mb-2">Headers</p>
+              <div className="bg-gray-50 rounded-xl p-3 font-mono space-y-1">
+                <p><span className="text-amber-600">x-api-key</span>: <span className="text-gray-500">your_key</span></p>
+                <p><span className="text-amber-600">Content-Type</span>: <span className="text-gray-500">application/json</span></p>
               </div>
             </div>
             <div>
-              <p className="font-semibold text-slate-500 uppercase tracking-wide text-[10px] mb-2">Body</p>
-              <div className="bg-slate-50 rounded-xl p-3 font-mono space-y-1">
-                <p><span className="text-emerald-700">phone</span> <span className="text-red-500">*</span></p>
-                <p><span className="text-sky-700">name</span> <span className="text-slate-400">optional</span></p>
-                <p><span className="text-sky-700">source</span> <span className="text-slate-400">optional</span></p>
+              <p className="font-semibold text-gray-500 uppercase tracking-wide text-[10px] mb-2">Body</p>
+              <div className="bg-gray-50 rounded-xl p-3 font-mono space-y-1">
+                <p><span className="text-brand-strong">phone</span> <span className="text-red-500">*</span></p>
+                <p><span className="text-sky-700">name</span> <span className="text-gray-400">optional</span></p>
+                <p><span className="text-sky-700">source</span> <span className="text-gray-400">optional</span></p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Inbound log */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">Inbound log</h3>
-            <span className="text-xs text-slate-400">{logs.length} hits</span>
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-800">Inbound log</h3>
+            <span className="text-xs text-gray-400">{logs.length} hits</span>
           </div>
           {logs.length === 0 ? (
             <div className="px-5 py-10 text-center">
-              <p className="text-sm text-slate-400 font-medium">No inbound webhook hits yet</p>
-              <p className="text-xs text-slate-300 mt-1">Send a test message to see the first entry.</p>
+              <p className="text-sm text-gray-400 font-medium">No inbound webhook hits yet</p>
+              <p className="text-xs text-gray-300 mt-1">Send a test message to see the first entry.</p>
             </div>
           ) : (
             <>
@@ -391,14 +391,14 @@ Body (JSON):
                         {s.icon} {s.label}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-800 truncate">
+                        <p className="text-xs font-medium text-gray-800 truncate">
                           {log.contact_name ? `${log.contact_name} — ` : ''}{log.contact_phone}
                         </p>
                         {log.error_message && <p className="text-[10px] text-red-500 truncate">{log.error_message}</p>}
                       </div>
                       <div className="text-right shrink-0">
-                        {log.source && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">{log.source}</span>}
-                        <p className="text-[10px] text-slate-400 mt-0.5" suppressHydrationWarning>
+                        {log.source && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{log.source}</span>}
+                        <p className="text-[10px] text-gray-400 mt-0.5" suppressHydrationWarning>
                           {new Date(log.triggered_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                         </p>
                       </div>
@@ -408,7 +408,7 @@ Body (JSON):
               </LogTable>
               {logs.length > 10 && (
                 <button type="button" onClick={() => setShowAll(s => !s)}
-                  className="w-full py-3 text-xs font-semibold text-slate-500 hover:text-emerald-700 flex items-center justify-center gap-1 border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                  className="w-full py-3 text-xs font-semibold text-gray-500 hover:text-brand-strong flex items-center justify-center gap-1 border-t border-gray-100 hover:bg-gray-50 transition-colors">
                   {showAll ? <><ChevronUp size={12} /> Show less</> : <><ChevronDown size={12} /> Show all {logs.length}</>}
                 </button>
               )}
@@ -483,11 +483,11 @@ function verifyAlphabotSignature(
       <div className="space-y-5">
 
         {/* Destination URL + events */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
             <ArrowUpCircle size={14} className="text-violet-600" /> Destination webhook URL
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             We&apos;ll POST events to this URL whenever something important happens. Leave blank to disable outbound delivery.
           </p>
 
@@ -495,12 +495,12 @@ function verifyAlphabotSignature(
             value={url}
             onChange={e => { setUrl(e.target.value); setSaveMsg(null); setSaveErr(null); }}
             placeholder="https://hooks.zapier.com/hooks/catch/... or https://your-crm.com/webhook"
-            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-300"
           />
 
           {/* Event subscriptions */}
           <div>
-            <p className="text-xs font-semibold text-slate-600 mb-2">Subscribe to events</p>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Subscribe to events</p>
             <div className="space-y-2">
               {OUTBOUND_EVENT_OPTIONS.map(opt => (
                 <label key={opt.value} className="flex items-start gap-3 cursor-pointer group">
@@ -511,8 +511,8 @@ function verifyAlphabotSignature(
                     className="mt-0.5 accent-violet-600"
                   />
                   <div>
-                    <p className="text-xs font-semibold text-slate-800 group-hover:text-violet-700 transition-colors">{opt.label}</p>
-                    <p className="text-[11px] text-slate-400">{opt.desc}</p>
+                    <p className="text-xs font-semibold text-gray-800 group-hover:text-violet-700 transition-colors">{opt.label}</p>
+                    <p className="text-[11px] text-gray-400">{opt.desc}</p>
                   </div>
                 </label>
               ))}
@@ -521,7 +521,7 @@ function verifyAlphabotSignature(
 
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2">
-              {saveMsg && <span className="text-xs text-emerald-600 flex items-center gap-1"><Check size={11} />{saveMsg}</span>}
+              {saveMsg && <span className="text-xs text-done flex items-center gap-1"><Check size={11} />{saveMsg}</span>}
               {saveErr && <span className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={11} />{saveErr}</span>}
             </div>
             <button type="button" disabled={saving}
@@ -534,16 +534,16 @@ function verifyAlphabotSignature(
         </div>
 
         {/* Signing secret */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Signing secret</h3>
-          <p className="text-xs text-slate-500">
-            Every outbound request includes an <code className="bg-slate-100 px-1 rounded">x-alphabot-signature</code> header.
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800">Signing secret</h3>
+          <p className="text-xs text-gray-500">
+            Every outbound request includes an <code className="bg-gray-100 px-1 rounded">x-alphabot-signature</code> header.
             Use this secret to verify the request is genuinely from us.
           </p>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-2.5 border border-slate-200">
+          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-200">
             <MonoField value={secret} hidden={secretHidden} />
             <button type="button" onClick={() => setSecretHidden(h => !h)}
-              className="text-slate-400 hover:text-slate-700 p-1 transition-colors">
+              className="text-gray-400 hover:text-gray-700 p-1 transition-colors">
               {secretHidden ? <Eye size={14} /> : <EyeOff size={14} />}
             </button>
             <CopyButton text={secret} />
@@ -568,11 +568,11 @@ function verifyAlphabotSignature(
         </div>
 
         {/* Manual push */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
             <Download size={14} className="text-violet-600" /> Push data now
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             Send a full snapshot of your data to your configured endpoint. Useful for initial CRM sync or on-demand exports.
           </p>
 
@@ -585,7 +585,7 @@ function verifyAlphabotSignature(
 
           <div className="grid grid-cols-3 gap-2">
             {([
-              { type: 'contacts' as PushType,      icon: <Users         size={14} />, label: 'Contacts',      color: 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100' },
+              { type: 'contacts' as PushType,      icon: <Users         size={14} />, label: 'Contacts',      color: 'bg-done-bg border-done/30 text-done hover:bg-done-bg/70' },
               { type: 'conversations' as PushType,  icon: <MessageSquare size={14} />, label: 'Conversations',  color: 'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100' },
               { type: 'leads' as PushType,          icon: <Target        size={14} />, label: 'Leads',          color: 'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100' },
             ]).map(({ type, icon, label, color }) => (
@@ -602,7 +602,7 @@ function verifyAlphabotSignature(
 
           {pushResult && (
             <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl border ${
-              pushResult.ok ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'
+              pushResult.ok ? 'bg-done-bg border-done/30 text-done' : 'bg-red-50 border-red-200 text-red-700'
             }`}>
               {pushResult.ok ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
               {pushResult.msg}
@@ -615,10 +615,10 @@ function verifyAlphabotSignature(
       <div className="space-y-5">
 
         {/* Event payload reference */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Event payload format</h3>
-          <p className="text-xs text-slate-500">Every outbound request is a JSON POST with this envelope:</p>
-          <pre className="bg-slate-950 text-green-300 text-[11px] font-mono rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">{`{
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800">Event payload format</h3>
+          <p className="text-xs text-gray-500">Every outbound request is a JSON POST with this envelope:</p>
+          <pre className="bg-gray-950 text-green-300 text-[11px] font-mono rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">{`{
   "event":      "contact.created",   // event type
   "timestamp":  "2026-01-01T10:00:00Z",
   "tenant_id":  "your-tenant-uuid",
@@ -644,29 +644,29 @@ function verifyAlphabotSignature(
         </div>
 
         {/* Signature verification */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Signature verification</h3>
-          <p className="text-xs text-slate-500">Verify the <code className="bg-slate-100 px-1 rounded">x-alphabot-signature</code> header to ensure the request is from us:</p>
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <h3 className="text-sm font-bold text-gray-800">Signature verification</h3>
+          <p className="text-xs text-gray-500">Verify the <code className="bg-gray-100 px-1 rounded">x-alphabot-signature</code> header to ensure the request is from us:</p>
           <div className="relative">
-            <pre className="bg-slate-950 text-sky-300 text-[11px] font-mono rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">{verifySnippet}</pre>
+            <pre className="bg-gray-950 text-sky-300 text-[11px] font-mono rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">{verifySnippet}</pre>
             <div className="absolute top-2 right-2"><CopyButton text={verifySnippet} /></div>
           </div>
         </div>
 
         {/* Outbound log */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">Outbound delivery log</h3>
-            <span className="text-xs text-slate-400">{logs.length} events</span>
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-800">Outbound delivery log</h3>
+            <span className="text-xs text-gray-400">{logs.length} events</span>
           </div>
           {logs.length === 0 ? (
             <div className="px-5 py-10 text-center">
-              <p className="text-sm text-slate-400 font-medium">No outbound deliveries yet</p>
-              <p className="text-xs text-slate-300 mt-1">Configure a URL, subscribe to events, and they&apos;ll appear here.</p>
+              <p className="text-sm text-gray-400 font-medium">No outbound deliveries yet</p>
+              <p className="text-xs text-gray-300 mt-1">Configure a URL, subscribe to events, and they&apos;ll appear here.</p>
             </div>
           ) : (
             <>
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-gray-50">
                 {displayedLogs.map(log => {
                   const s = OUTBOUND_STATUS[log.status] ?? OUTBOUND_STATUS.skipped!;
                   return (
@@ -675,11 +675,11 @@ function verifyAlphabotSignature(
                         {s.icon} {log.status}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-800">{log.event_type}</p>
+                        <p className="text-xs font-medium text-gray-800">{log.event_type}</p>
                         {log.error_message && <p className="text-[10px] text-red-500 truncate">{log.error_message}</p>}
-                        {log.http_status && <p className="text-[10px] text-slate-400">HTTP {log.http_status}</p>}
+                        {log.http_status && <p className="text-[10px] text-gray-400">HTTP {log.http_status}</p>}
                       </div>
-                      <p className="text-[10px] text-slate-400 shrink-0" suppressHydrationWarning>
+                      <p className="text-[10px] text-gray-400 shrink-0" suppressHydrationWarning>
                         {new Date(log.triggered_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                       </p>
                     </div>
@@ -688,7 +688,7 @@ function verifyAlphabotSignature(
               </div>
               {logs.length > 10 && (
                 <button type="button" onClick={() => setShowAll(s => !s)}
-                  className="w-full py-3 text-xs font-semibold text-slate-500 hover:text-violet-700 flex items-center justify-center gap-1 border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                  className="w-full py-3 text-xs font-semibold text-gray-500 hover:text-violet-700 flex items-center justify-center gap-1 border-t border-gray-100 hover:bg-gray-50 transition-colors">
                   {showAll ? <><ChevronUp size={12} /> Show less</> : <><ChevronDown size={12} /> Show all {logs.length}</>}
                 </button>
               )}

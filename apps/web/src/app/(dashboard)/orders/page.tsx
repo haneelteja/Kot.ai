@@ -8,17 +8,17 @@ import { SendInvoiceButton } from '@/components/dashboard/SendInvoiceButton';
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   pending:    <Clock size={13} className="text-amber-500" />,
-  confirmed:  <CheckCircle size={13} className="text-emerald-500" />,
+  confirmed:  <CheckCircle size={13} className="text-done" />,
   dispatched: <Truck size={13} className="text-indigo-500" />,
-  delivered:  <Package size={13} className="text-slate-400" />,
+  delivered:  <Package size={13} className="text-neutral" />,
   cancelled:  <XCircle size={13} className="text-red-400" />,
 };
 
 const PAYMENT_BADGE: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700 ring-amber-200',
-  paid:    'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  paid:    'bg-done-bg text-done ring-transparent',
   failed:  'bg-red-50 text-red-700 ring-red-200',
-  expired: 'bg-slate-100 text-slate-500 ring-slate-200',
+  expired: 'bg-neutral-bg text-neutral ring-transparent',
 };
 
 type SearchParams = Promise<{ status?: string }>;
@@ -82,7 +82,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
         </div>
         <Link
           href="/orders/new"
-          className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 bg-brand-strong text-white text-sm font-semibold rounded-xl hover:bg-brand transition-colors"
         >
           <Plus size={14} />
           New Order
@@ -92,14 +92,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Orders', value: totals.all,       color: 'text-slate-800'   },
+          { label: 'Total Orders', value: totals.all,       color: 'text-text'   },
           { label: 'Pending',      value: totals.pending,   color: 'text-amber-600'   },
-          { label: 'Confirmed',    value: totals.confirmed, color: 'text-emerald-600' },
+          { label: 'Confirmed',    value: totals.confirmed, color: 'text-done' },
           { label: 'Revenue (₹)',  value: `₹${totalRevenue.toLocaleString('en-IN')}`, color: 'text-indigo-600' },
         ].map(s => (
-          <div key={s.label} className="bg-white border border-green-100 rounded-xl p-4">
+          <div key={s.label} className="bg-white border border-line rounded-xl p-4">
             <p className={`text-xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -112,8 +112,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             href={s === 'all' ? '/orders' : `/orders?status=${s}`}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors capitalize ${
               (s === 'all' && !filterStatus) || filterStatus === s
-                ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                ? 'bg-done-bg text-done border-done'
+                : 'bg-white text-muted-foreground border-line hover:bg-sunken'
             }`}
           >
             {s}
@@ -122,17 +122,17 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       </div>
 
       {/* Orders list */}
-      <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
         {!orders?.length ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <ShoppingCart size={28} className="text-slate-200" />
-            <p className="text-sm text-slate-400">No orders yet.</p>
-            <Link href="/orders/new" className="text-xs font-semibold text-emerald-600 hover:text-emerald-800">
+            <ShoppingCart size={28} className="text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No orders yet.</p>
+            <Link href="/orders/new" className="text-xs font-semibold text-brand-strong hover:underline">
               Create your first order →
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-line">
             {orders.map(order => {
               const contact  = order.contact as unknown as { phone: string; name: string | null } | null;
               const payment  = (order.payments as Array<{ id: string; status: string; link_url: string | null; webhook_received_at: string | null }>)?.[0];
@@ -144,22 +144,22 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-800 truncate">
+                      <p className="text-sm font-semibold text-text truncate">
                         {contact?.name ?? contact?.phone ?? '—'}
                       </p>
-                      <span className="text-[10px] text-slate-400 font-mono">{order.id.slice(0, 8)}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">{order.id.slice(0, 8)}</span>
                     </div>
-                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
                       {items.slice(0, 2).map(i => `${i.name} ×${i.quantity}`).join(', ')}
                       {items.length > 2 ? ` +${items.length - 2} more` : ''}
                     </p>
-                    <p className="text-[10px] text-slate-300 mt-0.5">
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
                       {new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <p className="text-sm font-bold text-slate-800 tabular-nums">₹{Number(order.total).toLocaleString('en-IN')}</p>
+                    <p className="text-sm font-bold text-text tabular-nums">₹{Number(order.total).toLocaleString('en-IN')}</p>
 
                     {payment && (
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 capitalize ${PAYMENT_BADGE[payment.status] ?? PAYMENT_BADGE.pending}`}>
@@ -177,7 +177,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Open payment link"
-                        className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                        className="p-1.5 rounded-md hover:bg-sunken text-muted-foreground hover:text-text transition-colors"
                       >
                         <ExternalLink size={13} />
                       </a>

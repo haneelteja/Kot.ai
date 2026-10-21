@@ -55,45 +55,45 @@ function ProductForm({
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {/* Name */}
       <div className="sm:col-span-2">
-        <label className="block text-xs font-semibold text-slate-600 mb-1">Product name *</label>
+        <label className="block text-xs font-semibold text-muted-foreground mb-1">Product name *</label>
         <input
           autoFocus
           value={f.name}
           onChange={set('name')}
           placeholder="e.g. Premium Water Pump"
-          className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
         />
       </div>
 
       {/* SKU */}
       <div>
-        <label className="flex items-center gap-1 text-xs font-semibold text-slate-600 mb-1">
+        <label className="flex items-center gap-1 text-xs font-semibold text-muted-foreground mb-1">
           <Hash size={10} /> SKU / Code
         </label>
         <input
           value={f.sku}
           onChange={set('sku')}
           placeholder="e.g. PUMP-001"
-          className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
         />
       </div>
 
       {/* Category */}
       <div>
-        <label className="flex items-center gap-1 text-xs font-semibold text-slate-600 mb-1">
+        <label className="flex items-center gap-1 text-xs font-semibold text-muted-foreground mb-1">
           <Tag size={10} /> Category
         </label>
         <input
           value={f.category}
           onChange={set('category')}
           placeholder="e.g. Pumps, Tanks"
-          className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
         />
       </div>
 
       {/* Price */}
       <div>
-        <label className="flex items-center gap-1 text-xs font-semibold text-slate-600 mb-1">
+        <label className="flex items-center gap-1 text-xs font-semibold text-muted-foreground mb-1">
           <IndianRupee size={10} /> Price (INR)
         </label>
         <input
@@ -103,19 +103,19 @@ function ProductForm({
           value={f.price_inr}
           onChange={set('price_inr')}
           placeholder="e.g. 45000"
-          className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400"
         />
       </div>
 
       {/* Description */}
       <div className="sm:col-span-2">
-        <label className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
+        <label className="block text-xs font-semibold text-muted-foreground mb-1">Description</label>
         <textarea
           rows={2}
           value={f.description}
           onChange={set('description')}
           placeholder="Short product description shown to the bot and in the WhatsApp catalogue message"
-          className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="w-full text-sm border border-line rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400"
         />
       </div>
 
@@ -134,7 +134,7 @@ function ProductForm({
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-line text-muted-foreground text-sm font-medium hover:bg-sunken transition-colors"
         >
           <X size={13} /> Cancel
         </button>
@@ -260,7 +260,7 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
 
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-700">
+        <p className="text-sm font-semibold text-text">
           {products.length} product{products.length !== 1 ? 's' : ''}
         </p>
         {!showAdd && (
@@ -291,10 +291,10 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
 
       {/* Product list */}
       {products.length === 0 && !showAdd ? (
-        <div className="bg-white border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
-          <Package size={32} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-sm font-semibold text-slate-500">No products yet</p>
-          <p className="text-xs text-slate-400 mt-1">Add your first product and the sales bot will start quoting prices in chat.</p>
+        <div className="bg-white border border-dashed border-line rounded-2xl px-6 py-12 text-center">
+          <Package size={32} className="mx-auto text-muted-foreground mb-3" />
+          <p className="text-sm font-semibold text-muted-foreground">No products yet</p>
+          <p className="text-xs text-muted-foreground mt-1">Add your first product and the sales bot will start quoting prices in chat.</p>
           <button
             type="button"
             onClick={() => setShowAdd(true)}
@@ -304,10 +304,10 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
           </button>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="divide-y divide-slate-50">
+        <div className="bg-white border border-line rounded-2xl overflow-hidden shadow-sm">
+          <div className="divide-y divide-line">
             {products.map((p, i) => (
-              <div key={p.id} className={`${i % 2 === 1 ? 'bg-slate-50/60' : 'bg-white'}`}>
+              <div key={p.id} className={`${i % 2 === 1 ? 'bg-sunken' : 'bg-white'}`}>
 
                 {/* Row — normal view */}
                 {editingId !== p.id ? (
@@ -319,7 +319,7 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
                       disabled={toggling === p.id}
                       title={p.active ? 'Click to deactivate' : 'Click to activate'}
                       className={`relative w-9 h-5 rounded-full transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-1 ${
-                        p.active ? 'bg-emerald-500' : 'bg-slate-200'
+                        p.active ? 'bg-done' : 'bg-line'
                       } ${toggling === p.id ? 'opacity-50' : ''}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${p.active ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -328,11 +328,11 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
                     {/* Product info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-sm font-semibold truncate ${p.active ? 'text-slate-800' : 'text-slate-400'}`}>
+                        <span className={`text-sm font-semibold truncate ${p.active ? 'text-text' : 'text-muted-foreground'}`}>
                           {p.name}
                         </span>
                         {p.sku && (
-                          <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded shrink-0">
+                          <span className="text-[10px] font-mono bg-neutral-bg text-neutral px-1.5 py-0.5 rounded shrink-0">
                             {p.sku}
                           </span>
                         )}
@@ -343,12 +343,12 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
                         )}
                       </div>
                       {p.description && (
-                        <p className="text-xs text-slate-400 truncate mt-0.5">{p.description}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</p>
                       )}
                     </div>
 
                     {/* Price */}
-                    <div className="text-sm font-semibold text-emerald-700 tabular-nums shrink-0 mr-2" suppressHydrationWarning>
+                    <div className="text-sm font-semibold text-done tabular-nums shrink-0 mr-2" suppressHydrationWarning>
                       {fmt(p.price_inr)}
                     </div>
 
@@ -356,7 +356,7 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
                     <button
                       type="button"
                       onClick={() => { setEditingId(p.id); setShowAdd(false); }}
-                      className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors shrink-0"
+                      className="p-1.5 text-muted-foreground hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors shrink-0"
                       title="Edit"
                     >
                       <Pencil size={13} />
@@ -367,7 +367,7 @@ export function ProductCatalogueManager({ initialProducts }: { initialProducts: 
                       type="button"
                       onClick={() => void handleDelete(p.id)}
                       disabled={deletingId === p.id}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                      className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                       title="Delete"
                     >
                       {deletingId === p.id

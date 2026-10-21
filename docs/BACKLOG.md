@@ -18,7 +18,8 @@ Brief refs: §20.1, §20.2
 Reuse: `docker-compose.yml`, `.env.example` (extend, don't replace)
 
 ### SET-02 Staging environment
-Epic: SET · Phase: 1 · Priority: P0 · Status: todo · Depends on: SET-01
+Epic: SET · Phase: 1 · Priority: P0 · Status: in-progress · Depends on: SET-01
+Note: Vercel (`kot-ai` project) + Supabase (`qogsclmwnthienjxkjbu`, Singapore) are live and connected — but as one environment serving as Vercel's "Production," not a separate staging tier per the brief's three-environment model. No WhatsApp number connected yet, so the actual Phase 1 gate ("a test WhatsApp message reaches staging and is stored") is still open. apps/api isn't deployed anywhere yet (Render pending).
 As the team, I want a staging environment so changes are verified before production.
 Acceptance criteria:
 - Given staging Supabase/Render/Vercel projects, a test WhatsApp message reaches staging and is stored (Phase 1 gate).

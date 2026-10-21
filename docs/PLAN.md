@@ -38,8 +38,8 @@ Each phase ends with a stop-and-summarize gate per brief §0 — no phase starts
 
 ## Open questions (brief §24 — batched, answer before Phase 1 unless noted)
 
-1. **Production domains** for API, dashboard, and ordering pages — not yet provided.
-2. **Hosting region** — Alphabot currently runs Render Singapore (`render.yaml`); confirm whether KOT.ai keeps that or needs an India region for data residency.
+1. **Production domains** — default Vercel domain `kot-ai-rust.vercel.app` is live; a custom domain hasn't been attached yet.
+2. **Hosting region** — resolved for the web+DB tier: Vercel project `kot-ai` (team `haneel-tejas-projects`) + Supabase project `qogsclmwnthienjxkjbu` (Southeast Asia/Singapore, `ap-southeast-1`), both live as of 2026-10-21. `apps/api` is not deployed anywhere yet — still needs Render (or a decision to also move it to Vercel, which would require the scheduler rework flagged earlier). Note: this is currently **one environment**, not the brief's local/staging/production three-tier split (SET-02) — the user deployed straight to what Vercel calls "Production." Revisit whether a separate staging Supabase project is wanted before real customer data touches this.
 3. **First delivery partner** to integrate (Shadowfax / Borzo / Porter) and whether a pilot restaurant already holds an account with it.
 4. **Pilot restaurant details** — name, branch count, Petpooja status, menu export availability, WhatsApp number readiness. Blocks Phase 3 menu sync and Phase 14 pilot readiness, not Phase 0–2.
 5. **Default values** for acceptance timeout, order cut-off buffer, payment link expiry, booking reminder offset, cancellation policy — brief §11 has the setting list; needs actual numbers. Can ship Phase 1–2 with placeholder defaults, must be confirmed before Phase 6 (payments) go-live.

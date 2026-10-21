@@ -4,13 +4,8 @@ import { useState } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Bot, MessageSquare, Zap, Shield } from 'lucide-react';
-
-const FEATURES = [
-  { icon: MessageSquare, text: 'AI-powered WhatsApp automation' },
-  { icon: Zap,           text: 'Instant replies, 24/7 coverage' },
-  { icon: Shield,        text: 'Smart escalation to human agents' },
-];
+import { Eye, EyeOff } from 'lucide-react';
+import { Button, Input } from '@/components/kot-ui';
 
 export default function LoginForm() {
   const [email, setEmail]       = useState('');
@@ -18,113 +13,69 @@ export default function LoginForm() {
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
-  const router   = useRouter();
-  const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setError(error.message); setLoading(false); return; }
     router.push('/');
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* ── Left brand panel ─────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between bg-[#071c0f] p-12 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_#059669_0%,_transparent_55%)] opacity-20 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full translate-x-1/2 translate-y-1/2 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-900/20 rounded-full pointer-events-none" />
-
-        {/* Logo */}
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-900/50">
-            <Bot size={20} className="text-white" />
-          </div>
-          <span className="text-white font-bold text-xl tracking-tight">Alphabot</span>
+    <div className="min-h-screen flex items-center justify-center bg-bg px-6">
+      <div className="w-full max-w-[380px]">
+        <div className="flex justify-center mb-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/kotai-logo-light-tagline.svg" alt="KOT.ai" className="h-14" />
         </div>
 
-        {/* Hero copy */}
-        <div className="relative z-10 space-y-8">
-          <div>
-            <h2 className="text-4xl font-bold text-white leading-tight">
-              Your AI sales &amp;<br />support team on<br />
-              <span className="text-emerald-400">WhatsApp.</span>
-            </h2>
-            <p className="mt-4 text-emerald-900/80 text-base leading-relaxed max-w-sm">
-              Automate customer conversations, qualify leads, and escalate to humans — all from one dashboard.
-            </p>
+        <div className="bg-surface border border-line rounded-lg p-8">
+          <div className="mb-6">
+            <h1 className="text-[22px] font-semibold text-text">Welcome back</h1>
+            <p className="text-sm text-muted mt-1">Sign in to your restaurant&rsquo;s dashboard</p>
           </div>
 
-          <ul className="space-y-4">
-            {FEATURES.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3 text-emerald-300/80 text-sm">
-                <div className="w-8 h-8 rounded-lg bg-emerald-900/50 border border-emerald-800/60 flex items-center justify-center shrink-0">
-                  <Icon size={15} className="text-emerald-400" />
-                </div>
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <p className="text-emerald-900 text-xs relative z-10">© 2026 Alphabot. All rights reserved.</p>
-      </div>
-
-      {/* ── Right form panel ─────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-white px-6 py-12">
-        {/* Mobile logo */}
-        <div className="flex items-center gap-2 mb-10 lg:hidden">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
-            <Bot size={16} className="text-white" />
-          </div>
-          <span className="font-bold text-gray-900 text-lg">Alphabot</span>
-        </div>
-
-        <div className="w-full max-w-[400px]">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="text-gray-500 text-sm mt-1">Sign in to your Alphabot dashboard</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Email address</label>
-              <input
+              <label htmlFor="email" className="text-sm font-medium text-text">Email address</label>
+              <Input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="you@company.com"
-                className="w-full h-11 px-3.5 rounded-xl border border-green-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                placeholder="you@restaurant.com"
               />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-700">Password</label>
-                <Link href="/forgot-password" className="text-xs text-emerald-600 hover:text-emerald-700 transition-colors">
+                <label htmlFor="password" className="text-sm font-medium text-text">Password</label>
+                <Link href="/forgot-password" className="text-xs text-brand-strong hover:underline">
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
-                <input
+                <Input
+                  id="password"
                   type={showPw ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full h-11 px-3.5 pr-11 rounded-xl border border-green-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                  className="pr-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
                 >
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -132,36 +83,24 @@ export default function LoginForm() {
             </div>
 
             {error && (
-              <div className="flex items-start gap-2.5 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3.5 py-3">
-                <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">!</span>
+              <div className="flex items-start gap-2.5 text-sm text-problem bg-problem-bg rounded-sm px-3.5 py-3">
+                <span className="w-4 h-4 rounded-full bg-problem text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">!</span>
                 {error}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-60 transition-colors shadow-sm shadow-emerald-500/20"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                  </svg>
-                  Signing in…
-                </span>
-              ) : 'Sign in'}
-            </button>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Signing in…' : 'Sign in'}
+            </Button>
           </form>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            New to Alphabot?{' '}
-            <Link href="/signup" className="text-emerald-600 font-medium hover:text-emerald-700 transition-colors">
-              Create a free account
-            </Link>
-          </p>
         </div>
+
+        <p className="text-center text-sm text-muted mt-6">
+          New to KOT.ai?{' '}
+          <Link href="/signup" className="text-brand-strong font-medium hover:underline">
+            Create a free account
+          </Link>
+        </p>
       </div>
     </div>
   );

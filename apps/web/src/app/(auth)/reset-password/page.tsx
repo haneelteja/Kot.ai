@@ -13,7 +13,6 @@ export default function ResetPasswordPage() {
   const [error, setError]         = useState('');
   const [done, setDone]           = useState(false);
   const router   = useRouter();
-  const supabase = getSupabaseBrowserClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,6 +21,7 @@ export default function ResetPasswordPage() {
     if (password !== confirm) { setError('Passwords do not match.'); return; }
 
     setLoading(true);
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
       setError(error.message);

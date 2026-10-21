@@ -10,7 +10,6 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent]       = useState(false);
   const [error, setError]     = useState('');
-  const supabase = getSupabaseBrowserClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,6 +21,7 @@ export default function ForgotPasswordPage() {
         ? `${window.location.origin}/auth/callback?next=/reset-password`
         : '/auth/callback?next=/reset-password';
 
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) {
       setError(error.message);

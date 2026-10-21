@@ -28,7 +28,7 @@ const BADGE_PALETTE = [
   'bg-sky-100 text-sky-700 border-sky-200',
   'bg-violet-100 text-violet-700 border-violet-200',
   'bg-orange-100 text-orange-700 border-orange-200',
-  'bg-teal-100 text-teal-700 border-teal-200',
+  'bg-done-bg text-done border-done',
   'bg-rose-100 text-rose-700 border-rose-200',
   'bg-amber-100 text-amber-700 border-amber-200',
   'bg-indigo-100 text-indigo-700 border-indigo-200',
@@ -38,7 +38,7 @@ const BADGE_PALETTE = [
 function SummaryPill({ count, singular }: { count: number; singular: string }) {
   const label = `${count} ${singular}${count !== 1 ? 's' : ''}`;
   return (
-    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${count > 0 ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
+    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${count > 0 ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200' : 'bg-sunken text-muted-foreground'}`}>
       {label}
     </span>
   );
@@ -78,7 +78,7 @@ export default async function PlatformGuardrailsPage() {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Globe size={14} className="text-indigo-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Layer 1 — Global Rules</h3>
+          <h3 className="text-sm font-semibold text-text">Layer 1 — Global Rules</h3>
           <span className="ml-auto text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">
             Every bot · Every client
           </span>
@@ -99,10 +99,10 @@ export default async function PlatformGuardrailsPage() {
       {/* ── Divider ─────────────────────────────────────────────────────────── */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200" />
+          <div className="w-full border-t border-line" />
         </div>
         <div className="relative flex justify-center">
-          <span className="px-3 bg-slate-50 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+          <span className="px-3 bg-sunken text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
             Bot-Type Overrides
           </span>
         </div>
@@ -111,9 +111,9 @@ export default async function PlatformGuardrailsPage() {
       {/* ── Layer 2: Per-bot-type ─────────────────────────────────────────── */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <ShieldCheck size={14} className="text-slate-500" />
-          <h3 className="text-sm font-semibold text-slate-700">Layer 2 — Bot-Type Defaults</h3>
-          <span className="ml-auto text-[11px] text-slate-400">Applied after global · before per-client</span>
+          <ShieldCheck size={14} className="text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-text">Layer 2 — Bot-Type Defaults</h3>
+          <span className="ml-auto text-[11px] text-muted-foreground">Applied after global · before per-client</span>
         </div>
 
         <div className="space-y-3">
@@ -125,10 +125,10 @@ export default async function PlatformGuardrailsPage() {
 
             const header = (
               <div className="flex items-center gap-3 w-full min-w-0">
-                <ShieldCheck size={14} className="text-slate-400 shrink-0" />
+                <ShieldCheck size={14} className="text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-slate-800">{p.name}</span>
+                    <span className="text-sm font-semibold text-text">{p.name}</span>
                     {p.description && (
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badge}`}>
                         {p.description}
@@ -157,13 +157,13 @@ export default async function PlatformGuardrailsPage() {
         </div>
 
         {activeProducts.length === 0 && (
-          <p className="text-sm text-slate-400 text-center py-6">
+          <p className="text-sm text-muted-foreground text-center py-6">
             No active products. Add a product on the Products page first.
           </p>
         )}
 
         {activeProducts.length > 0 && (
-          <p className="text-[11px] text-slate-400 mt-3 text-center">
+          <p className="text-[11px] text-muted-foreground mt-3 text-center">
             Click a bot card to expand and configure its defaults. Changes apply to all clients using that bot type.
           </p>
         )}

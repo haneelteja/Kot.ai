@@ -37,9 +37,9 @@ function TagInput({
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {value.map(tag => (
-            <span key={tag} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full">
+            <span key={tag} className="inline-flex items-center gap-1 text-xs bg-sunken text-text px-2.5 py-1 rounded-full">
               {tag}
-              <button type="button" onClick={() => onChange(value.filter(t => t !== tag))} className="text-slate-400 hover:text-slate-700 leading-none">×</button>
+              <button type="button" onClick={() => onChange(value.filter(t => t !== tag))} className="text-muted-foreground hover:text-text leading-none">×</button>
             </span>
           ))}
         </div>

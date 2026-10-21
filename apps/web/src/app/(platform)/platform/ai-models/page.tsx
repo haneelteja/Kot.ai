@@ -84,10 +84,10 @@ export default async function PlatformAiModelsPage() {
       </div>
 
       {/* ── Platform Default (Level 4 fallback) ─────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100 bg-indigo-50/40">
+      <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line bg-indigo-50/40">
           <Cpu size={15} className="text-indigo-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Platform Default</h3>
+          <h3 className="text-sm font-semibold text-text">Platform Default</h3>
           <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">
             Ultimate fallback · All bots · All clients
           </span>
@@ -107,15 +107,15 @@ export default async function PlatformAiModelsPage() {
       {/* ── Platform Bot-type Defaults (Level 3 fallback) ───────────────── */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Cpu size={14} className="text-slate-500" />
-          <h3 className="text-sm font-semibold text-slate-700">Bot-Type Defaults</h3>
-          <span className="ml-auto text-[11px] text-slate-400">Override per bot type · applies before platform default</span>
+          <Cpu size={14} className="text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-text">Bot-Type Defaults</h3>
+          <span className="ml-auto text-[11px] text-muted-foreground">Override per bot type · applies before platform default</span>
         </div>
         <div className="space-y-3">
           {BOT_TYPES.map(bt => (
-            <div key={bt.slug} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
-                <h4 className="text-sm font-semibold text-slate-800">{bt.name}</h4>
+            <div key={bt.slug} className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
+                <h4 className="text-sm font-semibold text-text">{bt.name}</h4>
                 <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full border ${bt.badge}`}>
                   {bt.desc}
                 </span>

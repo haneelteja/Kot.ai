@@ -33,14 +33,14 @@ export default async function PlatformAuditPage() {
           <ClipboardList size={18} className="text-indigo-500" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Platform Audit Log</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-xl font-bold text-text">Platform Audit Log</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
             All actions taken by platform managers across all clients — last 500 events.
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-5">
+      <div className="bg-white rounded-2xl border border-line p-5">
         {error ? (
           <p className="text-sm text-red-500">{error}</p>
         ) : (

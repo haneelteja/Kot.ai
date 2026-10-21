@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { CreditCard, AlertTriangle, Clock } from 'lucide-react';
 
 const PLAN_BADGE: Record<string, string> = {
-  starter: 'bg-slate-100 text-slate-600 ring-slate-200',
+  starter: 'bg-sunken text-muted-foreground ring-neutral',
   growth:  'bg-violet-50 text-violet-700 ring-violet-200',
-  scale:   'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  scale:   'bg-done-bg text-done ring-done',
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  active:    'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  active:    'bg-done-bg text-done ring-done',
   trial:     'bg-sky-50 text-sky-700 ring-sky-200',
   suspended: 'bg-red-50 text-red-700 ring-red-200',
 };
@@ -76,21 +76,21 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Billing Overview</h2>
-        <p className="text-sm text-slate-500 mt-0.5">Subscription and plan status across all clients</p>
+        <h2 className="text-xl font-bold text-text">Billing Overview</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Subscription and plan status across all clients</p>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Clients',  value: String(tenants?.length ?? 0),     color: 'text-slate-700'   },
-          { label: 'Active',         value: String(planCounts.starter + planCounts.growth + planCounts.scale), color: 'text-emerald-700' },
+          { label: 'Total Clients',  value: String(tenants?.length ?? 0),     color: 'text-text'   },
+          { label: 'Active',         value: String(planCounts.starter + planCounts.growth + planCounts.scale), color: 'text-done' },
           { label: 'On Trial',       value: String((tenants ?? []).filter(t => t.status === 'trial').length),  color: 'text-sky-700'     },
           { label: 'Suspended',      value: String((tenants ?? []).filter(t => t.status === 'suspended').length), color: 'text-red-600' },
         ].map(s => (
-          <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
+          <div key={s.label} className="bg-white border border-line rounded-xl p-4">
             <p className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
-            <p className="text-xs font-medium text-slate-400 mt-0.5">{s.label}</p>
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -109,13 +109,13 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
       )}
 
       {/* Plan distribution */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5">
-        <p className="text-sm font-semibold text-slate-700 mb-3">Active Plan Distribution</p>
+      <div className="bg-white border border-line rounded-2xl p-5">
+        <p className="text-sm font-semibold text-text mb-3">Active Plan Distribution</p>
         <div className="grid grid-cols-3 gap-3">
           {(['starter', 'growth', 'scale'] as const).map(p => (
             <div key={p} className={`rounded-xl border p-3 ${PLAN_BADGE[p].replace('ring-', 'border-').replace('ring', 'border')}`}>
-              <p className="text-lg font-bold tabular-nums text-slate-800">{planCounts[p]}</p>
-              <p className="text-xs font-medium text-slate-500 capitalize">{p}</p>
+              <p className="text-lg font-bold tabular-nums text-text">{planCounts[p]}</p>
+              <p className="text-xs font-medium text-muted-foreground capitalize">{p}</p>
             </div>
           ))}
         </div>
@@ -130,20 +130,20 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
             className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors capitalize ${
               (s === 'all' && !filterStatus) || filterStatus === s
                 ? 'bg-indigo-100 text-indigo-700 border-indigo-300'
-                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                : 'bg-white text-muted-foreground border-line hover:bg-sunken'
             }`}
           >
             {s}
           </Link>
         ))}
-        <span className="text-xs text-slate-400 ml-1">{filtered.length} clients</span>
+        <span className="text-xs text-muted-foreground ml-1">{filtered.length} clients</span>
       </div>
 
       {/* Clients table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="divide-y divide-slate-100">
+      <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
+        <div className="divide-y divide-line">
           {filtered.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-12">No clients match this filter.</p>
+            <p className="text-sm text-muted-foreground text-center py-12">No clients match this filter.</p>
           ) : filtered.map(t => {
             const tSubs   = subsMap.get(t.id) ?? [];
             const tTrials = trialsMap.get(t.id) ?? [];
@@ -156,11 +156,11 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
               <Link
                 key={t.id}
                 href={`/platform/clients/${t.id}`}
-                className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors group"
+                className="flex items-center gap-4 px-6 py-4 hover:bg-sunken transition-colors group"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">{t.name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{botCount} active bot{botCount !== 1 ? 's' : ''}</p>
+                  <p className="text-sm font-semibold text-text group-hover:text-indigo-700 transition-colors">{t.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{botCount} active bot{botCount !== 1 ? 's' : ''}</p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
@@ -171,7 +171,7 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
                     </span>
                   )}
                   {nextBill && (
-                    <span className="text-[10px] text-slate-400 bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5">
+                    <span className="text-[10px] text-muted-foreground bg-sunken border border-line rounded-full px-2 py-0.5">
                       Next: {new Date(nextBill).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                     </span>
                   )}

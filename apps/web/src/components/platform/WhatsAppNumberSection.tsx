@@ -87,50 +87,50 @@ function NumberForm({
   return (
     <form
       onSubmit={e => { e.preventDefault(); handleSave(); }}
-      className="mt-3 space-y-3 border-t border-slate-100 pt-3"
+      className="mt-3 space-y-3 border-t border-line pt-3"
     >
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Provider</label>
+          <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Provider</label>
           <select
             value={provider}
             onChange={e => setProvider(e.target.value as WaProvider)}
-            className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+            className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
           >
             {PROVIDERS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Display Label</label>
+          <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Display Label</label>
           <input
             type="text"
             value={label}
             onChange={e => setLabel(e.target.value)}
             placeholder="e.g. India Support Line"
-            className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Phone Number</label>
+        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Phone Number</label>
         <input
           type="text"
           value={phoneNumber}
           onChange={e => setPhoneNumber(e.target.value)}
           placeholder="+91 9999999999"
-          className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
+          className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
         />
       </div>
 
       {provider === 'meta_cloud' && (
         <div className="space-y-2.5">
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Phone Number ID</label>
-            <input type="text" value={phoneNumId} onChange={e => setPhoneNumId(e.target.value)} placeholder="From Meta Business dashboard" className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Phone Number ID</label>
+            <input type="text" value={phoneNumId} onChange={e => setPhoneNumId(e.target.value)} placeholder="From Meta Business dashboard" className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Access Token</label>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Access Token</label>
             <div className="relative">
               <input
                 type={showSecret ? 'text' : 'password'}
@@ -138,12 +138,12 @@ function NumberForm({
                 onChange={e => setAccessToken(e.target.value)}
                 placeholder="Permanent access token"
                 autoComplete="new-password"
-                className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
+                className="w-full text-xs border border-line rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
               />
               <button
                 type="button"
                 onClick={() => setShowSecret(s => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors"
                 tabIndex={-1}
               >
                 {showSecret ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -151,18 +151,18 @@ function NumberForm({
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Verify Token</label>
-            <input type="text" value={verifyToken} onChange={e => setVerifyToken(e.target.value)} placeholder="Your chosen webhook verify token" className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Verify Token</label>
+            <input type="text" value={verifyToken} onChange={e => setVerifyToken(e.target.value)} placeholder="Your chosen webhook verify token" className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
           </div>
         </div>
       )}
 
       {provider === 'interakt' && (
         <div>
-          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">API Key</label>
+          <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">API Key</label>
           <div className="relative">
-            <input type={showSecret ? 'text' : 'password'} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Interakt API key" autoComplete="new-password" className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
-            <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+            <input type={showSecret ? 'text' : 'password'} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Interakt API key" autoComplete="new-password" className="w-full text-xs border border-line rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
+            <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors" tabIndex={-1}>
               {showSecret ? <EyeOff size={13} /> : <Eye size={13} />}
             </button>
           </div>
@@ -172,14 +172,14 @@ function NumberForm({
       {provider === 'wati' && (
         <div className="space-y-2.5">
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">API Endpoint</label>
-            <input type="text" value={apiEndpoint} onChange={e => setApiEndpoint(e.target.value)} placeholder="https://live-server.wati.io" className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">API Endpoint</label>
+            <input type="text" value={apiEndpoint} onChange={e => setApiEndpoint(e.target.value)} placeholder="https://live-server.wati.io" className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">API Token</label>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">API Token</label>
             <div className="relative">
-              <input type={showSecret ? 'text' : 'password'} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="WATI API token" autoComplete="new-password" className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
-              <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+              <input type={showSecret ? 'text' : 'password'} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="WATI API token" autoComplete="new-password" className="w-full text-xs border border-line rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
+              <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors" tabIndex={-1}>
                 {showSecret ? <EyeOff size={13} /> : <Eye size={13} />}
               </button>
             </div>
@@ -190,17 +190,17 @@ function NumberForm({
       {provider === 'gupshup' && (
         <div className="space-y-2.5">
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">API Key</label>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">API Key</label>
             <div className="relative">
-              <input type={showSecret ? 'text' : 'password'} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Gupshup API key" autoComplete="new-password" className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
-              <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+              <input type={showSecret ? 'text' : 'password'} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Gupshup API key" autoComplete="new-password" className="w-full text-xs border border-line rounded-lg px-2.5 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
+              <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors" tabIndex={-1}>
                 {showSecret ? <EyeOff size={13} /> : <Eye size={13} />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">App Name</label>
-            <input type="text" value={appName} onChange={e => setAppName(e.target.value)} placeholder="Gupshup app name" className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">App Name</label>
+            <input type="text" value={appName} onChange={e => setAppName(e.target.value)} placeholder="Gupshup app name" className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono" />
           </div>
         </div>
       )}
@@ -216,7 +216,7 @@ function NumberForm({
           <Check size={12} />
           {pending ? 'Saving…' : saved ? 'Saved!' : 'Save'}
         </button>
-        <button type="button" onClick={onDone} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+        <button type="button" onClick={onDone} className="text-xs text-muted-foreground hover:text-text transition-colors">
           Cancel
         </button>
       </div>
@@ -232,7 +232,7 @@ export function WhatsAppNumberSection({ tenantId, activeBots, waNumbers }: Props
   );
 
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-line">
       {activeBots.map(bot => {
         const meta    = BOT_META[bot.product_type];
         if (!meta) return null;
@@ -248,12 +248,12 @@ export function WhatsAppNumberSection({ tenantId, activeBots, waNumbers }: Props
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-semibold ${meta.color}`}>{meta.name}</p>
                 {num ? (
-                  <p className="text-xs text-slate-500 font-mono truncate">
+                  <p className="text-xs text-muted-foreground font-mono truncate">
                     {num.label ? `${num.label} · ` : ''}{num.phone_number}
-                    <span className="ml-2 text-[10px] text-slate-400 font-sans capitalize">{num.provider.replace('_', ' ')}</span>
+                    <span className="ml-2 text-[10px] text-muted-foreground font-sans capitalize">{num.provider.replace('_', ' ')}</span>
                   </p>
                 ) : (
-                  <p className="text-xs text-slate-400">Not configured</p>
+                  <p className="text-xs text-muted-foreground">Not configured</p>
                 )}
               </div>
               <button
@@ -283,7 +283,7 @@ export function WhatsAppNumberSection({ tenantId, activeBots, waNumbers }: Props
       })}
 
       {activeBots.length === 0 && (
-        <p className="text-xs text-slate-400 py-4">No active bots — assign products above first.</p>
+        <p className="text-xs text-muted-foreground py-4">No active bots — assign products above first.</p>
       )}
     </div>
   );

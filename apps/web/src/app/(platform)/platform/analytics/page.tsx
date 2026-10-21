@@ -19,14 +19,14 @@ const BOT_META: Record<string, { name: string; color: string; bg: string; border
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  open:       'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  open:       'bg-done-bg text-done ring-done',
   escalated:  'bg-red-50 text-red-700 ring-red-200',
-  resolved:   'bg-slate-100 text-slate-600 ring-slate-200',
+  resolved:   'bg-sunken text-muted-foreground ring-neutral',
   bot_paused: 'bg-amber-50 text-amber-700 ring-amber-200',
 };
 
 const PLAN_META: Record<string, { label: string; color: string; bg: string }> = {
-  starter: { label: 'Starter', color: 'text-slate-600',  bg: 'bg-slate-100'  },
+  starter: { label: 'Starter', color: 'text-muted-foreground',  bg: 'bg-sunken'  },
   growth:  { label: 'Growth',  color: 'text-indigo-600', bg: 'bg-indigo-50'  },
   scale:   { label: 'Scale',   color: 'text-violet-600', bg: 'bg-violet-50'  },
 };
@@ -216,18 +216,18 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Platform Analytics</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Aggregate metrics across all tenants</p>
+          <h2 className="text-xl font-bold text-text">Platform Analytics</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Aggregate metrics across all tenants</p>
         </div>
-        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-sunken rounded-lg p-1">
           {RANGES.map(r => (
             <Link
               key={r.value}
               href={`/platform/analytics?range=${r.value}`}
               className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
                 range === r.value
-                  ? 'bg-white text-slate-800 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-text shadow-sm'
+                  : 'text-muted-foreground hover:text-text'
               }`}
             >
               {r.label}
@@ -238,20 +238,20 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
 
       {/* Top-line KPIs — WhatsApp */}
       <div>
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">WhatsApp</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">WhatsApp</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Conversations',  value: fmtNum(totalConvs ?? 0),      icon: MessageSquare, color: 'text-indigo-600', bg: 'bg-indigo-50'  },
-            { label: 'Messages',       value: fmtNum(totalMessages ?? 0),    icon: TrendingUp,    color: 'text-emerald-600',bg: 'bg-emerald-50' },
+            { label: 'Messages',       value: fmtNum(totalMessages ?? 0),    icon: TrendingUp,    color: 'text-done',bg: 'bg-done-bg' },
             { label: 'Escalations',    value: fmtNum(totalEscalations ?? 0), icon: AlertCircle,   color: 'text-red-500',   bg: 'bg-red-50'    },
             { label: 'Total Contacts', value: fmtNum(contacts ?? 0),         icon: Users,         color: 'text-violet-600',bg: 'bg-violet-50'  },
           ].map(s => (
-            <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
+            <div key={s.label} className="bg-white border border-line rounded-xl p-4">
               <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center mb-2`}>
                 <s.icon size={15} className={s.color} />
               </div>
-              <p className="text-2xl font-bold tabular-nums text-slate-800">{s.value}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
+              <p className="text-2xl font-bold tabular-nums text-text">{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -259,20 +259,20 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
 
       {/* Top-line KPIs — Voice */}
       <div>
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Voice</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Voice</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Calls Made',    value: fmtNum(totalCalls),                  icon: Phone,         color: 'text-sky-600',    bg: 'bg-sky-50'    },
-            { label: 'Answered',      value: fmtNum(answeredCalls),               icon: Phone,         color: 'text-emerald-600',bg: 'bg-emerald-50' },
+            { label: 'Answered',      value: fmtNum(answeredCalls),               icon: Phone,         color: 'text-done',bg: 'bg-done-bg' },
             { label: 'Answer Rate',   value: `${answerRate}%`,                    icon: TrendingUp,    color: 'text-indigo-600', bg: 'bg-indigo-50'  },
             { label: 'Total Cost',    value: `₹${totalCostINR.toFixed(0)}`,       icon: IndianRupee,   color: 'text-amber-600',  bg: 'bg-amber-50'   },
           ].map(s => (
-            <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
+            <div key={s.label} className="bg-white border border-line rounded-xl p-4">
               <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center mb-2`}>
                 <s.icon size={15} className={s.color} />
               </div>
-              <p className="text-2xl font-bold tabular-nums text-slate-800">{s.value}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
+              <p className="text-2xl font-bold tabular-nums text-text">{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -280,20 +280,20 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
 
       {/* Top-line KPIs — Campaigns */}
       <div>
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Campaigns</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Campaigns</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Total Campaigns', value: fmtNum(totalCampaigns),     icon: Megaphone, color: 'text-violet-600', bg: 'bg-violet-50'  },
             { label: 'Contacts Reached',value: fmtNum(totalCampContacts),  icon: Users,     color: 'text-indigo-600', bg: 'bg-indigo-50'  },
-            { label: 'WA Sent',         value: fmtNum(totalWaSent),        icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'WA Sent',         value: fmtNum(totalWaSent),        icon: MessageSquare, color: 'text-done', bg: 'bg-done-bg' },
             { label: 'Calls Initiated', value: fmtNum(totalCallsMade),     icon: Phone,     color: 'text-sky-600',    bg: 'bg-sky-50'     },
           ].map(s => (
-            <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
+            <div key={s.label} className="bg-white border border-line rounded-xl p-4">
               <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center mb-2`}>
                 <s.icon size={15} className={s.color} />
               </div>
-              <p className="text-2xl font-bold tabular-nums text-slate-800">{s.value}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
+              <p className="text-2xl font-bold tabular-nums text-text">{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -302,15 +302,15 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
       {/* Conversation health */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Open',         value: fmtNum(openConvs ?? 0),      sub: 'conversations', color: 'text-emerald-700' },
+          { label: 'Open',         value: fmtNum(openConvs ?? 0),      sub: 'conversations', color: 'text-done' },
           { label: 'Escalated',    value: fmtNum(escalatedConvs ?? 0), sub: 'conversations', color: 'text-red-600'     },
           { label: 'Resolution',   value: `${resolutionRate}%`,         sub: 'rate',          color: 'text-indigo-600'  },
           { label: 'Escalation',   value: `${escalationRate}%`,         sub: 'rate',          color: 'text-amber-600'   },
         ].map(s => (
-          <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
+          <div key={s.label} className="bg-white border border-line rounded-xl p-4">
             <p className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">{s.label}</p>
-            <p className="text-[10px] text-slate-400">{s.sub}</p>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">{s.label}</p>
+            <p className="text-[10px] text-muted-foreground">{s.sub}</p>
           </div>
         ))}
       </div>
@@ -318,10 +318,10 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
       {/* Three-col: Bot breakdown + Voice breakdown + Escalation summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Bot breakdown */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+        <div className="bg-white border border-line rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Bot size={14} className="text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Conversations by Bot</p>
+            <Bot size={14} className="text-muted-foreground" />
+            <p className="text-sm font-semibold text-text">Conversations by Bot</p>
           </div>
           <div className="space-y-2.5">
             {Object.entries(BOT_META).map(([slug, meta]) => {
@@ -331,11 +331,11 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
                 <div key={slug}>
                   <div className="flex items-center justify-between mb-1">
                     <p className={`text-xs font-medium ${meta.color}`}>{meta.name}</p>
-                    <p className="text-xs font-semibold text-slate-700 tabular-nums">
-                      {fmtNum(count)} <span className="text-slate-400 font-normal">({pct}%)</span>
+                    <p className="text-xs font-semibold text-text tabular-nums">
+                      {fmtNum(count)} <span className="text-muted-foreground font-normal">({pct}%)</span>
                     </p>
                   </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-sunken rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${meta.bg.replace('-50', '-400')}`}
                       style={{ width: `${pct}%` }}
@@ -345,65 +345,65 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
               );
             })}
             {(totalConvs ?? 0) === 0 && (
-              <p className="text-xs text-slate-400 text-center py-4">No conversations in this period.</p>
+              <p className="text-xs text-muted-foreground text-center py-4">No conversations in this period.</p>
             )}
           </div>
         </div>
 
         {/* Voice breakdown */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+        <div className="bg-white border border-line rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Phone size={14} className="text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Voice Calls</p>
+            <Phone size={14} className="text-muted-foreground" />
+            <p className="text-sm font-semibold text-text">Voice Calls</p>
           </div>
           <div className="space-y-3">
             {[
-              { label: 'Total calls',   value: fmtNum(totalCalls),                            color: 'text-slate-800'   },
-              { label: 'Answered',      value: `${fmtNum(answeredCalls)} (${answerRate}%)`,   color: 'text-emerald-700' },
+              { label: 'Total calls',   value: fmtNum(totalCalls),                            color: 'text-text'   },
+              { label: 'Answered',      value: `${fmtNum(answeredCalls)} (${answerRate}%)`,   color: 'text-done' },
               { label: 'Voicemail',     value: fmtNum(voicemailCalls),                        color: 'text-amber-600'   },
               { label: 'Failed / N/A',  value: fmtNum(failedCalls),                           color: 'text-red-600'     },
-              { label: 'Avg duration',  value: avgDurationS ? fmtDuration(avgDurationS) : '—', color: 'text-slate-800' },
-              { label: 'From escalation', value: fmtNum(escalationCalls),                     color: 'text-slate-500'   },
-              { label: 'From campaigns',  value: fmtNum(campaignCalls),                       color: 'text-slate-500'   },
+              { label: 'Avg duration',  value: avgDurationS ? fmtDuration(avgDurationS) : '—', color: 'text-text' },
+              { label: 'From escalation', value: fmtNum(escalationCalls),                     color: 'text-muted-foreground'   },
+              { label: 'From campaigns',  value: fmtNum(campaignCalls),                       color: 'text-muted-foreground'   },
               { label: 'Total cost',    value: `₹${totalCostINR.toFixed(2)}`,                 color: 'text-amber-700'   },
             ].map(row => (
-              <div key={row.label} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                <p className="text-xs text-slate-500">{row.label}</p>
+              <div key={row.label} className="flex items-center justify-between py-1.5 border-b border-line last:border-0">
+                <p className="text-xs text-muted-foreground">{row.label}</p>
                 <p className={`text-xs font-bold tabular-nums ${row.color}`}>{row.value}</p>
               </div>
             ))}
             {totalCalls === 0 && (
-              <p className="text-xs text-slate-400 text-center py-4">No calls in this period.</p>
+              <p className="text-xs text-muted-foreground text-center py-4">No calls in this period.</p>
             )}
           </div>
         </div>
 
         {/* Escalation summary */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+        <div className="bg-white border border-line rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <AlertCircle size={14} className="text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Escalations</p>
+            <AlertCircle size={14} className="text-muted-foreground" />
+            <p className="text-sm font-semibold text-text">Escalations</p>
           </div>
           <div className="space-y-3">
             {[
-              { label: 'Total',    value: totalEscalations ?? 0,   color: 'text-slate-800' },
+              { label: 'Total',    value: totalEscalations ?? 0,   color: 'text-text' },
               { label: 'Pending',  value: pendingEscalations ?? 0, color: 'text-red-600'   },
-              { label: 'Resolved', value: (totalEscalations ?? 0) - (pendingEscalations ?? 0), color: 'text-emerald-700' },
+              { label: 'Resolved', value: (totalEscalations ?? 0) - (pendingEscalations ?? 0), color: 'text-done' },
             ].map(row => (
-              <div key={row.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                <p className="text-xs text-slate-500">{row.label}</p>
+              <div key={row.label} className="flex items-center justify-between py-2 border-b border-line last:border-0">
+                <p className="text-xs text-muted-foreground">{row.label}</p>
                 <p className={`text-sm font-bold tabular-nums ${row.color}`}>{fmtNum(row.value)}</p>
               </div>
             ))}
-            <div className="flex items-center justify-between py-2 border-b border-slate-100">
-              <p className="text-xs text-slate-500">Avg messages / conv.</p>
-              <p className="text-sm font-bold tabular-nums text-slate-800">
+            <div className="flex items-center justify-between py-2 border-b border-line">
+              <p className="text-xs text-muted-foreground">Avg messages / conv.</p>
+              <p className="text-sm font-bold tabular-nums text-text">
                 {totalConvs ? ((totalMessages ?? 0) / totalConvs).toFixed(1) : '—'}
               </p>
             </div>
             <div className="flex items-center justify-between py-2">
-              <p className="text-xs text-slate-500">User messages</p>
-              <p className="text-sm font-bold tabular-nums text-slate-800">{fmtNum(userMessages ?? 0)}</p>
+              <p className="text-xs text-muted-foreground">User messages</p>
+              <p className="text-sm font-bold tabular-nums text-text">{fmtNum(userMessages ?? 0)}</p>
             </div>
           </div>
         </div>
@@ -411,66 +411,66 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
 
       {/* Campaign breakdown */}
       {totalCampaigns > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+        <div className="bg-white border border-line rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Megaphone size={14} className="text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Campaign Breakdown</p>
-            <span className="text-xs text-slate-400 ml-auto">{totalCampaigns} total</span>
+            <Megaphone size={14} className="text-muted-foreground" />
+            <p className="text-sm font-semibold text-text">Campaign Breakdown</p>
+            <span className="text-xs text-muted-foreground ml-auto">{totalCampaigns} total</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {/* Status breakdown */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">By Status</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">By Status</p>
               {[
-                { label: 'Running',   value: runningCampaigns,   color: 'text-emerald-700' },
+                { label: 'Running',   value: runningCampaigns,   color: 'text-done' },
                 { label: 'Completed', value: completedCampaigns, color: 'text-indigo-700'  },
-                { label: 'Other',     value: totalCampaigns - runningCampaigns - completedCampaigns, color: 'text-slate-500' },
+                { label: 'Other',     value: totalCampaigns - runningCampaigns - completedCampaigns, color: 'text-muted-foreground' },
               ].map(r => (
                 <div key={r.label} className="flex justify-between">
-                  <p className="text-xs text-slate-500">{r.label}</p>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
                   <p className={`text-xs font-bold ${r.color}`}>{r.value}</p>
                 </div>
               ))}
             </div>
             {/* Channel breakdown */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">By Channel</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">By Channel</p>
               {[
-                { label: 'WhatsApp', value: waCampaigns,    color: 'text-emerald-700' },
+                { label: 'WhatsApp', value: waCampaigns,    color: 'text-done' },
                 { label: 'Voice',    value: voiceCampaigns, color: 'text-sky-700'     },
                 { label: 'Both',     value: bothCampaigns,  color: 'text-violet-700'  },
               ].map(r => (
                 <div key={r.label} className="flex justify-between">
-                  <p className="text-xs text-slate-500">{r.label}</p>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
                   <p className={`text-xs font-bold ${r.color}`}>{r.value}</p>
                 </div>
               ))}
             </div>
             {/* WA stats */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">WhatsApp</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">WhatsApp</p>
               {[
                 { label: 'Sent',    value: fmtNum(totalWaSent)    },
                 { label: 'Replied', value: fmtNum(totalWaReplied) },
                 { label: 'Reply rate', value: totalWaSent ? `${Math.round((totalWaReplied / totalWaSent) * 100)}%` : '—' },
               ].map(r => (
                 <div key={r.label} className="flex justify-between">
-                  <p className="text-xs text-slate-500">{r.label}</p>
-                  <p className="text-xs font-bold text-slate-700">{r.value}</p>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
+                  <p className="text-xs font-bold text-text">{r.value}</p>
                 </div>
               ))}
             </div>
             {/* Voice call stats */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Voice</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Voice</p>
               {[
                 { label: 'Initiated', value: fmtNum(totalCallsMade)    },
                 { label: 'Answered',  value: fmtNum(totalCallsAnswered) },
                 { label: 'Answer rate', value: totalCallsMade ? `${Math.round((totalCallsAnswered / totalCallsMade) * 100)}%` : '—' },
               ].map(r => (
                 <div key={r.label} className="flex justify-between">
-                  <p className="text-xs text-slate-500">{r.label}</p>
-                  <p className="text-xs font-bold text-slate-700">{r.value}</p>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
+                  <p className="text-xs font-bold text-text">{r.value}</p>
                 </div>
               ))}
             </div>
@@ -481,34 +481,34 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
       {/* Tenant leaderboard + Plan distribution */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Leaderboard */}
-        <div className="sm:col-span-2 bg-white border border-slate-200 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
-            <BarChart2 size={14} className="text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Top Clients by Conversations</p>
-            <span className="text-xs text-slate-400 ml-auto">{RANGES.find(r => r.value === range)?.label}</span>
+        <div className="sm:col-span-2 bg-white border border-line rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-line">
+            <BarChart2 size={14} className="text-muted-foreground" />
+            <p className="text-sm font-semibold text-text">Top Clients by Conversations</p>
+            <span className="text-xs text-muted-foreground ml-auto">{RANGES.find(r => r.value === range)?.label}</span>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-line">
             {tenantList.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-10">No data yet.</p>
+              <p className="text-sm text-muted-foreground text-center py-10">No data yet.</p>
             ) : tenantList.map((t, i) => (
               <Link
                 key={t.id}
                 href={`/platform/clients/${t.id}`}
-                className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 transition-colors group"
+                className="flex items-center gap-4 px-5 py-3.5 hover:bg-sunken transition-colors group"
               >
-                <span className="text-xs font-bold text-slate-400 w-5 tabular-nums">{i + 1}</span>
+                <span className="text-xs font-bold text-muted-foreground w-5 tabular-nums">{i + 1}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors truncate">{t.name}</p>
-                  <p className="text-[10px] text-slate-400 capitalize">{t.plan} · {t.status}</p>
+                  <p className="text-sm font-semibold text-text group-hover:text-indigo-700 transition-colors truncate">{t.name}</p>
+                  <p className="text-[10px] text-muted-foreground capitalize">{t.plan} · {t.status}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="w-20 h-1.5 bg-sunken rounded-full overflow-hidden">
                     <div
                       className="h-full bg-indigo-400 rounded-full"
                       style={{ width: tenantList[0].convCount ? `${(t.convCount / tenantList[0].convCount) * 100}%` : '0%' }}
                     />
                   </div>
-                  <p className="text-xs font-bold text-slate-700 tabular-nums w-8 text-right">{fmtNum(t.convCount)}</p>
+                  <p className="text-xs font-bold text-text tabular-nums w-8 text-right">{fmtNum(t.convCount)}</p>
                 </div>
               </Link>
             ))}
@@ -516,15 +516,15 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
         </div>
 
         {/* Plan distribution */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+        <div className="bg-white border border-line rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Users size={14} className="text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Tenant Overview</p>
-            <span className="text-xs text-slate-400 ml-auto">{totalTenants} total</span>
+            <Users size={14} className="text-muted-foreground" />
+            <p className="text-sm font-semibold text-text">Tenant Overview</p>
+            <span className="text-xs text-muted-foreground ml-auto">{totalTenants} total</span>
           </div>
 
           <div className="mb-5">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">By Plan</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">By Plan</p>
             <div className="space-y-2">
               {Object.entries(PLAN_META).map(([plan, meta]) => {
                 const count = planCounts[plan] ?? 0;
@@ -533,11 +533,11 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
                   <div key={plan}>
                     <div className="flex items-center justify-between mb-1">
                       <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${meta.bg} ${meta.color}`}>{meta.label}</span>
-                      <p className="text-xs font-semibold text-slate-700 tabular-nums">{count} <span className="text-slate-400 font-normal">({pct}%)</span></p>
+                      <p className="text-xs font-semibold text-text tabular-nums">{count} <span className="text-muted-foreground font-normal">({pct}%)</span></p>
                     </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-sunken rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${plan === 'starter' ? 'bg-slate-400' : plan === 'growth' ? 'bg-indigo-400' : 'bg-violet-400'}`}
+                        className={`h-full rounded-full ${plan === 'starter' ? 'bg-sunken' : plan === 'growth' ? 'bg-indigo-400' : 'bg-violet-400'}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -548,31 +548,31 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
           </div>
 
           <div>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">By Status</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">By Status</p>
             <div className="space-y-1.5">
               {[
-                { label: 'Active',    value: statusCounts.active    ?? 0, color: 'text-emerald-700' },
+                { label: 'Active',    value: statusCounts.active    ?? 0, color: 'text-done' },
                 { label: 'Trial',     value: statusCounts.trial     ?? 0, color: 'text-amber-600'   },
                 { label: 'Suspended', value: statusCounts.suspended ?? 0, color: 'text-red-600'     },
               ].map(r => (
                 <div key={r.label} className="flex justify-between items-center">
-                  <p className="text-xs text-slate-500">{r.label}</p>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
                   <p className={`text-xs font-bold tabular-nums ${r.color}`}>{r.value}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">Growth & AI</p>
+          <div className="mt-4 pt-4 border-t border-line">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Growth & AI</p>
             <div className="space-y-1.5">
               {[
                 { label: `New clients (period)`, value: newTenants ?? 0, color: 'text-indigo-700' },
                 { label: 'Custom LLM clients',   value: tenantsWithCustomLlm,  color: 'text-violet-700' },
-                { label: 'Active KB docs',        value: kbDocs ?? 0,           color: 'text-emerald-700' },
+                { label: 'Active KB docs',        value: kbDocs ?? 0,           color: 'text-done' },
               ].map(r => (
                 <div key={r.label} className="flex justify-between items-center">
-                  <p className="text-xs text-slate-500">{r.label}</p>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
                   <p className={`text-xs font-bold tabular-nums ${r.color}`}>{fmtNum(r.value)}</p>
                 </div>
               ))}
@@ -580,13 +580,13 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
           </div>
 
           {Object.keys(llmProviderCounts).length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">LLM Providers</p>
+            <div className="mt-4 pt-4 border-t border-line">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">LLM Providers</p>
               <div className="space-y-1.5">
                 {Object.entries(llmProviderCounts).map(([provider, count]) => (
                   <div key={provider} className="flex justify-between items-center">
-                    <p className="text-xs text-slate-500 capitalize">{provider}</p>
-                    <p className="text-xs font-bold tabular-nums text-slate-700">{count} config{count !== 1 ? 's' : ''}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{provider}</p>
+                    <p className="text-xs font-bold tabular-nums text-text">{count} config{count !== 1 ? 's' : ''}</p>
                   </div>
                 ))}
               </div>
@@ -596,25 +596,25 @@ export default async function PlatformAnalyticsPage({ searchParams }: { searchPa
       </div>
 
       {/* Recent conversations */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
-          <MessageSquare size={14} className="text-slate-400" />
-          <p className="text-sm font-semibold text-slate-700">Recent Conversations</p>
+      <div className="bg-white border border-line rounded-2xl overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-line">
+          <MessageSquare size={14} className="text-muted-foreground" />
+          <p className="text-sm font-semibold text-text">Recent Conversations</p>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-line">
           {(recentConvs ?? []).length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-10">No conversations yet.</p>
+            <p className="text-sm text-muted-foreground text-center py-10">No conversations yet.</p>
           ) : (recentConvs ?? []).map(c => {
             const tenant  = (c.tenants as unknown as { name: string } | null);
             const botMeta = BOT_META[c.product_type];
             return (
               <div key={c.id} className="flex items-center gap-4 px-5 py-3.5">
-                <div className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${botMeta?.bg ?? 'bg-slate-50'} ${botMeta?.color ?? 'text-slate-600'} border ${botMeta?.border ?? 'border-slate-200'}`}>
+                <div className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${botMeta?.bg ?? 'bg-sunken'} ${botMeta?.color ?? 'text-muted-foreground'} border ${botMeta?.border ?? 'border-line'}`}>
                   {botMeta?.name ?? c.product_type}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-700 truncate">{tenant?.name ?? '—'}</p>
-                  <p className="text-[10px] text-slate-400">{new Date(c.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}</p>
+                  <p className="text-xs font-semibold text-text truncate">{tenant?.name ?? '—'}</p>
+                  <p className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}</p>
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 capitalize ${STATUS_BADGE[c.status] ?? STATUS_BADGE.open}`}>
                   {c.status.replace('_', ' ')}

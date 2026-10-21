@@ -63,7 +63,7 @@ export function ProductDefaultsForm({
             Default AI Model
           </label>
           {model && (
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${isFree ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-slate-100 text-slate-500'}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${isFree ? 'bg-done-bg text-done ring-1 ring-done' : 'bg-sunken text-muted-foreground'}`}>
               {isFree ? 'Free tier' : 'Paid'}
             </span>
           )}
@@ -88,10 +88,10 @@ export function ProductDefaultsForm({
       </div>
 
       {/* Helper for model name format */}
-      <div className="flex items-start gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
-        <Info size={12} className="text-slate-400 shrink-0 mt-0.5" />
-        <p className="text-[11px] text-slate-500 leading-relaxed">
-          OpenRouter format: <code className="font-mono bg-slate-100 px-1 rounded">provider/model-name</code> — add <code className="font-mono bg-slate-100 px-1 rounded">:free</code> suffix for free-tier models.
+      <div className="flex items-start gap-2 bg-sunken border border-line rounded-lg px-3 py-2.5">
+        <Info size={12} className="text-muted-foreground shrink-0 mt-0.5" />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          OpenRouter format: <code className="font-mono bg-sunken px-1 rounded">provider/model-name</code> — add <code className="font-mono bg-sunken px-1 rounded">:free</code> suffix for free-tier models.
           Your current platform API key is used for all models configured here.
         </p>
       </div>

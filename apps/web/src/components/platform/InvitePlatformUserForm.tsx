@@ -36,12 +36,12 @@ export function InvitePlatformUserForm() {
           value={email}
           onChange={e => setEmail(e.target.value)}
           placeholder="colleague@yourcompany.com"
-          className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
         <select
           value={role}
           onChange={e => setRole(e.target.value as 'manager' | 'admin')}
-          className="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+          className="text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
         >
           <option value="admin">Admin</option>
           <option value="manager">Manager</option>
@@ -59,20 +59,20 @@ export function InvitePlatformUserForm() {
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {sent && (
-        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
-          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-2 bg-done-bg border border-done rounded-lg px-3 py-2.5">
+          <div className="w-5 h-5 rounded-full bg-done flex items-center justify-center shrink-0">
             <Check size={11} className="text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-emerald-800">Invite sent!</p>
-            <p className="text-xs text-emerald-600">They&apos;ll receive a magic-link email to set up their account.</p>
+            <p className="text-sm font-semibold text-done">Invite sent!</p>
+            <p className="text-xs text-done">They&apos;ll receive a magic-link email to set up their account.</p>
           </div>
         </div>
       )}
 
-      <div className="flex items-start gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
-        <Mail size={11} className="text-slate-400 shrink-0 mt-0.5" />
-        <p className="text-[11px] text-slate-500">
+      <div className="flex items-start gap-2 bg-sunken border border-line rounded-lg px-3 py-2">
+        <Mail size={11} className="text-muted-foreground shrink-0 mt-0.5" />
+        <p className="text-[11px] text-muted-foreground">
           <strong>Admin</strong> — can view and configure everything.{' '}
           <strong>Manager</strong> — full access including inviting other platform users.
         </p>

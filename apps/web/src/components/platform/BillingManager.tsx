@@ -13,13 +13,13 @@ import {
 } from '@/app/actions/billing';
 
 const PLAN_META: Record<TenantPlan, { name: string; color: string; bg: string; border: string; ring: string; bots: number; conversations: string }> = {
-  starter: { name: 'Starter', color: 'text-slate-700',  bg: 'bg-slate-50',   border: 'border-slate-300',  ring: 'ring-slate-400',  bots: 1, conversations: '500 / mo' },
+  starter: { name: 'Starter', color: 'text-text',  bg: 'bg-sunken',   border: 'border-line',  ring: 'ring-neutral',  bots: 1, conversations: '500 / mo' },
   growth:  { name: 'Growth',  color: 'text-violet-700', bg: 'bg-violet-50',  border: 'border-violet-300', ring: 'ring-violet-400', bots: 2, conversations: '2,000 / mo' },
-  scale:   { name: 'Scale',   color: 'text-emerald-700',bg: 'bg-emerald-50', border: 'border-emerald-300',ring: 'ring-emerald-400',bots: 3, conversations: 'Unlimited' },
+  scale:   { name: 'Scale',   color: 'text-done',bg: 'bg-done-bg', border: 'border-done',ring: 'ring-done',bots: 3, conversations: 'Unlimited' },
 };
 
 const STATUS_META: Record<TenantStatus, { label: string; bg: string; text: string; border: string }> = {
-  active:    { label: 'Active',    bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-300' },
+  active:    { label: 'Active',    bg: 'bg-done-bg', text: 'text-done', border: 'border-done' },
   trial:     { label: 'Trial',     bg: 'bg-sky-50',     text: 'text-sky-700',     border: 'border-sky-300'     },
   suspended: { label: 'Suspended', bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-300'     },
 };
@@ -114,9 +114,9 @@ function SubscriptionCard({
   }
 
   return (
-    <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+    <div className="border border-line rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className={`text-sm font-semibold ${meta?.color ?? 'text-slate-700'}`}>{meta?.name ?? bot.product_type}</p>
+        <p className={`text-sm font-semibold ${meta?.color ?? 'text-text'}`}>{meta?.name ?? bot.product_type}</p>
         <button
           type="button"
           onClick={() => { setEditing(e => !e); setError(null); }}
@@ -129,16 +129,16 @@ function SubscriptionCard({
       {!editing ? (
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wide">Tier</p>
-            <p className="font-medium text-slate-700 capitalize mt-0.5">{sub?.tier ?? '—'}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Tier</p>
+            <p className="font-medium text-text capitalize mt-0.5">{sub?.tier ?? '—'}</p>
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wide">Cycle</p>
-            <p className="font-medium text-slate-700 capitalize mt-0.5">{sub?.billing_cycle ?? '—'}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Cycle</p>
+            <p className="font-medium text-text capitalize mt-0.5">{sub?.billing_cycle ?? '—'}</p>
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wide">Next Bill</p>
-            <p className="font-medium text-slate-700 mt-0.5" suppressHydrationWarning>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Next Bill</p>
+            <p className="font-medium text-text mt-0.5" suppressHydrationWarning>
               {sub?.next_billing_date ? new Date(sub.next_billing_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}
             </p>
           </div>
@@ -147,22 +147,22 @@ function SubscriptionCard({
         <div className="space-y-2.5">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Tier</label>
-              <select value={tier} onChange={e => setTier(e.target.value)} className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white capitalize">
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Tier</label>
+              <select value={tier} onChange={e => setTier(e.target.value)} className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white capitalize">
                 {['starter', 'growth', 'scale'].map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Billing Cycle</label>
-              <select value={cycle} onChange={e => setCycle(e.target.value)} className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white">
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Billing Cycle</label>
+              <select value={cycle} onChange={e => setCycle(e.target.value)} className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white">
                 <option value="monthly">Monthly</option>
                 <option value="annual">Annual</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Next Billing Date</label>
-            <input type="date" value={nextBill} onChange={e => setNextBill(e.target.value)} className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Next Billing Date</label>
+            <input type="date" value={nextBill} onChange={e => setNextBill(e.target.value)} className="w-full text-xs border border-line rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button type="button" onClick={saveSub} disabled={pending} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
@@ -172,12 +172,12 @@ function SubscriptionCard({
       )}
 
       {/* Free trial */}
-      <div className="border-t border-slate-100 pt-2.5">
+      <div className="border-t border-line pt-2.5">
         {activeTrial ? (
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-semibold text-sky-700">Active Trial</p>
-              <p className="text-[10px] text-slate-400 mt-0.5" suppressHydrationWarning>
+              <p className="text-[10px] text-muted-foreground mt-0.5" suppressHydrationWarning>
                 Ends {new Date(activeTrial.ends_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                 {' · '}{activeTrial.allowed_model.split('-').slice(0, 2).join(' ')}
               </p>
@@ -196,12 +196,12 @@ function SubscriptionCard({
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Trial Ends</label>
-                    <input type="date" value={trialEnd} onChange={e => setTrialEnd(e.target.value)} className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Trial Ends</label>
+                    <input type="date" value={trialEnd} onChange={e => setTrialEnd(e.target.value)} className="w-full text-xs border border-line rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Model</label>
-                    <select value={trialModel} onChange={e => setTrialModel(e.target.value)} className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white">
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Model</label>
+                    <select value={trialModel} onChange={e => setTrialModel(e.target.value)} className="w-full text-xs border border-line rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white">
                       {CLAUDE_MODELS.map(m => <option key={m} value={m}>{m.split('-').slice(0, 3).join('-')}</option>)}
                     </select>
                   </div>
@@ -210,7 +210,7 @@ function SubscriptionCard({
                   <button type="button" onClick={grantTrial} disabled={pending || !trialEnd} className="flex items-center gap-1 px-2.5 py-1.5 bg-sky-600 text-white text-[11px] font-semibold rounded-lg hover:bg-sky-700 disabled:opacity-50 transition-colors">
                     <Check size={10} /> {pending ? 'Granting…' : 'Grant'}
                   </button>
-                  <button type="button" onClick={() => setShowTrialForm(false)} className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
+                  <button type="button" onClick={() => setShowTrialForm(false)} className="text-[11px] text-muted-foreground hover:text-text transition-colors">Cancel</button>
                 </div>
               </div>
             )}
@@ -245,7 +245,7 @@ export function BillingManager({ tenantId, initialPlan, initialStatus, activeBot
     <div className="space-y-5">
       {/* Plan selector */}
       <div>
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Plan</p>
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Plan</p>
         <div className="grid grid-cols-3 gap-2">
           {(Object.entries(PLAN_META) as [TenantPlan, typeof PLAN_META[TenantPlan]][]).map(([key, meta]) => (
             <button
@@ -254,7 +254,7 @@ export function BillingManager({ tenantId, initialPlan, initialStatus, activeBot
               onClick={() => changePlan(key)}
               disabled={pending}
               className={`relative p-3 rounded-xl border text-left transition-all disabled:opacity-60 ${
-                plan === key ? `${meta.bg} ${meta.border} ring-1 ${meta.ring}` : 'bg-white border-slate-200 hover:bg-slate-50'
+                plan === key ? `${meta.bg} ${meta.border} ring-1 ${meta.ring}` : 'bg-white border-line hover:bg-sunken'
               }`}
             >
               {plan === key && (
@@ -262,9 +262,9 @@ export function BillingManager({ tenantId, initialPlan, initialStatus, activeBot
                   <Check size={9} className="text-white" />
                 </span>
               )}
-              <p className={`text-sm font-bold ${plan === key ? meta.color : 'text-slate-600'}`}>{meta.name}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">{meta.bots} bot{meta.bots > 1 ? 's' : ''}</p>
-              <p className="text-[10px] text-slate-400">{meta.conversations}</p>
+              <p className={`text-sm font-bold ${plan === key ? meta.color : 'text-muted-foreground'}`}>{meta.name}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{meta.bots} bot{meta.bots > 1 ? 's' : ''}</p>
+              <p className="text-[10px] text-muted-foreground">{meta.conversations}</p>
             </button>
           ))}
         </div>
@@ -272,7 +272,7 @@ export function BillingManager({ tenantId, initialPlan, initialStatus, activeBot
 
       {/* Status selector */}
       <div>
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Account Status</p>
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Account Status</p>
         <div className="flex items-center gap-2 flex-wrap">
           {(Object.entries(STATUS_META) as [TenantStatus, typeof STATUS_META[TenantStatus]][]).map(([key, meta]) => (
             <button
@@ -281,7 +281,7 @@ export function BillingManager({ tenantId, initialPlan, initialStatus, activeBot
               onClick={() => changeStatus(key)}
               disabled={pending}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all disabled:opacity-60 ${
-                status === key ? `${meta.bg} ${meta.text} ${meta.border}` : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                status === key ? `${meta.bg} ${meta.text} ${meta.border}` : 'bg-white text-muted-foreground border-line hover:bg-sunken'
               }`}
             >
               {status === key && <Check size={10} />}
@@ -298,8 +298,8 @@ export function BillingManager({ tenantId, initialPlan, initialStatus, activeBot
       {activeBots.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard size={13} className="text-slate-400" />
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Per-Bot Subscriptions</p>
+            <CreditCard size={13} className="text-muted-foreground" />
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Per-Bot Subscriptions</p>
           </div>
           <div className="space-y-2">
             {activeBots.map(bot => (
@@ -316,7 +316,7 @@ export function BillingManager({ tenantId, initialPlan, initialStatus, activeBot
       )}
 
       {activeBots.length === 0 && (
-        <p className="text-xs text-slate-400 flex items-center gap-1.5">
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
           <Calendar size={12} /> Assign bots above to configure per-bot subscriptions.
         </p>
       )}

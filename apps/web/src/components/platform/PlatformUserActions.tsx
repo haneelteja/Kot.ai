@@ -36,7 +36,7 @@ export function PlatformUserActions({ userId, currentRole, isSelf }: Props) {
 
   if (isSelf) {
     return (
-      <span className="text-[11px] text-slate-400 italic">You</span>
+      <span className="text-[11px] text-muted-foreground italic">You</span>
     );
   }
 
@@ -48,19 +48,19 @@ export function PlatformUserActions({ userId, currentRole, isSelf }: Props) {
           value={role}
           disabled={pending}
           onChange={e => handleRoleChange(e.target.value as 'manager' | 'admin')}
-          className="appearance-none text-xs font-medium border border-slate-200 rounded-lg pl-2.5 pr-6 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white disabled:opacity-50 cursor-pointer"
+          className="appearance-none text-xs font-medium border border-line rounded-lg pl-2.5 pr-6 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white disabled:opacity-50 cursor-pointer"
         >
           <option value="admin">Admin</option>
           <option value="manager">Manager</option>
         </select>
-        <ChevronDown size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <ChevronDown size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
       </div>
       <button
         type="button"
         onClick={handleRemove}
         disabled={pending}
         title="Remove team member"
-        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
       >
         <Trash2 size={13} />
       </button>

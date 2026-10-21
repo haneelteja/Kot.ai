@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { Plus, Building2, CheckCircle2, Clock, XCircle, Mail, type LucideIcon } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { label: string; badge: string; Icon: LucideIcon }> = {
-  active:    { label: 'Active',    badge: 'bg-emerald-50 text-emerald-700 ring-emerald-200', Icon: CheckCircle2 },
+  active:    { label: 'Active',    badge: 'bg-done-bg text-done ring-done', Icon: CheckCircle2 },
   trial:     { label: 'Trial',     badge: 'bg-sky-50 text-sky-700 ring-sky-200',            Icon: Clock },
   suspended: { label: 'Suspended', badge: 'bg-red-50 text-red-700 ring-red-200',            Icon: XCircle },
 };
 
 const PLAN_BADGE: Record<string, string> = {
-  starter: 'bg-slate-100 text-slate-600',
+  starter: 'bg-sunken text-muted-foreground',
   growth:  'bg-violet-50 text-violet-600',
   scale:   'bg-amber-50 text-amber-600',
 };
@@ -54,8 +54,8 @@ export default async function PlatformClientsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Clients</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-xl font-bold text-text">Clients</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {counts.total} client{counts.total !== 1 ? 's' : ''} on the platform
           </p>
         </div>
@@ -72,27 +72,27 @@ export default async function PlatformClientsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {(
           [
-            { label: 'Total',     value: counts.total,     color: 'text-slate-700',   bg: 'bg-white',       border: 'border-slate-200' },
-            { label: 'Active',    value: counts.active,    color: 'text-emerald-700', bg: 'bg-emerald-50',  border: 'border-emerald-200' },
+            { label: 'Total',     value: counts.total,     color: 'text-text',   bg: 'bg-white',       border: 'border-line' },
+            { label: 'Active',    value: counts.active,    color: 'text-done', bg: 'bg-done-bg',  border: 'border-done' },
             { label: 'Trial',     value: counts.trial,     color: 'text-sky-700',     bg: 'bg-sky-50',      border: 'border-sky-200' },
             { label: 'Suspended', value: counts.suspended, color: 'text-red-700',     bg: 'bg-red-50',      border: 'border-red-200' },
           ] as const
         ).map(s => (
           <div key={s.label} className={`${s.bg} border ${s.border} rounded-xl p-4`}>
             <p className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
-            <p className="text-xs font-medium text-slate-500 mt-0.5">{s.label}</p>
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* Client table / empty state */}
       {rows.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 flex flex-col items-center justify-center py-16 px-6 text-center">
+        <div className="bg-white rounded-2xl border border-line flex flex-col items-center justify-center py-16 px-6 text-center">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4 border border-indigo-100">
             <Building2 size={24} className="text-indigo-400" />
           </div>
-          <p className="text-sm font-semibold text-slate-600">No clients yet</p>
-          <p className="text-xs text-slate-400 mt-1 max-w-xs">Add your first client to start assigning bots and configuring automations.</p>
+          <p className="text-sm font-semibold text-muted-foreground">No clients yet</p>
+          <p className="text-xs text-muted-foreground mt-1 max-w-xs">Add your first client to start assigning bots and configuring automations.</p>
           <Link
             href="/platform/clients/new"
             className="mt-4 flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-xl"
@@ -102,19 +102,19 @@ export default async function PlatformClientsPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60">
+                <tr className="border-b border-line bg-sunken">
                   {['Client', 'Email', 'Status', 'Plan', 'Products', 'Trial', 'Added', ''].map(h => (
-                    <th key={h} className="text-left px-4 first:px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                    <th key={h} className="text-left px-4 first:px-6 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-line">
                 {rows.map(tenant => {
                   const status  = STATUS_CONFIG[tenant.status] ?? STATUS_CONFIG.active;
                   const planBadge = PLAN_BADGE[tenant.plan] ?? PLAN_BADGE.starter;
@@ -128,15 +128,15 @@ export default async function PlatformClientsPage() {
                   });
 
                   return (
-                    <tr key={tenant.id} className="hover:bg-slate-50/60 transition-colors group">
+                    <tr key={tenant.id} className="hover:bg-sunken transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0">
                             {tenant.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-800 leading-tight">{tenant.name}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">{tenant.id.slice(0, 8)}…</p>
+                            <p className="font-semibold text-text leading-tight">{tenant.name}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">{tenant.id.slice(0, 8)}…</p>
                           </div>
                         </div>
                       </td>
@@ -145,13 +145,13 @@ export default async function PlatformClientsPage() {
                         {tenant.contact_email ? (
                           <a
                             href={`mailto:${tenant.contact_email}`}
-                            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 transition-colors max-w-[180px] truncate"
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-indigo-600 transition-colors max-w-[180px] truncate"
                           >
-                            <Mail size={11} className="shrink-0 text-slate-400" />
+                            <Mail size={11} className="shrink-0 text-muted-foreground" />
                             {tenant.contact_email}
                           </a>
                         ) : (
-                          <span className="text-xs text-slate-300">—</span>
+                          <span className="text-xs text-line">—</span>
                         )}
                       </td>
 
@@ -171,7 +171,7 @@ export default async function PlatformClientsPage() {
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1">
                           {activeProducts.length === 0 ? (
-                            <span className="text-xs text-slate-300">None</span>
+                            <span className="text-xs text-line">None</span>
                           ) : activeProducts.map(p => {
                             const b = PRODUCT_BADGE[p.product_type];
                             return b ? (
@@ -189,11 +189,11 @@ export default async function PlatformClientsPage() {
                             {trialDaysLeft}d left
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-300">—</span>
+                          <span className="text-xs text-line">—</span>
                         )}
                       </td>
 
-                      <td className="px-4 py-4 text-xs text-slate-400 whitespace-nowrap">{addedAt}</td>
+                      <td className="px-4 py-4 text-xs text-muted-foreground whitespace-nowrap">{addedAt}</td>
 
                       <td className="px-4 py-4 text-right">
                         <Link

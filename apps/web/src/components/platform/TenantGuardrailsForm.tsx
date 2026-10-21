@@ -27,18 +27,18 @@ function TagInput({
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
           placeholder={placeholder}
-          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-done"
         />
-        <button type="button" onClick={add} className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 font-medium">
+        <button type="button" onClick={add} className="px-3 py-2 text-sm bg-done-bg text-done rounded-lg hover:bg-done-bg font-medium">
           Add
         </button>
       </div>
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {value.map(tag => (
-            <span key={tag} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full">
+            <span key={tag} className="inline-flex items-center gap-1 text-xs bg-sunken text-text px-2.5 py-1 rounded-full">
               {tag}
-              <button type="button" onClick={() => onChange(value.filter(t => t !== tag))} className="text-slate-400 hover:text-slate-700 leading-none">×</button>
+              <button type="button" onClick={() => onChange(value.filter(t => t !== tag))} className="text-muted-foreground hover:text-text leading-none">×</button>
             </span>
           ))}
         </div>
@@ -83,9 +83,9 @@ export function TenantGuardrailsForm({
   const [onBlocked,       setOnBlocked]       = useState<LayeredGuardrailsConfig['on_blocked_topic']>(g.on_blocked_topic);
   const [customMsg,       setCustomMsg]       = useState(g.custom_blocked_message ?? '');
 
-  const ring  = accentColor === 'emerald' ? 'focus:ring-emerald-300' : 'focus:ring-indigo-300';
-  const btnBg = accentColor === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700';
-  const savedColor = accentColor === 'emerald' ? 'text-emerald-600' : 'text-indigo-600';
+  const ring  = accentColor === 'emerald' ? 'focus:ring-done' : 'focus:ring-indigo-300';
+  const btnBg = accentColor === 'emerald' ? 'bg-done hover:opacity-90' : 'bg-indigo-600 hover:bg-indigo-700';
+  const savedColor = accentColor === 'emerald' ? 'text-done' : 'text-indigo-600';
 
   function handleSave() {
     setError(null);
@@ -150,7 +150,7 @@ export function TenantGuardrailsForm({
           { label: 'No external links in responses', value: noExternalLinks, set: setNoExternalLinks },
         ].map(({ label, value, set }) => (
           <label key={label} className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={value} onChange={e => set(e.target.checked)} className="w-4 h-4 accent-emerald-500" />
+            <input type="checkbox" checked={value} onChange={e => set(e.target.checked)} className="w-4 h-4 accent-done" />
             <span className="text-sm text-gray-700">{label}</span>
           </label>
         ))}

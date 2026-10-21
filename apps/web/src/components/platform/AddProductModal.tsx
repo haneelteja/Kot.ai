@@ -85,10 +85,10 @@ export function AddProductModal() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-800">Add New Product</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+              <h2 className="text-base font-bold text-text">Add New Product</h2>
               <button type="button" onClick={handleClose} disabled={pending}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken transition-colors"
                 aria-label="Close">
                 <X size={14} />
               </button>
@@ -99,58 +99,58 @@ export function AddProductModal() {
 
               {/* Name */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Product Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   value={name}
                   onChange={e => handleNameChange(e.target.value)}
                   placeholder="e.g. Booking Bot"
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
               </div>
 
               {/* Slug */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Slug <span className="text-red-400">*</span>
                 </label>
-                <p className="text-xs text-slate-400">Unique identifier — auto-generated from name; lowercase letters, numbers, underscores only</p>
+                <p className="text-xs text-muted-foreground">Unique identifier — auto-generated from name; lowercase letters, numbers, underscores only</p>
                 <input
                   value={slug}
                   onChange={e => handleSlugChange(e.target.value)}
                   placeholder="booking_bot"
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
+                  className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Description
                 </label>
                 <input
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Short description of what this bot does"
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
               </div>
 
               {/* Default AI Model */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Default AI Model <span className="text-red-400">*</span>
                 </label>
-                <p className="text-xs text-slate-400">
-                  OpenRouter format: <code className="font-mono bg-slate-100 px-1 rounded">provider/model-name</code> — add <code className="font-mono bg-slate-100 px-1 rounded">:free</code> for free-tier
+                <p className="text-xs text-muted-foreground">
+                  OpenRouter format: <code className="font-mono bg-sunken px-1 rounded">provider/model-name</code> — add <code className="font-mono bg-sunken px-1 rounded">:free</code> for free-tier
                 </p>
                 <input
                   list="add-product-models"
                   value={model}
                   onChange={e => setModel(e.target.value)}
                   placeholder="meta-llama/llama-3.3-70b-instruct:free"
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
+                  className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
                 />
                 <datalist id="add-product-models">
                   {MODEL_SUGGESTIONS.map(m => <option key={m} value={m} />)}
@@ -159,16 +159,16 @@ export function AddProductModal() {
 
               {/* Default System Prompt */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Default System Prompt <span className="text-red-400">*</span>
                 </label>
-                <p className="text-xs text-slate-400">Used for all clients until they configure their own prompt</p>
+                <p className="text-xs text-muted-foreground">Used for all clients until they configure their own prompt</p>
                 <textarea
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
                   rows={5}
                   placeholder="You are a helpful assistant..."
-                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y font-mono"
+                  className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y font-mono"
                 />
               </div>
 
@@ -176,9 +176,9 @@ export function AddProductModal() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line bg-sunken">
               <button type="button" onClick={handleClose} disabled={pending}
-                className="px-4 py-2 text-sm font-semibold text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors">
+                className="px-4 py-2 text-sm font-semibold text-muted-foreground border border-line rounded-xl hover:bg-sunken transition-colors">
                 Cancel
               </button>
               <button

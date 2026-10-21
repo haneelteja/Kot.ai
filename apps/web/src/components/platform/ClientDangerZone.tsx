@@ -86,7 +86,7 @@ export function ClientDangerZone({ tenantId, tenantName, status }: Props) {
               <strong>Use for testing only.</strong>
             </p>
             {clearResult && (
-              <p className="text-xs text-emerald-700 font-medium mt-1">✓ {clearResult}</p>
+              <p className="text-xs text-done font-medium mt-1">✓ {clearResult}</p>
             )}
           </div>
         </div>
@@ -129,7 +129,7 @@ export function ClientDangerZone({ tenantId, tenantName, status }: Props) {
               <strong>Use for testing only.</strong>
             </p>
             {resetDone && (
-              <p className="text-xs text-emerald-700 font-medium mt-1">✓ Subscriptions reset</p>
+              <p className="text-xs text-done font-medium mt-1">✓ Subscriptions reset</p>
             )}
           </div>
         </div>
@@ -178,7 +178,7 @@ export function ClientDangerZone({ tenantId, tenantName, status }: Props) {
           disabled={isPending}
           className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg border transition-colors disabled:opacity-50 ${
             isSuspended
-              ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+              ? 'bg-done text-white border-done hover:bg-done'
               : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-100'
           }`}
         >

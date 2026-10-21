@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "git config core.hooksPath scripts/hooks",
+    "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath scripts/hooks',{stdio:'ignore'})}catch(e){}\"",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",

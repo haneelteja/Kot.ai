@@ -10,20 +10,14 @@ import {
   Settings,
   LogOut,
   Bot,
-  BarChart2,
   ShieldCheck,
   CreditCard,
   ShoppingCart,
-  Megaphone,
-  Zap,
-  Target,
   MessageSquareMore,
   Plug,
   CalendarClock,
   ClipboardList,
   RotateCcw,
-  Users,
-  ReceiptText,
   Inbox,
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -35,21 +29,15 @@ const BASE_NAV = [
   { href: '/inbox',            label: 'Inbox',          icon: Inbox            },
   { href: '/knowledge-base',   label: 'Knowledge Base', icon: BookOpen         },
   { href: '/guardrails',       label: 'Guardrails',     icon: ShieldCheck      },
-  { href: '/call-triggers',    label: 'Triggers',       icon: Zap              },
   { href: '/button-templates', label: 'Buttons',        icon: MessageSquareMore },
-  { href: '/campaigns',            label: 'Campaigns',  icon: Megaphone    },
   { href: '/scheduled-messages',  label: 'Scheduled',  icon: CalendarClock },
-  { href: '/analytics',           label: 'Analytics',  icon: BarChart2    },
   { href: '/billing',          label: 'Billing',        icon: CreditCard       },
   { href: '/settings',         label: 'Settings',       icon: Settings         },
 ];
 
-const LEADS_ITEM          = { href: '/leads',           label: 'Leads',       icon: Target      };
 const INTEGRATIONS_ITEM   = { href: '/integrations',   label: 'Integrations', icon: Plug        };
 const ORDERS_ITEM         = { href: '/orders',          label: 'Orders',       icon: ShoppingCart };
 const RETURNS_ITEM        = { href: '/returns',         label: 'Returns',      icon: RotateCcw   };
-const AGENCY_CLIENTS_ITEM  = { href: '/agency-clients',  label: 'My Clients',      icon: Users       };
-const AGENCY_BILLING_ITEM  = { href: '/agency-billing',  label: 'Agency Billing',  icon: ReceiptText };
 
 export function DashboardNav({
   tenantName,
@@ -75,25 +63,20 @@ export function DashboardNav({
 
   const ADMIN_ONLY_HREFS = new Set(['/audit']);
   const AGENT_HREFS      = new Set(['/dashboard', '/conversations', '/inbox']);
-  const SUPERVISOR_HREFS = new Set(['/dashboard', '/conversations', '/inbox', '/leads', '/integrations', '/knowledge-base', '/orders', '/returns', '/analytics', '/scheduled-messages', '/settings']);
+  const SUPERVISOR_HREFS = new Set(['/dashboard', '/conversations', '/inbox', '/integrations', '/knowledge-base', '/orders', '/returns', '/scheduled-messages', '/settings']);
 
   const navItems = (() => {
     const items = [...BASE_NAV];
     const convsIdx = items.findIndex(i => i.href === '/conversations');
-    items.splice(convsIdx + 1, 0, LEADS_ITEM, INTEGRATIONS_ITEM);
+    items.splice(convsIdx + 1, 0, INTEGRATIONS_ITEM);
     if (hasLifecycleBot) {
       const guardrailsIdx = items.findIndex(i => i.href === '/guardrails');
       items.splice(guardrailsIdx + 1, 0, ORDERS_ITEM, RETURNS_ITEM);
     }
     // Audit log — admin and client_manager only
     if (['admin', 'client_manager'].includes(userRole)) {
-      const analyticsIdx = items.findIndex(i => i.href === '/analytics');
-      items.splice(analyticsIdx + 1, 0, { href: '/audit', label: 'Activity Log', icon: ClipboardList });
-    }
-    // My Clients + Agency Billing — agency tenants only (admin / client_manager)
-    if (isAgency && ['admin', 'client_manager'].includes(userRole)) {
       const settingsIdx = items.findIndex(i => i.href === '/settings');
-      items.splice(settingsIdx, 0, AGENCY_CLIENTS_ITEM, AGENCY_BILLING_ITEM);
+      items.splice(settingsIdx, 0, { href: '/audit', label: 'Activity Log', icon: ClipboardList });
     }
     if (userRole === 'agent') return items.filter(i => !ADMIN_ONLY_HREFS.has(i.href) && AGENT_HREFS.has(i.href));
     if (userRole === 'supervisor') return items.filter(i => !ADMIN_ONLY_HREFS.has(i.href) && SUPERVISOR_HREFS.has(i.href));

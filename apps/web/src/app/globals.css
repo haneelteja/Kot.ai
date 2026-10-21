@@ -2,26 +2,122 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * KOT.ai design tokens — source of truth is docs/DESIGN.md.
+ * Two token vocabularies are defined on the same :root:
+ *   1. Named tokens (--bg, --surface, --brand, --waiting, ...) — use these
+ *      in new KOT.ai components (TicketCard, StatusPill, etc.).
+ *   2. shadcn-style aliases (--background, --foreground, --card, --primary,
+ *      --destructive, ...) — kept so every inherited dashboard page retains
+ *      its existing className vocabulary (bg-background, text-foreground,
+ *      bg-card, ...) while picking up KOT.ai's actual colours instead of
+ *      Alphabot's green theme. New code should prefer the named tokens.
+ */
 @layer base {
   :root {
-    --background: 138 40% 98%;
-    --foreground: 152 30% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 152 30% 10%;
-    --primary: 152 65% 35%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 138 30% 95%;
-    --secondary-foreground: 152 30% 10%;
-    --muted: 138 20% 96%;
-    --muted-foreground: 152 10% 45%;
-    --accent: 138 25% 93%;
-    --accent-foreground: 152 30% 10%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 138 25% 88%;
-    --input: 138 25% 88%;
-    --ring: 152 65% 40%;
+    /* ── KOT.ai named tokens (docs/DESIGN.md §3.3) ───────────────────────── */
+    --bg: #F5F5F3;              /* Paper */
+    --surface: #FFFFFF;
+    --surface-sunken: #EEEEEB;
+    --text: #16181D;            /* Ink */
+    --text-muted: #565A62;      /* Graphite */
+    --line: #E3E3DF;            /* Steel */
+    --line-strong: #CFCFC9;
+    --brand: #E8590C;           /* Saffron — large text/graphics only */
+    --brand-strong: #C2410C;    /* Saffron Deep — buttons, small text */
+    --brand-wash: #FDEBDD;
+    --on-brand: #FFFFFF;
+    --focus: #E8590C;
+
+    --waiting: #B45309;   --waiting-bg: #FEF3C7;
+    --progress: #1D4ED8;  --progress-bg: #DBEAFE;
+    --ready: #0F766E;     --ready-bg: #CCFBF1;
+    --done: #15803D;      --done-bg: #DCFCE7;
+    --problem: #B91C1C;   --problem-bg: #FEE2E2;
+    --neutral: #565A62;   --neutral-bg: #EEEEEB;
+
+    --ticket: #FFFFFF;    /* order ticket paper — stays light even in dark mode */
+    --rail: #16181D;      /* live-orders rail */
+
+    /* ── shadcn-style aliases, mapped onto the palette above ─────────────── */
+    --background: var(--bg);
+    --foreground: var(--text);
+    --card: var(--surface);
+    --card-foreground: var(--text);
+    --primary: var(--brand-strong);
+    --primary-foreground: var(--on-brand);
+    --secondary: var(--surface-sunken);
+    --secondary-foreground: var(--text);
+    --muted: var(--surface-sunken);
+    --muted-foreground: var(--text-muted);
+    --accent: var(--brand-wash);
+    --accent-foreground: var(--brand-strong);
+    --destructive: var(--problem);
+    --destructive-foreground: #FFFFFF;
+    --border: var(--line);
+    --input: var(--line);
+    --ring: var(--focus);
     --radius: 0.75rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --bg: #16181D; --surface: #1F2228; --surface-sunken: #1A1C21;
+      --text: #F5F5F3; --text-muted: #A9ADB5;
+      --line: #2E3239; --line-strong: #3A3F47;
+      --brand: #F07A33; --brand-strong: #F07A33; --brand-wash: #3A2216; --on-brand: #16181D;
+      --focus: #F07A33;
+      --waiting: #FBBF24;  --waiting-bg: #3A2E12;
+      --progress: #93C5FD; --progress-bg: #18243F;
+      --ready: #5EEAD4;    --ready-bg: #12302D;
+      --done: #4ADE80;     --done-bg: #14301E;
+      --problem: #F87171;  --problem-bg: #3B1717;
+      --neutral: #A9ADB5;  --neutral-bg: #26292F;
+      --ticket: #F5F5F3; --rail: #0E0F12;
+
+      --background: var(--bg);
+      --foreground: var(--text);
+      --card: var(--surface);
+      --card-foreground: var(--text);
+      --primary: var(--brand-strong);
+      --primary-foreground: var(--on-brand);
+      --secondary: var(--surface-sunken);
+      --secondary-foreground: var(--text);
+      --muted: var(--surface-sunken);
+      --muted-foreground: var(--text-muted);
+      --accent: var(--brand-wash);
+      --accent-foreground: var(--brand-strong);
+      --destructive: var(--problem);
+      --destructive-foreground: #FFFFFF;
+      --border: var(--line);
+      --input: var(--line);
+      --ring: var(--focus);
+    }
+  }
+
+  /* Manual toggle override — the viewer's theme switch stamps data-theme on <html> */
+  :root[data-theme='dark'] {
+    --bg: #16181D; --surface: #1F2228; --surface-sunken: #1A1C21;
+    --text: #F5F5F3; --text-muted: #A9ADB5;
+    --line: #2E3239; --line-strong: #3A3F47;
+    --brand: #F07A33; --brand-strong: #F07A33; --brand-wash: #3A2216; --on-brand: #16181D;
+    --focus: #F07A33;
+    --waiting: #FBBF24;  --waiting-bg: #3A2E12;
+    --progress: #93C5FD; --progress-bg: #18243F;
+    --ready: #5EEAD4;    --ready-bg: #12302D;
+    --done: #4ADE80;     --done-bg: #14301E;
+    --problem: #F87171;  --problem-bg: #3B1717;
+    --neutral: #A9ADB5;  --neutral-bg: #26292F;
+    --ticket: #F5F5F3; --rail: #0E0F12;
+
+    --background: var(--bg); --foreground: var(--text);
+    --card: var(--surface); --card-foreground: var(--text);
+    --primary: var(--brand-strong); --primary-foreground: var(--on-brand);
+    --secondary: var(--surface-sunken); --secondary-foreground: var(--text);
+    --muted: var(--surface-sunken); --muted-foreground: var(--text-muted);
+    --accent: var(--brand-wash); --accent-foreground: var(--brand-strong);
+    --destructive: var(--problem); --destructive-foreground: #FFFFFF;
+    --border: var(--line); --input: var(--line); --ring: var(--focus);
   }
 }
 
@@ -29,18 +125,37 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 
-  /* Global focus ring — enables keyboard navigation across the entire app.
+  /* Visible focus ring everywhere — docs/DESIGN.md §12 accessibility floor.
      Uses :focus-visible so mouse users never see the ring. */
   *:focus-visible {
-    outline: 2px solid #10b981;
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
     border-radius: 4px;
   }
 
-  /* Remove outline from elements that have their own focus style */
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
     outline: none;
   }
+
+  /* Tabular numerals for money/timers/order refs — docs/DESIGN.md §4 */
+  .tabular-nums, table, .ticket {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Zigzag ticket edge — docs/DESIGN.md §8 */
+.ticket {
+  --zz: 10px;
+  background: var(--ticket);
+  color: var(--text);
+  border-radius: 10px 10px 0 0;
+  padding-bottom: calc(var(--zz) + 12px);
+  -webkit-mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--zz) * 2) var(--zz) repeat-x,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--zz) + 0.5px) no-repeat;
+          mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--zz) * 2) var(--zz) repeat-x,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--zz) + 0.5px) no-repeat;
 }

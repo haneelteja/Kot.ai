@@ -7,7 +7,8 @@ Format per brief §22. `Status` starts `todo` for everything; update in place as
 ## SET — Environments, accounts, CI/CD, secrets, seed data, SETUP.md
 
 ### SET-01 Local dev environment
-Epic: SET · Phase: 1 · Priority: P0 · Status: todo · Depends on: —
+Epic: SET · Phase: 1 · Priority: P0 · Status: in-progress · Depends on: —
+Note: docs/SETUP.md written and docker-compose/seed script exist; not yet executed end-to-end by a human against a real local Supabase instance.
 As a developer, I want a documented local setup so I can run the full stack without guessing.
 Acceptance criteria:
 - Given a fresh clone, `docs/SETUP.md`'s steps (Node 22, Supabase CLI, Docker, `npm install`, `.env` from `.env.example`) produce a running API + web + local Postgres/Redis.
@@ -27,7 +28,8 @@ Brief refs: §20.1
 Reuse: `render.yaml`, Vercel project (extend)
 
 ### SET-03 CI pipeline
-Epic: SET · Phase: 1 · Priority: P0 · Status: todo · Depends on: —
+Epic: SET · Phase: 1 · Priority: P0 · Status: in-progress · Depends on: —
+Note: lint step and a migration-filename-convention check added to .github/workflows/ci.yml; not yet observed passing on a real CI run.
 As a developer, I want CI to catch regressions before merge.
 Acceptance criteria:
 - Given a push, lint/type-check/unit/integration tests run via GitHub Actions.
@@ -37,7 +39,7 @@ Brief refs: §19, §20.2
 Reuse: `.github/workflows/*` (extend existing ci.yml/deploy-render.yml)
 
 ### SET-04 .env.example completeness
-Epic: SET · Phase: 1 · Priority: P1 · Status: todo · Depends on: —
+Epic: SET · Phase: 1 · Priority: P1 · Status: done · Depends on: —
 As a developer, I want every required env var documented so setup never silently fails.
 Acceptance criteria:
 - Given any new integration credential introduced in later phases, `.env.example` gains a documented entry in the same PR.
@@ -46,7 +48,8 @@ Brief refs: §20.2
 Reuse: `.env.example` (extend)
 
 ### SET-05 Seed data script
-Epic: SET · Phase: 1 · Priority: P0 · Status: todo · Depends on: BR-01, MENU-01
+Epic: SET · Phase: 1 · Priority: P0 · Status: in-progress · Depends on: BR-01, MENU-01
+Note: `packages/database/src/seed.ts` seeds a demo tenant + restaurant_bot product + placeholder WhatsApp number now; branches/menu/offers wait on BR-01/MENU-01 (Phase 3).
 As a developer, I want realistic seed data so every later story can be tested against a believable tenant.
 Acceptance criteria:
 - Given the seed script runs, "Demo Biryani House" has 2 branches with hours, a menu with variants/add-ons, offers, and staff users with roles.
@@ -55,7 +58,7 @@ Brief refs: §20.2
 Reuse: none — net-new
 
 ### SET-06 Secrets rotation procedure
-Epic: SET · Phase: 13 · Priority: P1 · Status: todo · Depends on: SEC-02
+Epic: SET · Phase: 13 · Priority: P1 · Status: done · Depends on: SEC-02
 As the platform operator, I want a documented rotation procedure so a leaked credential doesn't require guesswork under pressure.
 Acceptance criteria:
 - Given `docs/RUNBOOK.md`, rotating the signed-link secret, Easebuzz platform fallback key, and Supabase service key each have a documented step list.
@@ -211,7 +214,7 @@ Reuse: `@bull-board/api`
 ## BRD — Logo assets, tokens, UI kit, light/dark, restaurant theming
 
 ### BRD-01 Brand package and design tokens
-Epic: BRD · Phase: 1 · Priority: P0 · Status: todo · Depends on: —
+Epic: BRD · Phase: 1 · Priority: P0 · Status: done · Depends on: —
 As a designer/developer, I want KOT.ai's tokens in one place so every screen stays visually consistent.
 Acceptance criteria:
 - Given `packages/brand`, CSS variables for the Ink/Paper/Saffron palette and status colours (from `docs/DESIGN.md`, which supersedes brief §14 where they differ) are defined for light and dark.
@@ -230,22 +233,24 @@ Brief refs: §14.1
 Reuse: full set extracted from `Design/kotai-brand.zip` into `packages/brand/assets/` (18 files) and `apps/web/public/` (5 files, favicons/app icons/apple-touch-icon per `docs/DESIGN.md` §13's placement note)
 
 ### BRD-03 UI kit component skeleton
-Epic: BRD · Phase: 1 · Priority: P0 · Status: todo · Depends on: BRD-01
+Epic: BRD · Phase: 1 · Priority: P0 · Status: in-progress · Depends on: BRD-01
 As a developer, I want a shared component set so dashboard screens don't each reinvent buttons/cards/tables.
 Acceptance criteria:
 - Given `packages/brand` (or a sibling `packages/ui`), Button, Input, Select, Toggle, Badge/StatusPill, Card, Drawer, Tabs, Table, EmptyState, Toast, Countdown, Stat, Timeline exist and are themed.
-Tests: visual check
+Tests: visual check — live at `/platform/design`
 Brief refs: §14.2
 Reuse: `shadcn/ui` copy-in pattern (brief §0A.2)
+Note: built in `apps/web/src/components/kot-ui/` rather than a separate `packages/ui` workspace — apps/web is currently the only consumer, so a cross-package build/tsconfig setup (React/JSX types, a second workspace) added risk without benefit; the component API is portable if/when a second consumer appears. First 7 components done (Button, StatusPill, TicketCard, Countdown, Card, EmptyState, Input); Select/Toggle/Drawer/Tabs/Table/Toast/Stat/Timeline still open — built as each screen that needs them is implemented (DSH/WEB epics).
 
 ### BRD-04 TicketCard motif
-Epic: BRD · Phase: 10 · Priority: P1 · Status: todo · Depends on: BRD-03
+Epic: BRD · Phase: 10 · Priority: P1 · Status: done · Depends on: BRD-03
 As a restaurant staff member, I want live order cards to read instantly as kitchen tickets.
 Acceptance criteria:
 - Given the Live Orders kanban, each card uses the zigzag-edge TicketCard component with mono order ref, status pill, and acceptance countdown.
 Tests: visual check
 Brief refs: §14.3
 Reuse: BRD-03's component set
+Note: component built (`apps/web/src/components/kot-ui/TicketCard.tsx`) and previewed at `/platform/design`; wiring it into the actual Live Orders kanban happens with ORD-06 (Phase 10).
 
 ---
 

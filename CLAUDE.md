@@ -8,7 +8,7 @@ KOT.ai — WhatsApp ordering and table booking for restaurants. Bootstrapped fro
 - `apps/web` — Next.js 14 App Router. `(dashboard)/*` = tenant app, `(platform)/platform/*` = platform console, `o/[tenant]/[branch]` and `t/[orderRef]` (net-new) = public ordering/tracking pages.
 - `packages/shared` — shared TS types. `packages/database` — Supabase client (`getServerClient` = service role, `getTenantClient` = RLS-scoped).
 - `packages/brand` — KOT.ai design tokens/assets (net-new; see `docs/DESIGN.md`, the authoritative design spec — it supersedes brief §14 where they differ).
-- `supabase/migrations` + `packages/database/migrations` — SQL migrations, two mirrored sets (see `docs/AUDIT.md` for why).
+- `supabase/migrations` + `packages/database/migrations` — two SQL migration sets that are **not** a 1:1 mirror (confirmed false in Phase 1 — different filenames/dates entirely). Which one reflects the real deployed schema is an open Phase 2 reconciliation item (`docs/PLAN.md`). When adding a new table/column, add the migration to **both** directories with matching content (see `049_restaurant_bot_product.sql` / `20261021000000_restaurant_bot_product.sql` for the pattern) until that reconciliation happens.
 - `docs/` — all Phase 0+ planning docs: `AUDIT.md`, `REUSE_MAP.md`, `ARCHITECTURE.md`, `DATA_MODEL.md`, `PLAN.md`, `BACKLOG.md`, `TRACEABILITY.md`, `adr/`, `integrations/`, `copy/`.
 
 ## Commands

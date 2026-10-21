@@ -27,6 +27,8 @@ Each phase ends with a stop-and-summarize gate per brief §0 — no phase starts
 
 | Risk | Mitigation |
 |---|---|
+| `packages/database/migrations` and `supabase/migrations` are **not** a 1:1 mirror — confirmed in Phase 1 (different filenames, different dates, no correspondence found) despite earlier assumptions that they were | Until reconciled, every new migration is added to both directories with matching content (see `049_restaurant_bot_product.sql`). Phase 2 should determine which set reflects the actually-deployed staging/production schema and retire the other, or document why both are needed |
+| `packages/database`'s `npm run db:migrate` script has no `src/migrate.ts` — it will fail if run | Use `supabase db push` as the real migration path (documented in `docs/SETUP.md`) until this is fixed or the dead script is removed |
 | Pruning Alphabot verticals broke a hidden shared dependency | Verified via `tsc --noEmit` on every workspace after the Phase 0 prune (clean); re-verify after each further deletion in later phases |
 | No durable queue today despite Redis being present | ADR 0001 (BullMQ) scheduled for Phase 2, before any payment work |
 | Petpooja order-edit support (post-payment item removal) unverified | Flag in `docs/integrations/petpooja.md` during Phase 3; document cancel-and-repush fallback if unsupported |

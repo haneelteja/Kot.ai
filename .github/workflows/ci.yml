@@ -28,5 +28,23 @@ jobs:
       - name: Type-check all packages
         run: npm run type-check
 
+      - name: Lint
+        run: npm run lint
+
       - name: Run tests
         run: npm test
+
+      - name: Check migration files are valid SQL filenames
+        run: |
+          # packages/database/migrations and supabase/migrations are NOT a
+          # 1:1 mirror (confirmed false in Phase 1 — see docs/AUDIT.md's
+          # "known gaps" note). Until Phase 2's reconciliation work (which
+          # set reflects the real deployed schema), this just guards against
+          # obviously malformed migration filenames landing in either set.
+          for f in packages/database/migrations/*.sql supabase/migrations/*.sql; do
+            base=$(basename "$f")
+            if ! [[ "$base" =~ ^[0-9]+_[a-z0-9_]+\.sql$ ]]; then
+              echo "::error::$f does not match the expected <number>_<name>.sql convention"
+              exit 1
+            fi
+          done

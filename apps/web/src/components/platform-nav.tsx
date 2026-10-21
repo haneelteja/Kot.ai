@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, Users, Bell, Settings, LogOut, Shield, ShieldCheck, Box, Cpu, CreditCard, BarChart2, Phone, ClipboardList, TrendingUp } from 'lucide-react';
+import { Building2, Users, Bell, Settings, LogOut, Shield, ShieldCheck, Box, Cpu, CreditCard, BarChart2, ClipboardList, Palette } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 const NAV_ITEMS = [
@@ -11,11 +11,10 @@ const NAV_ITEMS = [
   { href: '/platform/products',        label: 'Products',        icon: Box        },
   { href: '/platform/guardrails',      label: 'Guardrails',      icon: ShieldCheck },
   { href: '/platform/ai-models',       label: 'AI Models',       icon: Cpu        },
-  { href: '/platform/voice-providers', label: 'Voice Providers', icon: Phone      },
   { href: '/platform/analytics',       label: 'Analytics',       icon: BarChart2  },
-  { href: '/platform/margin',          label: 'Margin',          icon: TrendingUp },
   { href: '/platform/billing',         label: 'Billing',         icon: CreditCard },
   { href: '/platform/notifications',   label: 'Notifications',   icon: Bell       },
+  { href: '/platform/design',          label: 'Design system',   icon: Palette    },
   { href: '/platform/settings',        label: 'Settings',        icon: Settings   },
 ];
 
@@ -37,7 +36,7 @@ export function PlatformNav({ role }: { role: string }) {
           <Shield size={15} className="text-white" />
         </div>
         <div>
-          <p className="text-white font-bold text-sm tracking-tight">Alphabot</p>
+          <p className="text-white font-bold text-sm tracking-tight">KOT.ai</p>
           <p className="text-indigo-400 text-[10px] leading-none mt-0.5 font-medium">Platform Console</p>
         </div>
       </div>

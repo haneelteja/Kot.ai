@@ -50,7 +50,7 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   client_manager: { label: 'Admin',      color: 'bg-violet-50 text-violet-700' },
   supervisor:     { label: 'Supervisor', color: 'bg-sky-50 text-sky-700' },
   client_admin:   { label: 'Supervisor', color: 'bg-sky-50 text-sky-700' },
-  agent:          { label: 'Agent',      color: 'bg-slate-100 text-slate-600' },
+  agent:          { label: 'Agent',      color: 'bg-neutral-bg text-neutral' },
 };
 
 const BOT_META_LLM: Record<string, { name: string; badge: string }> = {
@@ -147,24 +147,24 @@ export default async function SettingsPage({
       <SettingsShell activeTab={activeTab}>
         <div className="space-y-5">
           <DashboardCollapsibleSection icon={<Building2 size={16} />} title="Workspace" hint="Read-only account details. Share your Tenant ID with support when reporting issues.">
-            <div className="divide-y divide-green-50">
+            <div className="divide-y divide-line">
               <InfoRow label="Name"      value={(tenant?.['name'] as string) ?? '—'} />
               <InfoRow label="Provider"  value={(tenant?.['provider'] as string) ?? '—'} capitalize />
               <InfoRow label="Tenant ID" value={(tenant?.['id'] as string) ?? '—'} mono />
               <div className="flex items-center justify-between gap-4 px-5 py-3.5">
-                <span className="text-sm text-gray-400 shrink-0">Plan</span>
+                <span className="text-sm text-muted-foreground shrink-0">Plan</span>
                 <PlanBadge plan={(tenant?.['plan'] as string) ?? 'starter'} />
               </div>
               <div className="flex items-center justify-between gap-4 px-5 py-3.5">
-                <span className="text-sm text-gray-400 shrink-0">Status</span>
+                <span className="text-sm text-muted-foreground shrink-0">Status</span>
                 <StatusBadge status={(tenant?.['status'] as string) ?? 'active'} />
               </div>
-              <Link href="/billing" className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-green-50 transition-colors group">
+              <Link href="/billing" className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-sunken transition-colors group">
                 <div className="flex items-center gap-2">
-                  <CreditCard size={14} className="text-emerald-500" />
-                  <span className="text-sm text-gray-700 font-medium">Billing &amp; Usage</span>
+                  <CreditCard size={14} className="text-brand" />
+                  <span className="text-sm text-text font-medium">Billing &amp; Usage</span>
                 </div>
-                <ChevronRight size={14} className="text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                <ChevronRight size={14} className="text-muted-foreground group-hover:text-brand transition-colors" />
               </Link>
             </div>
           </DashboardCollapsibleSection>
@@ -296,8 +296,8 @@ export default async function SettingsPage({
       <SettingsShell activeTab={activeTab}>
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4">
-            <p className="text-sm text-gray-500">Manage your team members and invite new agents.</p>
-            <span className="text-xs font-semibold text-gray-500 bg-white border border-green-100 px-3 py-1.5 rounded-full shadow-sm shrink-0">
+            <p className="text-sm text-muted-foreground">Manage your team members and invite new agents.</p>
+            <span className="text-xs font-semibold text-muted-foreground bg-surface border border-line px-3 py-1.5 rounded-full shadow-sm shrink-0">
               {members.length} member{members.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -307,7 +307,7 @@ export default async function SettingsPage({
             {[
               { role: 'Admin',      desc: 'Full access. Can invite, remove members, and change all settings.',      color: 'bg-violet-50 border-violet-100 text-violet-700' },
               { role: 'Supervisor', desc: 'Manages conversations and settings. Cannot invite or remove members.',   color: 'bg-sky-50 border-sky-100 text-sky-700' },
-              { role: 'Agent',      desc: 'Handles assigned conversations only. No access to settings.',            color: 'bg-slate-50 border-slate-100 text-slate-600' },
+              { role: 'Agent',      desc: 'Handles assigned conversations only. No access to settings.',            color: 'bg-sunken border-line text-muted-foreground' },
             ].map(r => (
               <div key={r.role} className={`rounded-xl border p-3 ${r.color}`}>
                 <p className="text-[11px] font-bold">{r.role}</p>
@@ -319,43 +319,43 @@ export default async function SettingsPage({
           {isAdmin
             ? <TeamInviteForm />
             : (
-              <div className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                <p className="text-xs text-slate-500">Only Admins can invite or remove team members. Contact your workspace Admin to make changes.</p>
+              <div className="bg-sunken border border-line rounded-xl px-4 py-3">
+                <p className="text-xs text-muted-foreground">Only Admins can invite or remove team members. Contact your workspace Admin to make changes.</p>
               </div>
             )
           }
 
-          <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-line">
+              <h3 className="text-sm font-semibold text-text flex items-center gap-2">
                 <Users size={14} />
                 Active members
               </h3>
             </div>
-            <div className="divide-y divide-slate-50">
+            <div className="divide-y divide-line">
               {members.map((m) => {
-                const roleMeta = ROLE_LABELS[m.role] ?? { label: m.role, color: 'bg-slate-100 text-slate-600' };
+                const roleMeta = ROLE_LABELS[m.role] ?? { label: m.role, color: 'bg-sunken text-muted-foreground' };
                 return (
                   <div key={m.userId} className="flex items-center gap-4 px-5 py-3.5">
-                    <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-brand-wash flex items-center justify-center text-brand-strong font-bold text-sm shrink-0">
                       {(m.name ?? m.email)[0]?.toUpperCase() ?? '?'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      {m.name && <p className="text-sm font-semibold text-slate-800 truncate">{m.name}</p>}
-                      <p className="text-xs text-slate-500 truncate">{m.email}</p>
+                      {m.name && <p className="text-sm font-semibold text-text truncate">{m.name}</p>}
+                      <p className="text-xs text-muted-foreground truncate">{m.email}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${roleMeta.color}`}>
                         {roleMeta.label}
                       </span>
                       {m.isSelf && (
-                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-medium">You</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-brand-wash text-brand-strong font-medium">You</span>
                       )}
                       {isAdmin && !m.isSelf && (
                         <form action={removeTeamMemberAction.bind(null, m.userId) as unknown as (formData: FormData) => Promise<void>}>
                           <button
                             type="submit"
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-problem-bg hover:text-problem transition-colors"
                             title="Remove member"
                           >
                             <Trash2 size={13} />
@@ -370,25 +370,25 @@ export default async function SettingsPage({
           </div>
 
           {(pendingInvites?.length ?? 0) > 0 && (
-            <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-slate-100">
-                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+            <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-line">
+                <h3 className="text-sm font-semibold text-text flex items-center gap-2">
                   <Clock size={14} />
                   Pending invites
                 </h3>
               </div>
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-line">
                 {(pendingInvites ?? []).map((inv) => {
                   const expired   = new Date(inv.expires_at) < new Date();
-                  const roleMeta  = ROLE_LABELS[inv.role] ?? { label: inv.role, color: 'bg-slate-100 text-slate-600' };
+                  const roleMeta  = ROLE_LABELS[inv.role] ?? { label: inv.role, color: 'bg-sunken text-muted-foreground' };
                   return (
                     <div key={inv.id} className="flex items-center gap-4 px-5 py-3.5">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-sunken flex items-center justify-center text-muted-foreground shrink-0">
                         <Mail size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-700 truncate">{inv.email}</p>
-                        <p className={`text-xs mt-0.5 ${expired ? 'text-red-400' : 'text-slate-400'}`}>
+                        <p className="text-sm font-medium text-text truncate">{inv.email}</p>
+                        <p className={`text-xs mt-0.5 ${expired ? 'text-problem' : 'text-muted-foreground'}`}>
                           {expired ? 'Expired' : `Expires ${new Date(inv.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`}
                         </p>
                       </div>
@@ -402,13 +402,13 @@ export default async function SettingsPage({
             </div>
           )}
 
-          <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-line">
+              <h3 className="text-sm font-semibold text-text flex items-center gap-2">
                 <ShieldOff size={14} />
                 Internal Team Numbers
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Messages from these numbers are silently ignored — no bot reply, no lead created.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Messages from these numbers are silently ignored — no bot reply, no lead created.</p>
             </div>
             <InternalNumbersManager initialNumbers={internalNumbers} />
           </div>
@@ -435,34 +435,34 @@ export default async function SettingsPage({
     return (
       <SettingsShell activeTab={activeTab}>
         <div className="space-y-5">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Bring your own LLM API key for cost control and higher rate limits. Leave blank to use the platform default — your bots work out of the box without any configuration here.
           </p>
 
-          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-2">
+          <div className="bg-brand-wash border border-line rounded-2xl p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <Info size={13} className="text-emerald-600" />
-              <p className="text-xs font-semibold text-emerald-800">How this works</p>
+              <Info size={13} className="text-brand-strong" />
+              <p className="text-xs font-semibold text-brand-strong">How this works</p>
             </div>
-            <div className="flex items-center gap-1 flex-wrap text-[11px] text-emerald-600">
+            <div className="flex items-center gap-1 flex-wrap text-[11px] text-brand-strong">
               {['Per-Bot (below)', 'Account Default (below)', 'Platform Bot-type', 'Platform Default'].map((level, i) => (
                 <span key={level} className="flex items-center gap-1">
-                  {i > 0 && <ChevronRight size={10} className="text-emerald-300" />}
-                  <span className={i < 2 ? 'font-semibold text-emerald-700' : 'text-emerald-400'}>{level}</span>
+                  {i > 0 && <ChevronRight size={10} className="text-brand" />}
+                  <span className={i < 2 ? 'font-semibold text-brand-strong' : 'text-brand'}>{level}</span>
                 </span>
               ))}
-              <span className="ml-1 text-emerald-400">→ system default</span>
+              <span className="ml-1 text-brand">→ system default</span>
             </div>
-            <p className="text-[11px] text-emerald-600">
+            <p className="text-[11px] text-brand-strong">
               All fields are <span className="font-semibold">optional</span> — your bots work without any configuration here (using the platform default).
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-green-50">
-              <Cpu size={15} className="text-emerald-500" />
-              <h3 className="text-sm font-semibold text-gray-800">Account Default</h3>
-              <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+          <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
+              <Cpu size={15} className="text-brand" />
+              <h3 className="text-sm font-semibold text-text">Account Default</h3>
+              <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-wash text-brand-strong border border-line">
                 All your bots
               </span>
             </div>
@@ -481,17 +481,17 @@ export default async function SettingsPage({
           {activeSlugs.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Cpu size={14} className="text-gray-500" />
-                <h3 className="text-sm font-semibold text-gray-700">Per-Bot Override</h3>
-                <span className="ml-auto text-[11px] text-gray-400">Overrides account default for that bot only</span>
+                <Cpu size={14} className="text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-text">Per-Bot Override</h3>
+                <span className="ml-auto text-[11px] text-muted-foreground">Overrides account default for that bot only</span>
               </div>
               <div className="space-y-3">
                 {activeSlugs.map((slug: string) => {
-                  const meta = BOT_META_LLM[slug] ?? { name: slug, badge: 'bg-gray-100 text-gray-600 border-gray-200' };
+                  const meta = BOT_META_LLM[slug] ?? { name: slug, badge: 'bg-sunken text-muted-foreground border-line' };
                   return (
-                    <div key={slug} className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-                      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-green-50">
-                        <h4 className="text-sm font-semibold text-gray-800">{meta.name}</h4>
+                    <div key={slug} className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+                      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
+                        <h4 className="text-sm font-semibold text-text">{meta.name}</h4>
                         <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full border ${meta.badge}`}>
                           {slug.replace(/_/g, ' ')}
                         </span>
@@ -514,7 +514,7 @@ export default async function SettingsPage({
           )}
 
           {activeSlugs.length === 0 && (
-            <p className="text-center py-8 text-sm text-gray-400">
+            <p className="text-center py-8 text-sm text-muted-foreground">
               No active bots found. Activate bots from the Workspace tab to configure per-bot models.
             </p>
           )}
@@ -522,9 +522,9 @@ export default async function SettingsPage({
           {activeSlugs.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Wrench size={14} className="text-gray-500" />
-                <h3 className="text-sm font-semibold text-gray-700">Bot Tools</h3>
-                <span className="ml-auto text-[11px] text-gray-400">Enable or disable per-bot capabilities</span>
+                <Wrench size={14} className="text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-text">Bot Tools</h3>
+                <span className="ml-auto text-[11px] text-muted-foreground">Enable or disable per-bot capabilities</span>
               </div>
               <ToolManifestEditor activeSlugs={activeSlugs} botToolsRows={botToolsRows} />
             </div>
@@ -533,9 +533,9 @@ export default async function SettingsPage({
           {activeSlugs.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Bot size={14} className="text-gray-500" />
-                <h3 className="text-sm font-semibold text-gray-700">Bot Persona</h3>
-                <span className="ml-auto text-[11px] text-gray-400">Injected as identity preamble before the system prompt</span>
+                <Bot size={14} className="text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-text">Bot Persona</h3>
+                <span className="ml-auto text-[11px] text-muted-foreground">Injected as identity preamble before the system prompt</span>
               </div>
               <PersonaEditor activeSlugs={activeSlugs} personas={personas} />
             </div>
@@ -555,7 +555,7 @@ export default async function SettingsPage({
   return (
     <SettingsShell activeTab={activeTab}>
       <div className="space-y-5">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Set up who receives an alert the moment a customer conversation is escalated by the bot.
         </p>
 
@@ -622,12 +622,12 @@ function SettingsShell({
   return (
     <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Settings</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Workspace, team, and bot configuration</p>
+        <h2 className="text-xl font-bold text-text">Settings</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Workspace, team, and bot configuration</p>
       </div>
 
       {/* Tab navigation */}
-      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 overflow-x-auto">
+      <div className="flex gap-1 bg-sunken rounded-xl p-1 overflow-x-auto">
         {TABS.map(t => {
           const isActive = activeTab === t.key;
           return (
@@ -636,8 +636,8 @@ function SettingsShell({
               href={`/settings?tab=${t.key}`}
               className={`flex-1 text-center text-xs font-semibold px-3 py-2 rounded-lg whitespace-nowrap transition-all duration-150 ${
                 isActive
-                  ? 'bg-white text-emerald-700 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                  ? 'bg-surface text-brand-strong shadow-sm'
+                  : 'text-muted-foreground hover:text-text hover:bg-surface/60'
               }`}
             >
               {t.label}
@@ -655,12 +655,12 @@ function SettingsShell({
 
 function Section({ icon, title, hint, children }: { icon: React.ReactNode; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-      <div className="flex items-start gap-2.5 px-5 py-4 border-b border-green-50">
-        <span className="text-emerald-600 mt-0.5 shrink-0">{icon}</span>
+    <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+      <div className="flex items-start gap-2.5 px-5 py-4 border-b border-line">
+        <span className="text-brand-strong mt-0.5 shrink-0">{icon}</span>
         <div>
-          <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
-          {hint && <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{hint}</p>}
+          <h2 className="text-sm font-semibold text-text">{title}</h2>
+          {hint && <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{hint}</p>}
         </div>
       </div>
       {children}
@@ -671,8 +671,8 @@ function Section({ icon, title, hint, children }: { icon: React.ReactNode; title
 function InfoRow({ label, value, mono = false, capitalize = false }: { label: string; value: string; mono?: boolean; capitalize?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4 px-5 py-3.5">
-      <span className="text-sm text-gray-400 shrink-0">{label}</span>
-      <span className={`text-right truncate max-w-[60%] ${mono ? 'font-mono text-xs text-gray-600 bg-green-50 px-2 py-0.5 rounded-md' : 'text-sm text-gray-700'} ${capitalize ? 'capitalize' : ''}`}>
+      <span className="text-sm text-muted-foreground shrink-0">{label}</span>
+      <span className={`text-right truncate max-w-[60%] ${mono ? 'font-mono text-xs text-muted-foreground bg-sunken px-2 py-0.5 rounded-md' : 'text-sm text-text'} ${capitalize ? 'capitalize' : ''}`}>
         {value}
       </span>
     </div>
@@ -680,9 +680,9 @@ function InfoRow({ label, value, mono = false, capitalize = false }: { label: st
 }
 
 const PLAN_BADGE: Record<string, { label: string; bg: string; text: string }> = {
-  starter: { label: 'Starter', bg: 'bg-slate-100',   text: 'text-slate-700'   },
+  starter: { label: 'Starter', bg: 'bg-neutral-bg',  text: 'text-neutral'      },
   growth:  { label: 'Growth',  bg: 'bg-violet-100',  text: 'text-violet-700'  },
-  scale:   { label: 'Scale',   bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  scale:   { label: 'Scale',   bg: 'bg-brand-wash',  text: 'text-brand-strong' },
 };
 
 function PlanBadge({ plan }: { plan: string }) {
@@ -695,9 +695,9 @@ function PlanBadge({ plan }: { plan: string }) {
 }
 
 const STATUS_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
-  active:    { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  trial:     { bg: 'bg-sky-50',     text: 'text-sky-700',     dot: 'bg-sky-500'     },
-  suspended: { bg: 'bg-red-50',     text: 'text-red-700',     dot: 'bg-red-500'     },
+  active:    { bg: 'bg-done-bg',    text: 'text-done',    dot: 'bg-done'    },
+  trial:     { bg: 'bg-sky-50',     text: 'text-sky-700', dot: 'bg-sky-500' },
+  suspended: { bg: 'bg-problem-bg', text: 'text-problem', dot: 'bg-problem' },
 };
 
 function StatusBadge({ status }: { status: string }) {

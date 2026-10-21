@@ -7,11 +7,11 @@ import UpgradePlanSection from '@/components/billing/UpgradePlanSection';
 const PLAN_META = {
   starter: {
     name: 'Starter',
-    color: 'text-slate-700',
-    bg: 'bg-slate-50',
-    border: 'border-slate-200',
-    badgeBg: 'bg-slate-100',
-    badgeText: 'text-slate-700',
+    color: 'text-neutral',
+    bg: 'bg-sunken',
+    border: 'border-line',
+    badgeBg: 'bg-neutral-bg',
+    badgeText: 'text-neutral',
     bots: 1,
     conversations: '1,000',
     features: [
@@ -45,11 +45,11 @@ const PLAN_META = {
   },
   scale: {
     name: 'Scale',
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-    badgeBg: 'bg-emerald-100',
-    badgeText: 'text-emerald-700',
+    color: 'text-brand-strong',
+    bg: 'bg-brand-wash',
+    border: 'border-line',
+    badgeBg: 'bg-brand-wash',
+    badgeText: 'text-brand-strong',
     bots: 4,
     conversations: '10,000',
     features: [
@@ -132,10 +132,10 @@ export default async function BillingPage({
   const subscriptionStatus = (tenant as { subscription_status?: string | null } | null)?.subscription_status ?? null;
 
   const SUBSCRIPTION_STATUS_BADGE: Record<string, string> = {
-    active:        'bg-emerald-100 text-emerald-700',
-    pending:       'bg-amber-100 text-amber-700',
-    halted:        'bg-red-100 text-red-700',
-    cancelled:     'bg-slate-100 text-slate-500',
+    active:        'bg-done-bg text-done',
+    pending:       'bg-waiting-bg text-waiting',
+    halted:        'bg-problem-bg text-problem',
+    cancelled:     'bg-neutral-bg text-neutral',
     created:       'bg-sky-100 text-sky-700',
     authenticated: 'bg-sky-100 text-sky-700',
   };
@@ -165,17 +165,17 @@ export default async function BillingPage({
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Billing & Plan</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Your current subscription and usage.</p>
+        <h2 className="text-xl font-bold text-text">Billing & Plan</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Your current subscription and usage.</p>
       </div>
 
       {/* Suspended banner */}
       {isSuspended && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
-          <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+        <div className="bg-problem-bg border border-line rounded-2xl p-4 flex items-start gap-3">
+          <AlertCircle size={16} className="text-problem shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-red-800">Account suspended</p>
-            <p className="text-xs text-red-600 mt-0.5">
+            <p className="text-sm font-semibold text-problem">Account suspended</p>
+            <p className="text-xs text-problem mt-0.5">
               Your bot has stopped replying to messages. Contact your KOT.ai account manager to restore access.
             </p>
           </div>
@@ -184,11 +184,11 @@ export default async function BillingPage({
 
       {/* Limit reached banner */}
       {!isSuspended && isOverLimit && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
-          <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+        <div className="bg-problem-bg border border-line rounded-2xl p-4 flex items-start gap-3">
+          <AlertCircle size={16} className="text-problem shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-red-800">Monthly conversation limit reached</p>
-            <p className="text-xs text-red-600 mt-0.5">
+            <p className="text-sm font-semibold text-problem">Monthly conversation limit reached</p>
+            <p className="text-xs text-problem mt-0.5">
               Your bot has paused replies for this month ({convThisMonth ?? 0}/{planLimitNum} conversations used).
               Contact your account manager to upgrade your plan.
             </p>
@@ -248,26 +248,26 @@ export default async function BillingPage({
                 {tenant?.status ?? 'active'}
               </span>
               {subscriptionStatus && (
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${SUBSCRIPTION_STATUS_BADGE[subscriptionStatus] ?? 'bg-slate-100 text-slate-500'}`}>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${SUBSCRIPTION_STATUS_BADGE[subscriptionStatus] ?? 'bg-neutral-bg text-neutral'}`}>
                   {subscriptionStatus === 'active' ? 'Paid' : subscriptionStatus}
                 </span>
               )}
             </div>
-            <p className="text-sm text-slate-500 mt-0.5">Current plan</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Current plan</p>
           </div>
           <CreditCard size={24} className={`${meta.color} opacity-40`} />
         </div>
 
         <ul className="space-y-1.5 mb-4">
           {meta.features.map(f => (
-            <li key={f} className="flex items-center gap-2 text-sm text-slate-700">
+            <li key={f} className="flex items-center gap-2 text-sm text-text">
               <Check size={13} className={meta.color} />
               {f}
             </li>
           ))}
         </ul>
 
-        <p className="text-xs text-slate-500 border-t border-slate-200 pt-3 mt-3">
+        <p className="text-xs text-muted-foreground border-t border-line pt-3 mt-3">
           Upgrade anytime using the options below. For custom plans or billing queries, contact your KOT.ai account manager.
         </p>
       </div>
@@ -275,112 +275,112 @@ export default async function BillingPage({
       {/* Usage this month */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Conversations */}
-        <div className="bg-white border border-green-100 rounded-xl p-4">
+        <div className="bg-surface border border-line rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <MessageSquare size={14} className="text-emerald-500" />
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Conversations</p>
+            <MessageSquare size={14} className="text-brand" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Conversations</p>
           </div>
-          <p className="text-2xl font-bold text-slate-800 tabular-nums">{convThisMonth ?? 0}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-2xl font-bold text-text tabular-nums">{convThisMonth ?? 0}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
             This month · limit: {meta.conversations}
           </p>
           {isFinite(planLimitNum) && (
             <div className="mt-2">
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-sunken rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    isOverLimit ? 'bg-red-500' : isNearLimit ? 'bg-amber-500' : 'bg-emerald-500'
+                    isOverLimit ? 'bg-problem' : isNearLimit ? 'bg-amber-500' : 'bg-brand'
                   }`}
                   style={{ width: `${Math.min(usagePercent, 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">{usagePercent}% used</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{usagePercent}% used</p>
             </div>
           )}
         </div>
 
         {/* AI Tokens */}
-        <div className="bg-white border border-green-100 rounded-xl p-4">
+        <div className="bg-surface border border-line rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Zap size={14} className="text-emerald-500" />
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">AI Tokens</p>
+            <Zap size={14} className="text-brand" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">AI Tokens</p>
           </div>
-          <p className="text-2xl font-bold text-slate-800 tabular-nums">{formatTokens(tokensUsed)}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-2xl font-bold text-text tabular-nums">{formatTokens(tokensUsed)}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
             This month · limit: {formatTokens(planTokenLimit)}
           </p>
           {isFinite(planTokenLimit) && (
             <div className="mt-2">
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-sunken rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    tokenOverLimit ? 'bg-red-500' : tokenNearLimit ? 'bg-amber-500' : 'bg-emerald-500'
+                    tokenOverLimit ? 'bg-problem' : tokenNearLimit ? 'bg-amber-500' : 'bg-brand'
                   }`}
                   style={{ width: `${Math.min(tokenPercent, 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">{tokenPercent}% used</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{tokenPercent}% used</p>
             </div>
           )}
         </div>
 
         {/* Active Bots */}
-        <div className="bg-white border border-green-100 rounded-xl p-4">
+        <div className="bg-surface border border-line rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Bot size={14} className="text-emerald-500" />
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Active Bots</p>
+            <Bot size={14} className="text-brand" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Active Bots</p>
           </div>
-          <p className="text-2xl font-bold text-slate-800 tabular-nums">{activeBots.length}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">of {meta.bots} on {meta.name}</p>
+          <p className="text-2xl font-bold text-text tabular-nums">{activeBots.length}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">of {meta.bots} on {meta.name}</p>
         </div>
 
         {/* LLM Cost this month */}
-        <div className="bg-white border border-green-100 rounded-xl p-4">
+        <div className="bg-surface border border-line rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
-            <IndianRupee size={14} className="text-emerald-500" />
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">AI Cost</p>
+            <IndianRupee size={14} className="text-brand" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">AI Cost</p>
           </div>
-          <p className="text-2xl font-bold text-slate-800 tabular-nums">
+          <p className="text-2xl font-bold text-text tabular-nums">
             ₹{costInrMonth < 1 ? costInrMonth.toFixed(4) : costInrMonth.toFixed(2)}
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">This month · LLM tokens only</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">This month · LLM tokens only</p>
         </div>
       </div>
 
       {/* Per-bot subscriptions */}
       {activeBots.length > 0 && (
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-gray-700">Bot Subscriptions</p>
+          <p className="text-sm font-semibold text-text">Bot Subscriptions</p>
           {activeBots.map(p => {
             const botMeta = BOT_META[p.product_type];
             const sub     = subMap.get(p.product_type);
             const trial   = trialMap.get(p.product_type);
 
             return (
-              <div key={p.product_type} className={`rounded-xl border p-4 ${botMeta?.bg ?? 'bg-slate-50'} ${botMeta?.border ?? 'border-slate-200'}`}>
+              <div key={p.product_type} className={`rounded-xl border p-4 ${botMeta?.bg ?? 'bg-sunken'} ${botMeta?.border ?? 'border-line'}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className={`text-sm font-semibold ${botMeta?.color ?? 'text-slate-700'}`}>{botMeta?.name ?? p.product_type}</p>
+                  <p className={`text-sm font-semibold ${botMeta?.color ?? 'text-text'}`}>{botMeta?.name ?? p.product_type}</p>
                   {trial ? (
                     <span className="text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-700 rounded-full">Trial</span>
                   ) : (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">Active</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 bg-done-bg text-done rounded-full">Active</span>
                   )}
                 </div>
                 {trial ? (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Trial ends {new Date(trial.ends_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                     {' · '}{trial.allowed_model.split('-').slice(0, 3).join('-')}
                   </p>
                 ) : sub ? (
-                  <div className="grid grid-cols-3 gap-2 text-xs text-slate-500">
-                    <span><span className="font-medium text-slate-700 capitalize">{sub.tier ?? plan}</span> tier</span>
-                    <span><span className="font-medium text-slate-700 capitalize">{sub.billing_cycle ?? 'Monthly'}</span></span>
+                  <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                    <span><span className="font-medium text-text capitalize">{sub.tier ?? plan}</span> tier</span>
+                    <span><span className="font-medium text-text capitalize">{sub.billing_cycle ?? 'Monthly'}</span></span>
                     {sub.next_billing_date && (
                       <span>Due {new Date(sub.next_billing_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400">Subscription details not yet configured.</p>
+                  <p className="text-xs text-muted-foreground">Subscription details not yet configured.</p>
                 )}
               </div>
             );

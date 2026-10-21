@@ -71,9 +71,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   Ordering:  'bg-amber-50 text-amber-700 border-amber-200',
   Delivery:  'bg-sky-50 text-sky-700 border-sky-200',
   Returns:   'bg-rose-50 text-rose-700 border-rose-200',
-  Support:   'bg-emerald-50 text-emerald-700 border-emerald-200',
-  Company:   'bg-gray-100 text-gray-600 border-gray-200',
-  General:   'bg-gray-50 text-gray-500 border-gray-200',
+  Support:   'bg-brand-wash text-brand-strong border-line',
+  Company:   'bg-neutral-bg text-neutral border-line',
+  General:   'bg-sunken text-muted-foreground border-line',
 };
 
 const EMPTY_STEP1 = { businessOverview: '', industry: '', customerType: 'B2C' };
@@ -90,15 +90,15 @@ function StepIndicator({ current }: { current: WizardStep }) {
       {WIZARD_STEPS.map((label, i) => (
         <div key={label} className="flex items-center">
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-            i < idx   ? 'bg-emerald-100 text-emerald-700' :
-            i === idx ? 'bg-emerald-600 text-white shadow-sm' :
-                        'bg-gray-100 text-gray-400'
+            i < idx   ? 'bg-brand-wash text-brand-strong' :
+            i === idx ? 'bg-brand-strong text-white shadow-sm' :
+                        'bg-sunken text-muted-foreground'
           }`}>
             {i < idx ? <Check size={11} /> : <span>{i + 1}</span>}
             {label}
           </div>
           {i < WIZARD_STEPS.length - 1 && (
-            <div className={`w-6 h-px mx-1 ${i < idx ? 'bg-emerald-300' : 'bg-gray-200'}`} />
+            <div className={`w-6 h-px mx-1 ${i < idx ? 'bg-brand' : 'bg-sunken'}`} />
           )}
         </div>
       ))}
@@ -552,10 +552,10 @@ export default function KnowledgeBasePage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-text">
             {activeTab === 'catalogue' ? 'Product Catalogue' : 'Knowledge Base'}
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {activeTab === 'catalogue'
               ? 'Active products are injected into the sales bot — it can quote exact prices and send a formatted product list on request.'
               : 'Collections of Q&A entries that power your AI bots'}
@@ -563,52 +563,52 @@ export default function KnowledgeBasePage() {
         </div>
         {activeTab === 'collections' && (
           <button type="button" onClick={() => setShowNew(true)}
-            className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold shadow-sm shadow-emerald-200 shrink-0">
+            className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold shadow-sm shrink-0">
             <Plus size={15} /> New Collection
           </button>
         )}
         {activeTab === 'media' && (
-          <div className="text-xs text-gray-400 bg-white border border-green-100 px-3 py-1.5 rounded-full shadow-sm self-start">
+          <div className="text-xs text-muted-foreground bg-surface border border-line px-3 py-1.5 rounded-full shadow-sm self-start">
             {mediaFiles.length} file{mediaFiles.length !== 1 ? 's' : ''} uploaded
           </div>
         )}
       </div>
 
       {/* Tab switcher */}
-      <div className="flex items-center gap-1 bg-white border border-green-100 rounded-xl shadow-sm p-1 w-fit">
+      <div className="flex items-center gap-1 bg-surface border border-line rounded-xl shadow-sm p-1 w-fit">
         <button type="button" onClick={() => setActiveTab('collections')}
           className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'collections' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'collections' ? 'bg-brand-strong text-white shadow-sm' : 'text-muted-foreground hover:text-text'
           }`}>
           <BookOpen size={14} /> Collections
         </button>
         <button type="button" onClick={() => { setActiveTab('builder'); }}
           className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'builder' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'builder' ? 'bg-brand-strong text-white shadow-sm' : 'text-muted-foreground hover:text-text'
           }`}>
           <Sparkles size={14} /> AI Builder
         </button>
         <button type="button" onClick={() => setActiveTab('media')}
           className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'media' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'media' ? 'bg-brand-strong text-white shadow-sm' : 'text-muted-foreground hover:text-text'
           }`}>
           <ImageIcon size={14} /> File Library
         </button>
         <button type="button" onClick={() => setActiveTab('catalogue')}
           className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'catalogue' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'catalogue' ? 'bg-brand-strong text-white shadow-sm' : 'text-muted-foreground hover:text-text'
           }`}>
           <Package size={14} /> Catalogue
         </button>
         <button type="button" onClick={() => setActiveTab('analytics')}
           className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'analytics' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'analytics' ? 'bg-brand-strong text-white shadow-sm' : 'text-muted-foreground hover:text-text'
           }`}>
           <BarChart2 size={14} /> Analytics
         </button>
         <button type="button" onClick={() => setActiveTab('suggestions')}
           className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'suggestions' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'suggestions' ? 'bg-brand-strong text-white shadow-sm' : 'text-muted-foreground hover:text-text'
           }`}>
           <Wand2 size={14} /> Suggestions
         </button>
@@ -619,24 +619,24 @@ export default function KnowledgeBasePage() {
         <>
           {loading && (
             <div className="flex items-center justify-center py-24">
-              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
           )}
 
           {!loading && !collections.length && (
-            <div className="bg-white rounded-2xl border border-green-100 shadow-sm flex flex-col items-center justify-center py-24 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center mb-4 border border-green-100">
-                <BookOpen size={28} className="text-green-400" />
+            <div className="bg-surface rounded-2xl border border-line shadow-sm flex flex-col items-center justify-center py-24 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-sunken flex items-center justify-center mb-4 border border-line">
+                <BookOpen size={28} className="text-muted-foreground" />
               </div>
-              <p className="text-sm font-semibold text-gray-600">No collections yet</p>
-              <p className="text-xs text-gray-400 mt-1 mb-4">Create a collection manually or use the AI Builder to generate one.</p>
+              <p className="text-sm font-semibold text-muted-foreground">No collections yet</p>
+              <p className="text-xs text-muted-foreground mt-1 mb-4">Create a collection manually or use the AI Builder to generate one.</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setShowNew(true)}
-                  className="text-sm px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold">
+                  className="text-sm px-4 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold">
                   New Collection
                 </button>
                 <button type="button" onClick={() => setActiveTab('builder')}
-                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-green-200 text-emerald-700 hover:bg-green-50 transition-colors font-semibold">
+                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-line text-brand-strong hover:bg-sunken transition-colors font-semibold">
                   <Sparkles size={14} /> Try AI Builder
                 </button>
               </div>
@@ -645,40 +645,40 @@ export default function KnowledgeBasePage() {
 
           {!loading && collections.length > 0 && visibleCollections.length === 0 && botParam && (
             <div className="py-10 text-center">
-              <p className="text-sm font-semibold text-gray-600">No collections for this bot</p>
-              <p className="text-xs text-gray-400 mt-1">Create a collection and link it to this bot when editing.</p>
+              <p className="text-sm font-semibold text-muted-foreground">No collections for this bot</p>
+              <p className="text-xs text-muted-foreground mt-1">Create a collection and link it to this bot when editing.</p>
             </div>
           )}
 
           {!loading && visibleCollections.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {visibleCollections.map((col) => (
-                <div key={col.id} className="relative bg-white rounded-2xl border border-green-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group">
+                <div key={col.id} className="relative bg-surface rounded-2xl border border-line shadow-sm hover:shadow-md hover:border-line transition-all group">
                   <Link href={`/knowledge-base/${col.id}`} className="block p-5 pr-10">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                        <BookOpen size={16} className="text-emerald-600" />
+                      <div className="w-9 h-9 rounded-xl bg-brand-wash border border-line flex items-center justify-center">
+                        <BookOpen size={16} className="text-brand-strong" />
                       </div>
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${col.active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${col.active ? 'bg-done-bg text-done' : 'bg-neutral-bg text-neutral'}`}>
                         {col.active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    <p className="font-semibold text-gray-900 text-sm">{col.name}</p>
-                    {col.description && <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{col.description}</p>}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-green-50">
-                      <p className="text-xs text-gray-400">
-                        <span className="font-semibold text-gray-700">{col.entry_count}</span>{' '}
+                    <p className="font-semibold text-text text-sm">{col.name}</p>
+                    {col.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{col.description}</p>}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-line">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold text-text">{col.entry_count}</span>{' '}
                         {col.entry_count === 1 ? 'entry' : 'entries'}
                       </p>
                       <div className="flex items-center gap-1 flex-wrap justify-end">
                         {col.kb_collection_bots.length ? (
                           col.kb_collection_bots.map((b) => (
-                            <span key={b.product_slug} className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${BOT_PILL[b.product_slug] ?? 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                            <span key={b.product_slug} className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${BOT_PILL[b.product_slug] ?? 'bg-sunken text-muted-foreground border-line'}`}>
                               {BOT_LABEL[b.product_slug] ?? b.product_slug}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[10px] text-gray-300 italic">no bots</span>
+                          <span className="text-[10px] text-muted-foreground italic">no bots</span>
                         )}
                       </div>
                     </div>
@@ -687,16 +687,16 @@ export default function KnowledgeBasePage() {
                     {col.entry_count > 0 && (
                       <button type="button" onClick={(e) => void handleOptimise(col, e)} aria-label="Optimise KB"
                         title="Optimise KB with AI"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:bg-violet-50 hover:text-violet-500 transition-colors">
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-violet-50 hover:text-violet-500 transition-colors">
                         <Wand2 size={13} />
                       </button>
                     )}
                     <button type="button" onClick={(e) => void handleDelete(col.id, e)} aria-label="Delete collection"
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors">
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-problem-bg hover:text-problem transition-colors">
                       <Trash2 size={13} />
                     </button>
                   </div>
-                  <ChevronRight size={14} className="absolute bottom-5 right-4 text-gray-200 group-hover:text-emerald-400 transition-colors" />
+                  <ChevronRight size={14} className="absolute bottom-5 right-4 text-line group-hover:text-brand transition-colors" />
                 </div>
               ))}
             </div>
@@ -706,44 +706,44 @@ export default function KnowledgeBasePage() {
 
       {/* ── AI BUILDER TAB ──────────────────────────────────────────────────── */}
       {activeTab === 'builder' && (
-        <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-6 lg:p-8">
+        <div className="bg-surface rounded-2xl border border-line shadow-sm p-6 lg:p-8">
 
           {/* ── STEP 1 — Business Overview ── */}
           {wizardStep === 1 && (
             <div className="max-w-2xl">
               <StepIndicator current={1} />
-              <h3 className="text-base font-bold text-gray-900 mb-1">Business Overview</h3>
-              <p className="text-sm text-gray-500 mb-6">Tell us about your business so we can tailor the knowledge base.</p>
+              <h3 className="text-base font-bold text-text mb-1">Business Overview</h3>
+              <p className="text-sm text-muted-foreground mb-6">Tell us about your business so we can tailor the knowledge base.</p>
 
               <div className="space-y-5">
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                    What does your business do? <span className="text-red-400">*</span>
+                  <label className="text-xs font-semibold text-text mb-1.5 block">
+                    What does your business do? <span className="text-problem">*</span>
                   </label>
                   <textarea rows={3} value={step1.businessOverview}
                     onChange={e => setStep1({ ...step1, businessOverview: e.target.value })}
                     placeholder="e.g. We manufacture and sell premium stainless steel kitchen equipment to hotels and restaurants across India. Our flagship products include industrial ovens, refrigeration units, and food prep stations."
-                    className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" />
+                    className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand resize-none" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">Industry <span className="text-red-400">*</span></label>
+                    <label className="text-xs font-semibold text-text mb-1.5 block">Industry <span className="text-problem">*</span></label>
                     <select value={step1.industry} onChange={e => setStep1({ ...step1, industry: e.target.value })}
-                      className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand">
                       <option value="">Select industry…</option>
                       {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">Primary customers <span className="text-red-400">*</span></label>
+                    <label className="text-xs font-semibold text-text mb-1.5 block">Primary customers <span className="text-problem">*</span></label>
                     <div className="flex gap-2 mt-1">
                       {['B2B', 'B2C', 'Both'].map(opt => (
                         <button key={opt} type="button" onClick={() => setStep1({ ...step1, customerType: opt })}
                           className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
                             step1.customerType === opt
-                              ? 'bg-emerald-600 text-white border-emerald-600'
-                              : 'bg-white text-gray-600 border-green-200 hover:border-emerald-300'
+                              ? 'bg-brand-strong text-white border-brand-strong'
+                              : 'bg-surface text-muted-foreground border-line hover:border-brand'
                           }`}>
                           {opt}
                         </button>
@@ -757,7 +757,7 @@ export default function KnowledgeBasePage() {
                 <button type="button"
                   disabled={!step1.businessOverview.trim() || !step1.industry}
                   onClick={() => setWizardStep(2)}
-                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-40 shadow-sm shadow-emerald-200">
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold disabled:opacity-40 shadow-sm">
                   Next <ChevronRight size={15} />
                 </button>
               </div>
@@ -768,17 +768,17 @@ export default function KnowledgeBasePage() {
           {wizardStep === 2 && (
             <div className="max-w-2xl">
               <StepIndicator current={2} />
-              <h3 className="text-base font-bold text-gray-900 mb-1">Products &amp; Services</h3>
-              <p className="text-sm text-gray-500 mb-6">Add up to 10 products or services. These become the core of your KB.</p>
+              <h3 className="text-base font-bold text-text mb-1">Products &amp; Services</h3>
+              <p className="text-sm text-muted-foreground mb-6">Add up to 10 products or services. These become the core of your KB.</p>
 
               <div className="space-y-3">
                 {products.map((p, i) => (
-                  <div key={i} className="bg-green-50/50 border border-green-200 rounded-xl p-4 space-y-3">
+                  <div key={i} className="bg-sunken border border-line rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Product / Service {i + 1}</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Product / Service {i + 1}</p>
                       {products.length > 1 && (
                         <button type="button" onClick={() => removeProduct(i)}
-                          className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                          className="text-xs text-muted-foreground hover:text-problem transition-colors">
                           Remove
                         </button>
                       )}
@@ -787,17 +787,17 @@ export default function KnowledgeBasePage() {
                       <div className="sm:col-span-2">
                         <input placeholder="Product / service name *" value={p.name}
                           onChange={e => updateProduct(i, 'name', e.target.value)}
-                          className="w-full rounded-xl border border-green-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                          className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand" />
                       </div>
                       <div className="sm:col-span-2">
                         <textarea rows={2} placeholder="Brief description (features, benefits, who it's for)"
                           value={p.description} onChange={e => updateProduct(i, 'description', e.target.value)}
-                          className="w-full rounded-xl border border-green-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" />
+                          className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand resize-none" />
                       </div>
                       <div>
                         <input placeholder="Price / pricing model (e.g. ₹999/mo, Quote-based)"
                           value={p.price} onChange={e => updateProduct(i, 'price', e.target.value)}
-                          className="w-full rounded-xl border border-green-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                          className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand" />
                       </div>
                     </div>
                   </div>
@@ -805,7 +805,7 @@ export default function KnowledgeBasePage() {
 
                 {products.length < 10 && (
                   <button type="button" onClick={addProduct}
-                    className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-green-200 text-emerald-700 hover:bg-green-50 transition-colors font-medium w-full justify-center">
+                    className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-line text-brand-strong hover:bg-sunken transition-colors font-medium w-full justify-center">
                     <Plus size={14} /> Add another product
                   </button>
                 )}
@@ -813,12 +813,12 @@ export default function KnowledgeBasePage() {
 
               <div className="flex items-center justify-between mt-8">
                 <button type="button" onClick={() => setWizardStep(1)}
-                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">
+                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                   <ChevronLeft size={15} /> Back
                 </button>
                 <button type="button" onClick={() => setWizardStep(3)}
                   disabled={!products.some(p => p.name.trim())}
-                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-40 shadow-sm shadow-emerald-200">
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold disabled:opacity-40 shadow-sm">
                   Next <ChevronRight size={15} />
                 </button>
               </div>
@@ -829,8 +829,8 @@ export default function KnowledgeBasePage() {
           {wizardStep === 3 && (
             <div className="max-w-2xl">
               <StepIndicator current={3} />
-              <h3 className="text-base font-bold text-gray-900 mb-1">Policies &amp; Operations</h3>
-              <p className="text-sm text-gray-500 mb-6">Fill in what you know — skip fields that don&apos;t apply.</p>
+              <h3 className="text-base font-bold text-text mb-1">Policies &amp; Operations</h3>
+              <p className="text-sm text-muted-foreground mb-6">Fill in what you know — skip fields that don&apos;t apply.</p>
 
               <div className="space-y-4">
                 {[
@@ -841,22 +841,22 @@ export default function KnowledgeBasePage() {
                   { key: 'warranty',     label: 'Warranty / Guarantee',          placeholder: 'e.g. 1-year manufacturer warranty on all products. Extended 2-year warranty available at checkout.' },
                 ] .map(({ key, label, placeholder }) => (
                   <div key={key}>
-                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{label}</label>
+                    <label className="text-xs font-semibold text-text mb-1.5 block">{label}</label>
                     <textarea rows={2} placeholder={placeholder}
                       value={step3[key as keyof typeof step3]}
                       onChange={e => setStep3({ ...step3, [key]: e.target.value })}
-                      className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" />
+                      className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand resize-none" />
                   </div>
                 ))}
               </div>
 
               <div className="flex items-center justify-between mt-8">
                 <button type="button" onClick={() => setWizardStep(2)}
-                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">
+                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                   <ChevronLeft size={15} /> Back
                 </button>
                 <button type="button" onClick={() => setWizardStep(4)}
-                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold shadow-sm shadow-emerald-200">
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold shadow-sm">
                   Next <ChevronRight size={15} />
                 </button>
               </div>
@@ -867,30 +867,30 @@ export default function KnowledgeBasePage() {
           {wizardStep === 4 && (
             <div className="max-w-2xl">
               <StepIndicator current={4} />
-              <h3 className="text-base font-bold text-gray-900 mb-1">Top Customer Questions</h3>
-              <p className="text-sm text-gray-500 mb-2">Optional — but even 5 real questions dramatically improve KB quality.</p>
+              <h3 className="text-base font-bold text-text mb-1">Top Customer Questions</h3>
+              <p className="text-sm text-muted-foreground mb-2">Optional — but even 5 real questions dramatically improve KB quality.</p>
               <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-800 mb-6">
                 💡 Paste the questions your customers ask most — one per line. These become primary KB entries and seed related questions.
               </div>
 
               <textarea rows={10} value={faqSeeds} onChange={e => setFaqSeeds(e.target.value)}
                 placeholder={`What is the minimum order quantity?\nDo you offer installation services?\nCan I get a product demo before buying?\nWhat are your payment terms for bulk orders?\nHow long does delivery take to Bangalore?`}
-                className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none font-mono" />
-              <p className="text-xs text-gray-400 mt-1.5">{faqSeeds.split('\n').filter(l => l.trim()).length} questions</p>
+                className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand resize-none font-mono" />
+              <p className="text-xs text-muted-foreground mt-1.5">{faqSeeds.split('\n').filter(l => l.trim()).length} questions</p>
 
               {genError && (
-                <div className="flex items-center gap-2 mt-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 mt-4 text-sm text-problem bg-problem-bg border border-line rounded-xl px-4 py-3">
                   <AlertCircle size={15} className="shrink-0" /> {genError}
                 </div>
               )}
 
               <div className="flex items-center justify-between mt-8">
                 <button type="button" onClick={() => setWizardStep(3)}
-                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">
+                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                   <ChevronLeft size={15} /> Back
                 </button>
                 <button type="button" onClick={() => void handleGenerate()} disabled={generating}
-                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold shadow-sm shadow-emerald-200 disabled:opacity-50">
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold shadow-sm disabled:opacity-50">
                   <Sparkles size={15} /> Generate Knowledge Base
                 </button>
               </div>
@@ -900,11 +900,11 @@ export default function KnowledgeBasePage() {
           {/* ── GENERATING ── */}
           {wizardStep === 'generating' && (
             <div className="flex flex-col items-center justify-center py-24 text-center max-w-sm mx-auto">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-5">
-                <Loader2 size={28} className="text-emerald-500 animate-spin" />
+              <div className="w-16 h-16 rounded-2xl bg-brand-wash border border-line flex items-center justify-center mb-5">
+                <Loader2 size={28} className="text-brand animate-spin" />
               </div>
-              <p className="text-base font-bold text-gray-900 mb-2">Building your Knowledge Base…</p>
-              <p className="text-sm text-gray-400">Claude is generating 30–50 Q&amp;A entries based on your business info. This takes about 15 seconds.</p>
+              <p className="text-base font-bold text-text mb-2">Building your Knowledge Base…</p>
+              <p className="text-sm text-muted-foreground">Claude is generating 30–50 Q&amp;A entries based on your business info. This takes about 15 seconds.</p>
             </div>
           )}
 
@@ -914,58 +914,58 @@ export default function KnowledgeBasePage() {
               {/* Header */}
               <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">Review Generated Entries</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <h3 className="text-base font-bold text-text">Review Generated Entries</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {entries.length} entries generated — {selectedCount} selected. Click any row to edit.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={toggleAll}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                     {entries.every(e => e.selected) ? <Square size={12} /> : <CheckSquare size={12} />}
                     {entries.every(e => e.selected) ? 'Deselect all' : 'Select all'}
                   </button>
                   <button type="button" onClick={() => void handleGenerate()}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                     <Sparkles size={12} /> Regenerate
                   </button>
                 </div>
               </div>
 
               {/* Table */}
-              <div className="border border-green-100 rounded-xl overflow-hidden mb-5">
-                <div className="divide-y divide-green-50">
+              <div className="border border-line rounded-xl overflow-hidden mb-5">
+                <div className="divide-y divide-line">
                   {entries.map((entry, i) => (
                     <div key={i}
-                      className={`flex items-start gap-3 px-4 py-3 transition-colors ${entry.selected ? 'bg-white' : 'bg-gray-50/50 opacity-60'}`}>
-                      <button type="button" onClick={() => toggleEntry(i)} className="shrink-0 mt-0.5 text-emerald-500 hover:text-emerald-700">
-                        {entry.selected ? <CheckSquare size={16} /> : <Square size={16} className="text-gray-300" />}
+                      className={`flex items-start gap-3 px-4 py-3 transition-colors ${entry.selected ? 'bg-surface' : 'bg-sunken opacity-60'}`}>
+                      <button type="button" onClick={() => toggleEntry(i)} className="shrink-0 mt-0.5 text-brand hover:text-brand-strong">
+                        {entry.selected ? <CheckSquare size={16} /> : <Square size={16} className="text-muted-foreground" />}
                       </button>
                       <div className="flex-1 min-w-0">
                         {editingIdx === i ? (
                           <div className="space-y-2">
                             <input autoFocus value={editDraft?.question ?? ''} onChange={e => setEditDraft(d => d ? { ...d, question: e.target.value } : d)}
-                              className="w-full rounded-lg border border-emerald-300 px-2.5 py-1.5 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                              className="w-full rounded-lg border border-brand px-2.5 py-1.5 text-sm font-semibold text-text focus:outline-none focus:ring-2 focus:ring-brand" />
                             <textarea rows={2} value={editDraft?.answer ?? ''} onChange={e => setEditDraft(d => d ? { ...d, answer: e.target.value } : d)}
-                              className="w-full rounded-lg border border-emerald-300 px-2.5 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" />
+                              className="w-full rounded-lg border border-brand px-2.5 py-1.5 text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand resize-none" />
                             <div className="flex gap-2">
                               <button type="button" onClick={saveEdit}
-                                className="text-xs px-3 py-1 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors">Save</button>
+                                className="text-xs px-3 py-1 rounded-lg bg-brand-strong text-white font-semibold hover:opacity-90 transition-colors">Save</button>
                               <button type="button" onClick={() => { setEditingIdx(null); setEditDraft(null); }}
-                                className="text-xs px-3 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">Cancel</button>
+                                className="text-xs px-3 py-1 rounded-lg border border-line text-muted-foreground hover:bg-sunken transition-colors">Cancel</button>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-start gap-2 cursor-pointer" onClick={() => startEdit(i)}>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 leading-snug">{entry.question}</p>
-                              <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{entry.answer}</p>
+                              <p className="text-sm font-semibold text-text leading-snug">{entry.question}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{entry.answer}</p>
                             </div>
-                            <Pencil size={12} className="text-gray-300 shrink-0 mt-1" />
+                            <Pencil size={12} className="text-muted-foreground shrink-0 mt-1" />
                           </div>
                         )}
                       </div>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 mt-0.5 ${CATEGORY_COLORS[entry.category] ?? 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 mt-0.5 ${CATEGORY_COLORS[entry.category] ?? 'bg-sunken text-muted-foreground border-line'}`}>
                         {entry.category}
                       </span>
                     </div>
@@ -974,9 +974,9 @@ export default function KnowledgeBasePage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-400">{selectedCount} of {entries.length} selected</p>
+                <p className="text-sm text-muted-foreground">{selectedCount} of {entries.length} selected</p>
                 <button type="button" onClick={() => setWizardStep('import-setup')} disabled={selectedCount === 0}
-                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-40 shadow-sm shadow-emerald-200">
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold disabled:opacity-40 shadow-sm">
                   Import {selectedCount} {selectedCount === 1 ? 'entry' : 'entries'} →
                 </button>
               </div>
@@ -986,43 +986,43 @@ export default function KnowledgeBasePage() {
           {/* ── IMPORT SETUP ── */}
           {wizardStep === 'import-setup' && (
             <div className="max-w-lg">
-              <h3 className="text-base font-bold text-gray-900 mb-1">Import {selectedCount} Entries</h3>
-              <p className="text-sm text-gray-500 mb-6">Choose where to import the selected entries.</p>
+              <h3 className="text-base font-bold text-text mb-1">Import {selectedCount} Entries</h3>
+              <p className="text-sm text-muted-foreground mb-6">Choose where to import the selected entries.</p>
 
               <div className="space-y-3 mb-6">
                 <button type="button" onClick={() => setImportMode('new')}
-                  className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-colors ${importMode === 'new' ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <div className={`w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center ${importMode === 'new' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
-                    {importMode === 'new' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-colors ${importMode === 'new' ? 'border-brand bg-brand-wash' : 'border-line hover:border-line'}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center ${importMode === 'new' ? 'border-brand bg-brand' : 'border-line'}`}>
+                    {importMode === 'new' && <div className="w-1.5 h-1.5 rounded-full bg-surface" />}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">Create new collection</p>
-                    <p className="text-xs text-gray-500 mt-0.5">A new collection will be created and entries imported into it</p>
+                    <p className="text-sm font-semibold text-text">Create new collection</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">A new collection will be created and entries imported into it</p>
                   </div>
                 </button>
 
                 {importMode === 'new' && (
                   <input value={newColName} onChange={e => setNewColName(e.target.value)}
                     placeholder="Collection name, e.g. Product FAQ"
-                    className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                    className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand" />
                 )}
 
                 {collections.length > 0 && (
                   <>
                     <button type="button" onClick={() => setImportMode('existing')}
-                      className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-colors ${importMode === 'existing' ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <div className={`w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center ${importMode === 'existing' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
-                        {importMode === 'existing' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-colors ${importMode === 'existing' ? 'border-brand bg-brand-wash' : 'border-line hover:border-line'}`}>
+                      <div className={`w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center ${importMode === 'existing' ? 'border-brand bg-brand' : 'border-line'}`}>
+                        {importMode === 'existing' && <div className="w-1.5 h-1.5 rounded-full bg-surface" />}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-800">Add to existing collection</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Append to one of your existing collections</p>
+                        <p className="text-sm font-semibold text-text">Add to existing collection</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Append to one of your existing collections</p>
                       </div>
                     </button>
 
                     {importMode === 'existing' && (
                       <select value={targetColId} onChange={e => setTargetColId(e.target.value)}
-                        className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand">
                         <option value="">Select a collection…</option>
                         {collections.map(c => <option key={c.id} value={c.id}>{c.name} ({c.entry_count} entries)</option>)}
                       </select>
@@ -1032,18 +1032,18 @@ export default function KnowledgeBasePage() {
               </div>
 
               {importError && (
-                <div className="flex items-center gap-2 mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 mb-4 text-sm text-problem bg-problem-bg border border-line rounded-xl px-4 py-3">
                   <AlertCircle size={15} className="shrink-0" /> {importError}
                 </div>
               )}
 
               <div className="flex items-center justify-between">
                 <button type="button" onClick={() => setWizardStep('preview')}
-                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">
+                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                   <ChevronLeft size={15} /> Back to Preview
                 </button>
                 <button type="button" onClick={() => void handleImport()} disabled={importing}
-                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-50 shadow-sm shadow-emerald-200">
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold disabled:opacity-50 shadow-sm">
                   {importing ? <><Loader2 size={15} className="animate-spin" /> Importing…</> : <>Import →</>}
                 </button>
               </div>
@@ -1053,22 +1053,22 @@ export default function KnowledgeBasePage() {
           {/* ── DONE ── */}
           {wizardStep === 'done' && importedCol && (
             <div className="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-5">
-                <Check size={28} className="text-emerald-500" />
+              <div className="w-16 h-16 rounded-2xl bg-done-bg border border-line flex items-center justify-center mb-5">
+                <Check size={28} className="text-done" />
               </div>
-              <p className="text-base font-bold text-gray-900 mb-2">
+              <p className="text-base font-bold text-text mb-2">
                 {selectedCount} {selectedCount === 1 ? 'entry' : 'entries'} imported!
               </p>
-              <p className="text-sm text-gray-400 mb-6">
-                Added to <span className="font-semibold text-gray-700">{importedCol.name}</span>. Assign it to a bot and your AI is ready.
+              <p className="text-sm text-muted-foreground mb-6">
+                Added to <span className="font-semibold text-text">{importedCol.name}</span>. Assign it to a bot and your AI is ready.
               </p>
               <div className="flex items-center gap-2">
                 <Link href={`/knowledge-base/${importedCol.id}`}
-                  className="text-sm px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold">
+                  className="text-sm px-4 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold">
                   View Collection →
                 </Link>
                 <button type="button" onClick={() => { resetBuilder(); }}
-                  className="text-sm px-4 py-2.5 rounded-xl border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">
+                  className="text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                   Build Another
                 </button>
               </div>
@@ -1083,10 +1083,10 @@ export default function KnowledgeBasePage() {
         <div className="space-y-5">
 
           {/* Upload card */}
-          <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-6">
+          <div className="bg-surface rounded-2xl border border-line shadow-sm p-6">
             <div className="mb-5">
-              <h3 className="text-sm font-bold text-gray-900">Upload Files</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Images and PDFs the bot will send inline when answering relevant questions</p>
+              <h3 className="text-sm font-bold text-text">Upload Files</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Images and PDFs the bot will send inline when answering relevant questions</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -1097,16 +1097,16 @@ export default function KnowledgeBasePage() {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={e => { handleFileDrop(e); }}
                   className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${
-                    dragOver ? 'border-emerald-400 bg-emerald-50/60' : uploadQueue.length ? 'border-emerald-300 bg-emerald-50/30' : 'border-green-200 hover:border-emerald-300 hover:bg-green-50/40'
+                    dragOver ? 'border-brand bg-brand-wash' : uploadQueue.length ? 'border-brand bg-brand-wash' : 'border-line hover:border-brand hover:bg-sunken'
                   }`}>
                   <input type="file" accept="image/*,.pdf" multiple className="hidden" onChange={handleFileInput} />
-                  <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                    <Upload size={18} className="text-emerald-500" />
+                  <div className="w-11 h-11 rounded-xl bg-brand-wash border border-line flex items-center justify-center">
+                    <Upload size={18} className="text-brand" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-gray-700">Drop files here</p>
-                    <p className="text-xs text-gray-400 mt-0.5">or click to browse · select multiple</p>
-                    <p className="text-[11px] text-gray-300 mt-1.5">JPEG, PNG, WEBP, GIF, PDF · Max 20 MB each</p>
+                    <p className="text-sm font-semibold text-text">Drop files here</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">or click to browse · select multiple</p>
+                    <p className="text-[11px] text-muted-foreground mt-1.5">JPEG, PNG, WEBP, GIF, PDF · Max 20 MB each</p>
                   </div>
                 </label>
 
@@ -1115,26 +1115,26 @@ export default function KnowledgeBasePage() {
                   <div className="space-y-1.5">
                     {uploadQueue.map((item, idx) => (
                       <div key={idx} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs ${
-                        item.status === 'done'      ? 'bg-emerald-50 border-emerald-100' :
-                        item.status === 'error'     ? 'bg-red-50 border-red-100' :
+                        item.status === 'done'      ? 'bg-done-bg border-line' :
+                        item.status === 'error'     ? 'bg-problem-bg border-line' :
                         item.status === 'uploading' ? 'bg-blue-50 border-blue-100' :
-                                                      'bg-gray-50 border-gray-100'
+                                                      'bg-sunken border-line'
                       }`}>
                         {item.file.type.startsWith('image/') ? (
-                          <ImageIcon size={13} className="shrink-0 text-gray-400" />
+                          <ImageIcon size={13} className="shrink-0 text-muted-foreground" />
                         ) : (
                           <FileText size={13} className="shrink-0 text-rose-400" />
                         )}
-                        <span className="flex-1 truncate text-gray-700 font-medium">{item.file.name}</span>
-                        <span className="text-gray-300 shrink-0">{formatBytes(item.file.size)}</span>
+                        <span className="flex-1 truncate text-text font-medium">{item.file.name}</span>
+                        <span className="text-muted-foreground shrink-0">{formatBytes(item.file.size)}</span>
                         {item.status === 'pending' && (
-                          <button type="button" onClick={() => removeFromQueue(idx)} className="shrink-0 text-gray-300 hover:text-red-400 transition-colors">
+                          <button type="button" onClick={() => removeFromQueue(idx)} className="shrink-0 text-muted-foreground hover:text-problem transition-colors">
                             <X size={12} />
                           </button>
                         )}
                         {item.status === 'uploading' && <Loader2 size={12} className="shrink-0 text-blue-400 animate-spin" />}
-                        {item.status === 'done'      && <Check size={12} className="shrink-0 text-emerald-500" />}
-                        {item.status === 'error'     && <span title={item.error}><AlertCircle size={12} className="shrink-0 text-red-400" /></span>}
+                        {item.status === 'done'      && <Check size={12} className="shrink-0 text-done" />}
+                        {item.status === 'error'     && <span title={item.error}><AlertCircle size={12} className="shrink-0 text-problem" /></span>}
                       </div>
                     ))}
                   </div>
@@ -1144,27 +1144,27 @@ export default function KnowledgeBasePage() {
               {/* Form fields */}
               <div className="lg:col-span-3 space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                     Description
-                    <span className="text-gray-300 font-normal normal-case tracking-normal ml-1">— applied to all files in this batch</span>
+                    <span className="text-muted-foreground font-normal normal-case tracking-normal ml-1">— applied to all files in this batch</span>
                   </label>
                   <input
                     value={uploadForm.description}
                     onChange={e => setUploadForm(f => ({ ...f, description: e.target.value }))}
                     placeholder="e.g. Full product catalogue with prices, specifications and images"
-                    className="w-full rounded-xl border border-green-200 bg-green-50/40 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                     Link to Collection
-                    <span className="text-gray-300 font-normal normal-case tracking-normal ml-1">— bot sends these when matching that collection</span>
+                    <span className="text-muted-foreground font-normal normal-case tracking-normal ml-1">— bot sends these when matching that collection</span>
                   </label>
                   <select
                     value={uploadForm.collectionId}
                     onChange={e => setUploadForm(f => ({ ...f, collectionId: e.target.value }))}
-                    className="w-full rounded-xl border border-green-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand"
                   >
                     <option value="">No collection (available to all queries)</option>
                     {collections.map(c => (
@@ -1177,7 +1177,7 @@ export default function KnowledgeBasePage() {
                   type="button"
                   onClick={() => void handleUpload()}
                   disabled={uploading || uploadQueue.filter(q => q.status === 'pending').length === 0}
-                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-40 shadow-sm shadow-emerald-200"
+                  className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold disabled:opacity-40 shadow-sm"
                 >
                   {uploading
                     ? <><Loader2 size={15} className="animate-spin" /> Uploading…</>
@@ -1191,19 +1191,19 @@ export default function KnowledgeBasePage() {
           {/* File grid */}
           {mediaLoading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
           ) : mediaFiles.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-green-100 shadow-sm flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mb-4 border border-green-100">
-                <ImageIcon size={24} className="text-green-400" />
+            <div className="bg-surface rounded-2xl border border-line shadow-sm flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-sunken flex items-center justify-center mb-4 border border-line">
+                <ImageIcon size={24} className="text-muted-foreground" />
               </div>
-              <p className="text-sm font-semibold text-gray-600">No files yet</p>
-              <p className="text-xs text-gray-400 mt-1 max-w-xs">Upload images or PDFs above and the bot will send them automatically when answering related questions.</p>
+              <p className="text-sm font-semibold text-muted-foreground">No files yet</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xs">Upload images or PDFs above and the bot will send them automatically when answering related questions.</p>
             </div>
           ) : (
             <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Uploaded Files</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Uploaded Files</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {mediaFiles.map(file => {
                   const isImage = file.file_type === 'image';
@@ -1211,13 +1211,13 @@ export default function KnowledgeBasePage() {
                   return (
                     <div
                       key={file.id}
-                      className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
-                        file.active ? 'border-green-100 hover:border-emerald-200' : 'border-gray-100 opacity-60'
+                      className={`bg-surface rounded-2xl border shadow-sm overflow-hidden transition-all ${
+                        file.active ? 'border-line hover:border-line' : 'border-line opacity-60'
                       }`}
                     >
                       {/* Preview area */}
                       {isImage ? (
-                        <div className="h-36 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-green-50">
+                        <div className="h-36 bg-sunken flex items-center justify-center overflow-hidden border-b border-line">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={file.public_url}
@@ -1236,37 +1236,37 @@ export default function KnowledgeBasePage() {
                       {/* Info */}
                       <div className="p-4 space-y-2.5">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900 leading-tight">{file.name}</p>
+                          <p className="text-sm font-semibold text-text leading-tight">{file.name}</p>
                           {file.description && (
-                            <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{file.description}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{file.description}</p>
                           )}
                         </div>
 
                         <div className="flex items-center gap-2 flex-wrap">
                           {col ? (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-brand-wash text-brand-strong border border-line font-medium">
                               {col.name}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-gray-300 italic">no collection</span>
+                            <span className="text-[11px] text-muted-foreground italic">no collection</span>
                           )}
                           {file.send_count > 0 && (
                             <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-600 border border-sky-100 font-medium">
                               <Send size={9} /> sent {file.send_count}×
                             </span>
                           )}
-                          <span className="text-[11px] text-gray-300 ml-auto">{formatBytes(file.file_size)}</span>
+                          <span className="text-[11px] text-muted-foreground ml-auto">{formatBytes(file.file_size)}</span>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center justify-between pt-2 border-t border-green-50">
+                        <div className="flex items-center justify-between pt-2 border-t border-line">
                           <button
                             type="button"
                             onClick={() => void handleToggleActive(file.id, file.active)}
                             className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
                               file.active
-                                ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
-                                : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                                ? 'text-done bg-done-bg hover:opacity-80'
+                                : 'text-muted-foreground bg-sunken hover:opacity-80'
                             }`}
                           >
                             {file.active ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -1275,7 +1275,7 @@ export default function KnowledgeBasePage() {
                           <button
                             type="button"
                             onClick={() => void handleDeleteMedia(file.id)}
-                            className="flex items-center gap-1.5 text-xs font-medium text-gray-300 hover:text-red-500 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-problem hover:bg-problem-bg px-2.5 py-1.5 rounded-lg transition-colors"
                           >
                             <Trash2 size={12} /> Delete
                           </button>
@@ -1295,7 +1295,7 @@ export default function KnowledgeBasePage() {
         <div>
           {catalogueLoading ? (
             <div className="flex items-center justify-center py-24">
-              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <ProductCatalogueManager initialProducts={catalogueProducts ?? []} />
@@ -1306,22 +1306,22 @@ export default function KnowledgeBasePage() {
       {/* ── Optimise KB Modal ── */}
       {optimisingColId && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-green-100">
+          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-line">
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-line shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center">
                   <Wand2 size={15} className="text-violet-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">Optimise KB</p>
-                  <p className="text-xs text-gray-400 truncate max-w-xs">{optimiseColName}</p>
+                  <p className="text-sm font-bold text-text">Optimise KB</p>
+                  <p className="text-xs text-muted-foreground truncate max-w-xs">{optimiseColName}</p>
                 </div>
               </div>
               {optimisingStep !== 'loading' && optimisingStep !== 'applying' && (
                 <button type="button" onClick={closeOptimise} aria-label="Close"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken transition-colors">
                   <X size={16} />
                 </button>
               )}
@@ -1333,8 +1333,8 @@ export default function KnowledgeBasePage() {
                 <div className="w-14 h-14 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-4">
                   <Loader2 size={26} className="text-violet-500 animate-spin" />
                 </div>
-                <p className="text-sm font-bold text-gray-900 mb-1">Analysing your Knowledge Base…</p>
-                <p className="text-xs text-gray-400 max-w-xs">The AI is reading all your entries and rewriting them for better bot comprehension. This takes about 15–30 seconds.</p>
+                <p className="text-sm font-bold text-text mb-1">Analysing your Knowledge Base…</p>
+                <p className="text-xs text-muted-foreground max-w-xs">The AI is reading all your entries and rewriting them for better bot comprehension. This takes about 15–30 seconds.</p>
               </div>
             )}
 
@@ -1344,23 +1344,23 @@ export default function KnowledgeBasePage() {
                 <div className="w-14 h-14 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-4">
                   <Loader2 size={26} className="text-violet-500 animate-spin" />
                 </div>
-                <p className="text-sm font-bold text-gray-900 mb-1">Applying optimised entries…</p>
-                <p className="text-xs text-gray-400">Replacing existing entries with the optimised set.</p>
+                <p className="text-sm font-bold text-text mb-1">Applying optimised entries…</p>
+                <p className="text-xs text-muted-foreground">Replacing existing entries with the optimised set.</p>
               </div>
             )}
 
             {/* Done */}
             {optimisingStep === 'done' && (
               <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4">
-                  <Check size={26} className="text-emerald-500" />
+                <div className="w-14 h-14 rounded-2xl bg-done-bg border border-line flex items-center justify-center mb-4">
+                  <Check size={26} className="text-done" />
                 </div>
-                <p className="text-sm font-bold text-gray-900 mb-1">Knowledge Base optimised!</p>
-                <p className="text-xs text-gray-400 mb-6">
+                <p className="text-sm font-bold text-text mb-1">Knowledge Base optimised!</p>
+                <p className="text-xs text-muted-foreground mb-6">
                   {optimisedEntries.filter(e => e.selected).length} optimised entries replaced {optimiseOrigCount} original entries.
                 </p>
                 <button type="button" onClick={closeOptimise}
-                  className="text-sm px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold shadow-sm shadow-emerald-200">
+                  className="text-sm px-5 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold shadow-sm">
                   Done
                 </button>
               </div>
@@ -1370,14 +1370,14 @@ export default function KnowledgeBasePage() {
             {optimisingStep === 'preview' && (
               <>
                 {/* Sub-header */}
-                <div className="px-6 py-3 border-b border-gray-50 bg-violet-50/40 flex items-center justify-between shrink-0">
-                  <p className="text-xs text-gray-600">
+                <div className="px-6 py-3 border-b border-line bg-violet-50/40 flex items-center justify-between shrink-0">
+                  <p className="text-xs text-muted-foreground">
                     <span className="font-semibold text-violet-700">{optimisedEntries.length}</span> optimised entries
-                    {optimiseOrigCount > 0 && <span className="text-gray-400"> · was {optimiseOrigCount}</span>}
+                    {optimiseOrigCount > 0 && <span className="text-muted-foreground"> · was {optimiseOrigCount}</span>}
                     {' · '}<span className="text-violet-700 font-semibold">{optimisedEntries.filter(e => e.selected).length}</span> selected
                   </p>
                   <button type="button" onClick={toggleAllOpt}
-                    className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-white transition-colors font-medium">
+                    className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-line text-muted-foreground hover:bg-surface transition-colors font-medium">
                     {optimisedEntries.every(e => e.selected) ? <Square size={11} /> : <CheckSquare size={11} />}
                     {optimisedEntries.every(e => e.selected) ? 'Deselect all' : 'Select all'}
                   </button>
@@ -1385,43 +1385,43 @@ export default function KnowledgeBasePage() {
 
                 {/* Error banner */}
                 {optimiseError && (
-                  <div className="mx-6 mt-3 flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 shrink-0">
+                  <div className="mx-6 mt-3 flex items-center gap-2 text-sm text-problem bg-problem-bg border border-line rounded-xl px-4 py-3 shrink-0">
                     <AlertCircle size={14} className="shrink-0" /> {optimiseError}
                   </div>
                 )}
 
                 {/* Entry list */}
-                <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+                <div className="flex-1 overflow-y-auto divide-y divide-line">
                   {optimisedEntries.map((entry, i) => (
-                    <div key={i} className={`flex items-start gap-3 px-6 py-3.5 transition-colors ${entry.selected ? 'bg-white hover:bg-gray-50/40' : 'bg-gray-50/50 opacity-50'}`}>
+                    <div key={i} className={`flex items-start gap-3 px-6 py-3.5 transition-colors ${entry.selected ? 'bg-surface hover:bg-sunken' : 'bg-sunken opacity-50'}`}>
                       <button type="button" onClick={() => toggleOptEntry(i)} className="shrink-0 mt-0.5 text-violet-500 hover:text-violet-700">
-                        {entry.selected ? <CheckSquare size={15} /> : <Square size={15} className="text-gray-300" />}
+                        {entry.selected ? <CheckSquare size={15} /> : <Square size={15} className="text-muted-foreground" />}
                       </button>
                       <div className="flex-1 min-w-0">
                         {optEditIdx === i ? (
                           <div className="space-y-2">
                             <input autoFocus value={optEditDraft?.question ?? ''} onChange={e => setOptEditDraft(d => d ? { ...d, question: e.target.value } : d)}
-                              className="w-full rounded-lg border border-violet-300 px-2.5 py-1.5 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-400" />
+                              className="w-full rounded-lg border border-violet-300 px-2.5 py-1.5 text-sm font-semibold text-text focus:outline-none focus:ring-2 focus:ring-violet-400" />
                             <textarea rows={2} value={optEditDraft?.answer ?? ''} onChange={e => setOptEditDraft(d => d ? { ...d, answer: e.target.value } : d)}
-                              className="w-full rounded-lg border border-violet-300 px-2.5 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none" />
+                              className="w-full rounded-lg border border-violet-300 px-2.5 py-1.5 text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none" />
                             <div className="flex gap-2">
                               <button type="button" onClick={saveOptEdit}
                                 className="text-xs px-3 py-1 rounded-lg bg-violet-600 text-white font-semibold hover:bg-violet-700 transition-colors">Save</button>
                               <button type="button" onClick={() => { setOptEditIdx(null); setOptEditDraft(null); }}
-                                className="text-xs px-3 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">Cancel</button>
+                                className="text-xs px-3 py-1 rounded-lg border border-line text-muted-foreground hover:bg-sunken transition-colors">Cancel</button>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-start gap-2 cursor-pointer" onClick={() => startOptEdit(i)}>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 leading-snug">{entry.question}</p>
-                              <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{entry.answer}</p>
+                              <p className="text-sm font-semibold text-text leading-snug">{entry.question}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{entry.answer}</p>
                             </div>
-                            <Pencil size={11} className="text-gray-300 shrink-0 mt-1" />
+                            <Pencil size={11} className="text-muted-foreground shrink-0 mt-1" />
                           </div>
                         )}
                       </div>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 mt-0.5 ${CATEGORY_COLORS[entry.category] ?? 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 mt-0.5 ${CATEGORY_COLORS[entry.category] ?? 'bg-sunken text-muted-foreground border-line'}`}>
                         {entry.category}
                       </span>
                     </div>
@@ -1429,9 +1429,9 @@ export default function KnowledgeBasePage() {
                 </div>
 
                 {/* Footer actions */}
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between shrink-0 bg-white rounded-b-2xl">
+                <div className="px-6 py-4 border-t border-line flex items-center justify-between shrink-0 bg-surface rounded-b-2xl">
                   <button type="button" onClick={closeOptimise}
-                    className="text-sm px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors font-medium">
+                    className="text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">
                     Cancel
                   </button>
                   <button type="button"
@@ -1453,10 +1453,10 @@ export default function KnowledgeBasePage() {
         <div className="space-y-5">
           {analyticsLoading ? (
             <div className="flex items-center justify-center py-24">
-              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !analytics ? (
-            <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-10 text-center text-sm text-gray-400">
+            <div className="bg-surface rounded-2xl border border-line shadow-sm p-10 text-center text-sm text-muted-foreground">
               No analytics data yet.
             </div>
           ) : (
@@ -1468,37 +1468,37 @@ export default function KnowledgeBasePage() {
                   { label: 'Unanswered queries (30d)', value: analytics.unanswered_total.toLocaleString() },
                   { label: 'Top entries tracked',     value: analytics.top_entries.length.toLocaleString() },
                 ].map(s => (
-                  <div key={s.label} className="bg-white rounded-2xl border border-green-100 shadow-sm p-4">
-                    <p className="text-2xl font-bold text-gray-900 tabular-nums">{s.value}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+                  <div key={s.label} className="bg-surface rounded-2xl border border-line shadow-sm p-4">
+                    <p className="text-2xl font-bold text-text tabular-nums">{s.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
                   </div>
                 ))}
               </div>
 
               {/* Top KB entries */}
-              <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-50">
-                  <p className="text-sm font-semibold text-gray-800">Most-Used KB Entries</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Questions your bot answered most in the last 30 days</p>
+              <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-line">
+                  <p className="text-sm font-semibold text-text">Most-Used KB Entries</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Questions your bot answered most in the last 30 days</p>
                 </div>
                 {analytics.top_entries.length === 0 ? (
-                  <p className="px-5 py-8 text-sm text-gray-400 text-center">No KB hits yet — they start logging once the bot uses your knowledge base.</p>
+                  <p className="px-5 py-8 text-sm text-muted-foreground text-center">No KB hits yet — they start logging once the bot uses your knowledge base.</p>
                 ) : (
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-line">
                     {analytics.top_entries.map((e, i) => (
                       <div key={e.entry_id ?? i} className="flex items-start gap-4 px-5 py-3.5">
-                        <span className="text-xs font-bold text-gray-300 w-5 tabular-nums shrink-0 mt-0.5">{i + 1}</span>
+                        <span className="text-xs font-bold text-muted-foreground w-5 tabular-nums shrink-0 mt-0.5">{i + 1}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-800 leading-snug">{e.question}</p>
+                          <p className="text-sm text-text leading-snug">{e.question}</p>
                           {e.category && (
-                            <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${CATEGORY_COLORS[e.category] ?? 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                            <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${CATEGORY_COLORS[e.category] ?? 'bg-sunken text-muted-foreground border-line'}`}>
                               {e.category}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <span className="text-sm font-bold text-emerald-600 tabular-nums">{e.hit_count}</span>
-                          <span className="text-xs text-gray-400">hits</span>
+                          <span className="text-sm font-bold text-brand-strong tabular-nums">{e.hit_count}</span>
+                          <span className="text-xs text-muted-foreground">hits</span>
                         </div>
                       </div>
                     ))}
@@ -1507,22 +1507,22 @@ export default function KnowledgeBasePage() {
               </div>
 
               {/* Unanswered queries */}
-              <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-50">
-                  <p className="text-sm font-semibold text-gray-800">Unanswered Queries</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Customer questions with no KB match — add entries to close these gaps</p>
+              <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-line">
+                  <p className="text-sm font-semibold text-text">Unanswered Queries</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Customer questions with no KB match — add entries to close these gaps</p>
                 </div>
                 {analytics.unanswered.length === 0 ? (
-                  <p className="px-5 py-8 text-sm text-gray-400 text-center">No unanswered queries in the last 30 days. Your KB is covering all questions!</p>
+                  <p className="px-5 py-8 text-sm text-muted-foreground text-center">No unanswered queries in the last 30 days. Your KB is covering all questions!</p>
                 ) : (
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-line">
                     {analytics.unanswered.map((q, i) => (
                       <div key={i} className="flex items-start gap-4 px-5 py-3.5">
                         <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
-                        <p className="flex-1 text-sm text-gray-700 leading-snug">{q.query}</p>
+                        <p className="flex-1 text-sm text-text leading-snug">{q.query}</p>
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="text-sm font-bold text-amber-600 tabular-nums">{q.count}</span>
-                          <span className="text-xs text-gray-400">times</span>
+                          <span className="text-xs text-muted-foreground">times</span>
                         </div>
                       </div>
                     ))}
@@ -1540,7 +1540,7 @@ export default function KnowledgeBasePage() {
           {/* Header + generate button */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-600">AI-drafted KB entries based on your top unanswered customer questions. Review, edit, and approve them directly into a collection.</p>
+              <p className="text-sm text-muted-foreground">AI-drafted KB entries based on your top unanswered customer questions. Review, edit, and approve them directly into a collection.</p>
             </div>
             <button
               type="button"
@@ -1554,7 +1554,7 @@ export default function KnowledgeBasePage() {
                 }
                 setSugGenerating(false);
               }}
-              className="shrink-0 flex items-center gap-2 bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+              className="shrink-0 flex items-center gap-2 bg-brand-strong text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60 transition-colors"
             >
               {sugGenerating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Wand2 size={14} />}
               {sugGenerating ? 'Generating…' : 'Generate Suggestions'}
@@ -1563,36 +1563,36 @@ export default function KnowledgeBasePage() {
 
           {suggestionsLoading ? (
             <div className="flex items-center justify-center py-24">
-              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !suggestions || suggestions.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-green-100 shadow-sm flex flex-col items-center justify-center py-20 text-center gap-3">
-              <Wand2 size={28} className="text-emerald-300" />
-              <p className="text-sm font-semibold text-gray-700">No pending suggestions</p>
-              <p className="text-xs text-gray-400 max-w-xs">Click <span className="font-semibold">Generate Suggestions</span> to analyse your unanswered queries and draft new KB entries automatically.</p>
+            <div className="bg-surface rounded-2xl border border-line shadow-sm flex flex-col items-center justify-center py-20 text-center gap-3">
+              <Wand2 size={28} className="text-brand" />
+              <p className="text-sm font-semibold text-text">No pending suggestions</p>
+              <p className="text-xs text-muted-foreground max-w-xs">Click <span className="font-semibold">Generate Suggestions</span> to analyse your unanswered queries and draft new KB entries automatically.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {suggestions.map(s => (
-                <div key={s.id} className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
+                <div key={s.id} className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
                   <div className="px-5 py-4">
-                    <p className="text-sm font-semibold text-gray-800 mb-1">{s.question}</p>
-                    <p className="text-sm text-gray-600 leading-relaxed">{s.answer_draft}</p>
+                    <p className="text-sm font-semibold text-text mb-1">{s.question}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{s.answer_draft}</p>
                     {s.source_queries.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {s.source_queries.slice(0, 3).map((q, i) => (
                           <span key={i} className="text-[10px] bg-amber-50 text-amber-700 border border-amber-100 rounded px-1.5 py-0.5">{q.slice(0, 60)}{q.length > 60 ? '…' : ''}</span>
                         ))}
                         {s.source_queries.length > 3 && (
-                          <span className="text-[10px] text-gray-400">+{s.source_queries.length - 3} more</span>
+                          <span className="text-[10px] text-muted-foreground">+{s.source_queries.length - 3} more</span>
                         )}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
+                  <div className="flex items-center gap-2 px-5 py-3 bg-sunken border-t border-line">
                     {/* Collection picker for approve */}
                     <select
-                      className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                      className="flex-1 text-xs border border-line rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand"
                       value={approveTarget?.id === s.id ? approveTarget.collectionId : ''}
                       onChange={e => setApproveTarget({ id: s.id, collectionId: e.target.value })}
                     >
@@ -1610,7 +1610,7 @@ export default function KnowledgeBasePage() {
                         setSuggestions(prev => prev?.filter(x => x.id !== s.id) ?? null);
                         setApproveTarget(null);
                       }}
-                      className="flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-emerald-700 disabled:opacity-40 transition-colors"
+                      className="flex items-center gap-1.5 bg-brand-strong text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-40 transition-colors"
                     >
                       <Check size={12} /> Add to KB
                     </button>
@@ -1620,7 +1620,7 @@ export default function KnowledgeBasePage() {
                         await rejectKBSuggestionAction(s.id);
                         setSuggestions(prev => prev?.filter(x => x.id !== s.id) ?? null);
                       }}
-                      className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-problem px-2 py-1.5 rounded-lg hover:bg-problem-bg transition-colors"
                     >
                       <X size={12} /> Dismiss
                     </button>
@@ -1635,35 +1635,35 @@ export default function KnowledgeBasePage() {
       {/* ── New Collection Modal ── */}
       {showNew && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 border border-green-100">
+          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 border border-line">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">New Collection</h2>
+              <h2 className="text-base font-semibold text-text">New Collection</h2>
               <button type="button" aria-label="Close" onClick={() => { setShowNew(false); setColError(''); }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken transition-colors">
                 <X size={16} />
               </button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Name <span className="text-red-400">*</span></label>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Name <span className="text-problem">*</span></label>
                 <input autoFocus value={newForm.name} onChange={e => setNewForm({ ...newForm, name: e.target.value })}
                   onKeyDown={e => e.key === 'Enter' && void handleCreate()}
                   placeholder="e.g. Support FAQ"
-                  className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+                  className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Description <span className="text-gray-300">(optional)</span></label>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Description <span className="text-muted-foreground">(optional)</span></label>
                 <input value={newForm.description} onChange={e => setNewForm({ ...newForm, description: e.target.value })}
                   placeholder="What this collection covers…"
-                  className="w-full rounded-xl border border-green-200 bg-green-50/50 px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+                  className="w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent" />
               </div>
-              {colError && <p className="text-xs text-red-500">{colError}</p>}
+              {colError && <p className="text-xs text-problem">{colError}</p>}
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => { setShowNew(false); setColError(''); }}
-                className="text-sm px-4 py-2.5 rounded-xl border border-green-200 text-gray-600 hover:bg-green-50 transition-colors font-medium">Cancel</button>
+                className="text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium">Cancel</button>
               <button type="button" onClick={() => void handleCreate()} disabled={saving || !newForm.name.trim()}
-                className="text-sm px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-50 shadow-sm shadow-emerald-200">
+                className="text-sm px-4 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold disabled:opacity-50 shadow-sm">
                 {saving ? 'Creating…' : 'Create Collection'}
               </button>
             </div>

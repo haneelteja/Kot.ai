@@ -1,0 +1,22 @@
+name: Supabase keep-alive
+
+# Free-tier Supabase projects auto-pause after 7 days with no API activity.
+# Vercel's own Cron Jobs are capped at once/day on the Hobby plan (see
+# vercel.json's existing keep-alive cron), which is already enough to avoid
+# the 7-day pause — this workflow is a second, independent safety net at a
+# much tighter interval, per explicit request.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Auth API
+        run: |
+          curl -sf "https://qogsclmwnthienjxkjbu.supabase.co/auth/v1/settings" \
+            -H "apikey: sb_publishable_CPHPEvv1A2Vt6EEhpr8AcA_n1DhqjRL" \
+            -o /dev/null -w "HTTP %{http_code}\n"

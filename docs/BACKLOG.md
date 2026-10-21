@@ -221,13 +221,13 @@ Brief refs: §14 (superseded in detail by `docs/DESIGN.md`)
 Reuse: none existing — net-new package
 
 ### BRD-02 Logo assets
-Epic: BRD · Phase: 1 · Priority: P0 · Status: todo · Depends on: BRD-01
+Epic: BRD · Phase: 1 · Priority: P0 · Status: done · Depends on: BRD-01
 As the platform, I want the full logo asset set (light/dark, mark-only, favicons, app icon, WhatsApp profile, OG image) available for every surface that needs it.
 Acceptance criteria:
 - Given `packages/brand/assets/`, light/dark logo, tagline variants, mark, app icon, favicon, and WhatsApp profile files are present per `docs/DESIGN.md` §2's file list.
 Tests: — (asset presence check)
 Brief refs: §14.1
-Reuse: two assets already extracted into `packages/brand/assets/` this session (`kotai-logo-light.svg`, `kotai-logo-light-tagline.png`); remaining assets are in the untracked `Design/kotai-brand.zip` — unzip and place manually
+Reuse: full set extracted from `Design/kotai-brand.zip` into `packages/brand/assets/` (18 files) and `apps/web/public/` (5 files, favicons/app icons/apple-touch-icon per `docs/DESIGN.md` §13's placement note)
 
 ### BRD-03 UI kit component skeleton
 Epic: BRD · Phase: 1 · Priority: P0 · Status: todo · Depends on: BRD-01

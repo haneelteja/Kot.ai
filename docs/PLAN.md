@@ -32,7 +32,7 @@ Each phase ends with a stop-and-summarize gate per brief §0 — no phase starts
 | Petpooja order-edit support (post-payment item removal) unverified | Flag in `docs/integrations/petpooja.md` during Phase 3; document cancel-and-repush fallback if unsupported |
 | Per-tenant Easebuzz/POS/delivery credential encryption doesn't exist yet | Phase 2 gate explicitly requires this before Phase 6 (payments) starts |
 | Brand/token package is net-new, no existing `packages/ui` to extend | `docs/DESIGN.md` (already provided, see note below) is the source of truth — build `packages/brand` directly from it in Phase 1, not from brief §14 alone |
-| Design assets (`Design/kotai-brand.zip`, DESIGN.md) appeared in the working directory outside normal file operations | `docs/DESIGN.md` is now the canonical copy (moved from `Design/`); the two already-extracted logo files were copied into `packages/brand/assets/`. The zip itself exceeds the repo's 100KB pre-commit file-size limit — left untracked in `Design/`; unzip and place remaining assets (dark variants, app icons, favicons, WhatsApp profile image) into `packages/brand/assets/` manually, or move the zip to external storage per the hook's suggestion |
+| Design assets (`Design/kotai-brand.zip`, DESIGN.md) appeared in the working directory outside normal file operations | Resolved: `docs/DESIGN.md` is the canonical copy; the full asset set (18 files) was extracted from the zip into `packages/brand/assets/`, and the 5 web-facing icons (favicons, apple-touch-icon, PWA icon) into `apps/web/public/`. The zip itself is `.gitignore`d (`*.zip`, exceeds the 100KB hook limit) and left in `Design/` for reference only — not needed going forward since every file it contained is now extracted and tracked |
 
 ## Open questions (brief §24 — batched, answer before Phase 1 unless noted)
 
@@ -43,7 +43,7 @@ Each phase ends with a stop-and-summarize gate per brief §0 — no phase starts
 5. **Default values** for acceptance timeout, order cut-off buffer, payment link expiry, booking reminder offset, cancellation policy — brief §11 has the setting list; needs actual numbers. Can ship Phase 1–2 with placeholder defaults, must be confirmed before Phase 6 (payments) go-live.
 6. **SaaS plan structure** — reuse Alphabot's existing subscription/billing tiers or define new KOT.ai-specific plans.
 7. **Staff alert channel** — restaurant staff WhatsApp number, dashboard-only, or both, for new-order/booking alerts.
-8. **Logo/theme feedback** — appears largely resolved: `docs/DESIGN.md` (kitchen-pass concept, Ink/Paper/Saffron palette) already supersedes brief §14's token table per its own header note. Confirm no further changes wanted before `packages/brand` is built in Phase 1.
+8. **Logo/theme feedback** — resolved: the user confirmed `Design/DESIGN.md` (now `docs/DESIGN.md`) is the design source of truth for all UI/UX, with an explicit bar that the product should "look great." All brand assets are extracted and in place (BRD-02, done). Phase 1's UI kit (BRD-03) and every later screen story must be built and reviewed against `docs/DESIGN.md` §8 (components) and §9 (per-screen specs), not a generic interpretation of brief §14.
 9. **Meta Tech Provider / business verification status** for KOT.ai's own Meta app — needed before any restaurant's WhatsApp number can be onboarded (Phase 11/14).
 10. **Existing number migration vs. fresh numbers** — do pilot restaurants' current WhatsApp Business App numbers move to the Cloud API (losing regular-app access) or do they provision new numbers?
 

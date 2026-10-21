@@ -21,9 +21,9 @@ export default async function PaymentStatusPage({ params }: Props) {
   if (!payment) {
     return (
       <StatusShell>
-        <XCircle size={48} className="text-slate-300 mx-auto" />
-        <h1 className="text-xl font-bold text-slate-700 mt-4">Payment not found</h1>
-        <p className="text-sm text-slate-400 mt-1">This link may be invalid or expired.</p>
+        <XCircle size={48} className="text-muted-foreground/50 mx-auto" />
+        <h1 className="text-xl font-bold text-text mt-4">Payment not found</h1>
+        <p className="text-sm text-muted-foreground mt-1">This link may be invalid or expired.</p>
       </StatusShell>
     );
   }
@@ -31,19 +31,19 @@ export default async function PaymentStatusPage({ params }: Props) {
   if (payment.status === 'paid') {
     return (
       <StatusShell>
-        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
-          <CheckCircle2 size={32} className="text-emerald-600" />
+        <div className="w-16 h-16 rounded-full bg-done-bg flex items-center justify-center mx-auto">
+          <CheckCircle2 size={32} className="text-done" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-800 mt-4">Payment Successful!</h1>
+        <h1 className="text-2xl font-bold text-text mt-4">Payment Successful!</h1>
         {order && (
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             ₹{Number(order.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })} received
           </p>
         )}
-        <p className="text-sm text-slate-500 mt-3">
+        <p className="text-sm text-muted-foreground mt-3">
           Your order is confirmed and being processed. You&apos;ll receive updates on WhatsApp.
         </p>
-        <div className="mt-6 px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-700 font-medium">
+        <div className="mt-6 px-4 py-3 bg-done-bg rounded-xl border border-done/20 text-xs text-done font-medium">
           Payment confirmed {payment.webhook_received_at
             ? `on ${new Date(payment.webhook_received_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
             : ''}
@@ -55,14 +55,14 @@ export default async function PaymentStatusPage({ params }: Props) {
   if (payment.status === 'failed') {
     return (
       <StatusShell>
-        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-          <XCircle size={32} className="text-red-500" />
+        <div className="w-16 h-16 rounded-full bg-problem-bg flex items-center justify-center mx-auto">
+          <XCircle size={32} className="text-problem" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-800 mt-4">Payment Failed</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold text-text mt-4">Payment Failed</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Your payment could not be processed. No amount has been charged.
         </p>
-        <p className="text-sm text-slate-500 mt-3">
+        <p className="text-sm text-muted-foreground mt-3">
           Please try again or contact us on WhatsApp for assistance.
         </p>
       </StatusShell>
@@ -72,14 +72,14 @@ export default async function PaymentStatusPage({ params }: Props) {
   if (payment.status === 'expired') {
     return (
       <StatusShell>
-        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
-          <Clock size={32} className="text-slate-400" />
+        <div className="w-16 h-16 rounded-full bg-sunken flex items-center justify-center mx-auto">
+          <Clock size={32} className="text-muted-foreground" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-800 mt-4">Payment Link Expired</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold text-text mt-4">Payment Link Expired</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           This payment link is no longer valid.
         </p>
-        <p className="text-sm text-slate-500 mt-3">
+        <p className="text-sm text-muted-foreground mt-3">
           Please contact us on WhatsApp to receive a new payment link.
         </p>
       </StatusShell>
@@ -92,13 +92,13 @@ export default async function PaymentStatusPage({ params }: Props) {
       <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto animate-pulse">
         <RefreshCw size={28} className="text-amber-500" />
       </div>
-      <h1 className="text-2xl font-bold text-slate-800 mt-4">Processing Payment…</h1>
+      <h1 className="text-2xl font-bold text-text mt-4">Processing Payment…</h1>
       {order && (
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           ₹{Number(order.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </p>
       )}
-      <p className="text-sm text-slate-500 mt-3">
+      <p className="text-sm text-muted-foreground mt-3">
         Your payment is being confirmed. This usually takes a few seconds.
       </p>
       <PendingRefresh />
@@ -108,10 +108,10 @@ export default async function PaymentStatusPage({ params }: Props) {
 
 function StatusShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8 text-center">
+    <div className="min-h-screen bg-sunken flex items-center justify-center p-6">
+      <div className="w-full max-w-sm bg-surface rounded-3xl border border-line shadow-sm p-8 text-center">
         {children}
-        <p className="text-[11px] text-slate-300 mt-8">Powered by KOT.ai</p>
+        <p className="text-[11px] text-muted-foreground/50 mt-8">Powered by KOT.ai</p>
       </div>
     </div>
   );

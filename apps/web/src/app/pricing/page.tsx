@@ -98,34 +98,34 @@ function CheckoutModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7"
+        className="bg-surface rounded-2xl shadow-2xl w-full max-w-md p-7"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Start {plan.name} Plan</h3>
-            <p className="text-sm text-gray-500 mt-0.5">{plan.priceLabel}/month &middot; cancel anytime</p>
+            <h3 className="text-lg font-bold text-text">Start {plan.name} Plan</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">{plan.priceLabel}/month &middot; cancel anytime</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="text-muted-foreground hover:text-text transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
               Company Name
             </label>
             <input
               value={company}
               onChange={e => setCompany(e.target.value)}
               placeholder="Acme Corp"
-              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full border border-line rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
               Work Email
             </label>
             <input
@@ -133,18 +133,18 @@ function CheckoutModal({
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="you@company.com"
-              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full border border-line rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 font-medium">{error}</p>
+            <p className="text-sm text-problem font-medium">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={isPending}
-            className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold text-sm py-3 rounded-xl transition-colors"
+            className="flex items-center justify-center gap-2 w-full bg-brand-strong hover:opacity-90 disabled:opacity-60 text-white font-semibold text-sm py-3 rounded-xl transition-colors"
           >
             {isPending ? (
               <><Loader2 size={15} className="animate-spin" /> Redirecting to payment&hellip;</>
@@ -153,7 +153,7 @@ function CheckoutModal({
             )}
           </button>
 
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Secured by Easebuzz &middot; Your workspace is created instantly on payment.
           </p>
         </form>
@@ -166,18 +166,18 @@ export default function PricingPage() {
   const [checkoutPlan, setCheckoutPlan] = useState<typeof PLANS[0] | null>(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f0fdf4] to-white">
+    <div className="min-h-screen bg-sunken">
       {/* Nav */}
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-brand-strong flex items-center justify-center">
             <Bot size={15} className="text-white" />
           </div>
-          <span className="font-bold text-gray-900 text-base">KOT.ai</span>
+          <span className="font-bold text-text text-base">KOT.ai</span>
         </Link>
         <Link
           href="/login"
-          className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          className="text-sm font-medium text-muted-foreground hover:text-text transition-colors"
         >
           Sign in
         </Link>
@@ -185,18 +185,18 @@ export default function PricingPage() {
 
       {/* Hero */}
       <div className="max-w-3xl mx-auto px-6 text-center pt-10 pb-14">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+        <div className="inline-flex items-center gap-2 bg-brand-wash border border-brand/20 text-brand-strong text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
           <Zap size={11} /> Simple, transparent pricing
         </div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-text tracking-tight leading-tight">
           Pick a plan.<br />Your AI is live in minutes.
         </h1>
-        <p className="text-gray-500 text-lg mt-4 max-w-xl mx-auto leading-relaxed">
+        <p className="text-muted-foreground text-lg mt-4 max-w-xl mx-auto leading-relaxed">
           No contracts. Pay monthly and cancel anytime.
         </p>
 
         {/* Bot icons */}
-        <div className="flex items-center justify-center gap-6 mt-8 text-sm text-gray-400 flex-wrap">
+        <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1.5"><LifeBuoy size={14} className="text-sky-400" /> Support Bot</span>
           <span className="flex items-center gap-1.5"><MessageSquare size={14} className="text-violet-400" /> Sales Bot</span>
           <span className="flex items-center gap-1.5"><Calendar size={14} className="text-pink-400" /> Appointment Bot</span>
@@ -212,29 +212,29 @@ export default function PricingPage() {
               key={plan.key}
               className={`relative flex flex-col rounded-2xl border p-7 ${
                 plan.highlight
-                  ? 'border-emerald-400 bg-[#071c0f] text-white shadow-xl shadow-emerald-900/20'
-                  : 'border-gray-200 bg-white'
+                  ? 'border-brand bg-rail text-white shadow-xl shadow-black/20'
+                  : 'border-line bg-surface'
               }`}
             >
               {plan.highlight && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-brand-strong text-white text-xs font-bold px-3 py-1 rounded-full">
                   Most popular
                 </div>
               )}
 
               <div className="mb-5">
-                <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${plan.highlight ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${plan.highlight ? 'text-brand' : 'text-brand-strong'}`}>
                   {plan.name}
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-4xl font-extrabold ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
+                  <span className={`text-4xl font-extrabold ${plan.highlight ? 'text-white' : 'text-text'}`}>
                     {plan.priceLabel}
                   </span>
                   {plan.price && (
-                    <span className={`text-sm font-medium ${plan.highlight ? 'text-emerald-300' : 'text-gray-400'}`}>/mo</span>
+                    <span className={`text-sm font-medium ${plan.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>/mo</span>
                   )}
                 </div>
-                <p className={`text-sm mt-2 leading-snug ${plan.highlight ? 'text-gray-300' : 'text-gray-500'}`}>
+                <p className={`text-sm mt-2 leading-snug ${plan.highlight ? 'text-white/70' : 'text-muted-foreground'}`}>
                   {plan.desc}
                 </p>
               </div>
@@ -245,8 +245,8 @@ export default function PricingPage() {
                   href={plan.ctaHref}
                   className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold mb-6 transition-colors ${
                     plan.highlight
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      ? 'bg-brand-strong hover:opacity-90 text-white'
+                      : 'bg-sunken hover:bg-line text-text'
                   }`}
                 >
                   {plan.cta}
@@ -256,8 +256,8 @@ export default function PricingPage() {
                   onClick={() => setCheckoutPlan(plan)}
                   className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold mb-6 transition-colors ${
                     plan.highlight
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                      : 'bg-gray-900 hover:bg-gray-800 text-white'
+                      ? 'bg-brand-strong hover:opacity-90 text-white'
+                      : 'bg-text hover:opacity-90 text-white'
                   }`}
                 >
                   {plan.cta} <ArrowRight size={13} />
@@ -268,14 +268,14 @@ export default function PricingPage() {
               <ul className="space-y-2.5 flex-1">
                 {plan.features.map(f => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check size={14} className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-emerald-400' : 'text-emerald-500'}`} />
-                    <span className={plan.highlight ? 'text-gray-200' : 'text-gray-600'}>{f}</span>
+                    <Check size={14} className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-white' : 'text-done'}`} />
+                    <span className={plan.highlight ? 'text-white/80' : 'text-muted-foreground'}>{f}</span>
                   </li>
                 ))}
                 {plan.missing.map(f => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <X size={14} className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-gray-600' : 'text-gray-300'}`} />
-                    <span className={`line-through ${plan.highlight ? 'text-gray-600' : 'text-gray-300'}`}>{f}</span>
+                    <X size={14} className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-white/40' : 'text-muted-foreground/50'}`} />
+                    <span className={`line-through ${plan.highlight ? 'text-white/40' : 'text-muted-foreground/50'}`}>{f}</span>
                   </li>
                 ))}
               </ul>
@@ -284,9 +284,9 @@ export default function PricingPage() {
         </div>
 
         {/* Footer note */}
-        <p className="text-center text-sm text-gray-400 mt-10">
+        <p className="text-center text-sm text-muted-foreground mt-10">
           All plans include WhatsApp Cloud API integration, conversation analytics, and team access.
-          Questions? <a href="mailto:nalluruhaneel@gmail.com" className="text-emerald-600 hover:underline">Contact us</a>.
+          Questions? <a href="mailto:nalluruhaneel@gmail.com" className="text-brand-strong hover:underline">Contact us</a>.
         </p>
       </div>
 

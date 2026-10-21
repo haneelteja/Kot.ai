@@ -12,7 +12,7 @@ export default function AutoRefresh() {
   }, [router]);
 
   return (
-    <p className="text-xs text-slate-400 mt-4">
+    <p className="text-xs text-muted-foreground mt-4">
       Checking status automatically…
     </p>
   );

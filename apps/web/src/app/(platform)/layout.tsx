@@ -25,7 +25,7 @@ export default async function PlatformLayout({
   if (!platformUser) redirect('/login');
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-sunken overflow-hidden">
       <PlatformNav role={platformUser.role} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <PlatformTopbar

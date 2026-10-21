@@ -82,13 +82,13 @@ export function AcceptInviteForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <p className="text-sm text-gray-500 mb-1">Joining as</p>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground mb-1">Joining as</p>
+        <div className="bg-brand-wash border border-brand/20 rounded-xl px-4 py-3 flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-emerald-800">{tenantName}</p>
-            <p className="text-xs text-emerald-600">{email}</p>
+            <p className="text-sm font-semibold text-brand-strong">{tenantName}</p>
+            <p className="text-xs text-brand">{email}</p>
           </div>
-          <span className="text-[11px] px-2 py-0.5 bg-white text-emerald-700 rounded-full font-medium border border-emerald-200 capitalize">
+          <span className="text-[11px] px-2 py-0.5 bg-surface text-brand-strong rounded-full font-medium border border-brand/20 capitalize">
             {role.replace(/_/g, ' ')}
           </span>
         </div>
@@ -97,8 +97,8 @@ export function AcceptInviteForm({
       <div className="space-y-3">
         {/* Full name */}
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
-            Full Name <span className="text-red-500">*</span>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1">
+            Full Name <span className="text-problem">*</span>
           </label>
           <input
             type="text"
@@ -106,14 +106,14 @@ export function AcceptInviteForm({
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Your full name"
-            className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            className="w-full text-sm border border-line rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/40"
           />
         </div>
 
         {/* Password */}
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
-            Password <span className="text-red-500">*</span>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1">
+            Password <span className="text-problem">*</span>
           </label>
           <div className="relative">
             <input
@@ -123,14 +123,14 @@ export function AcceptInviteForm({
               onChange={e => { setPassword(e.target.value); setPwTouched(true); }}
               placeholder="Create a strong password"
               autoComplete="new-password"
-              className={`w-full text-sm border rounded-xl px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-emerald-300 transition ${
-                pwTouched && !isPasswordValid(password) ? 'border-red-300' : 'border-gray-200'
+              className={`w-full text-sm border rounded-xl px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-brand/40 transition ${
+                pwTouched && !isPasswordValid(password) ? 'border-problem/40' : 'border-line'
               }`}
             />
             <button
               type="button"
               onClick={() => setShowPw(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors"
               aria-label={showPw ? 'Hide password' : 'Show password'}
             >
               {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -143,8 +143,8 @@ export function AcceptInviteForm({
               {PW_RULES.map(rule => {
                 const ok = rule.test(password);
                 return (
-                  <li key={rule.label} className={`flex items-center gap-2 text-[11px] font-medium ${ok ? 'text-emerald-600' : 'text-red-500'}`}>
-                    <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 text-[9px] font-bold ${ok ? 'bg-emerald-100' : 'bg-red-100'}`}>
+                  <li key={rule.label} className={`flex items-center gap-2 text-[11px] font-medium ${ok ? 'text-done' : 'text-problem'}`}>
+                    <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 text-[9px] font-bold ${ok ? 'bg-done-bg' : 'bg-problem-bg'}`}>
                       {ok ? '✓' : '✗'}
                     </span>
                     {rule.label}
@@ -156,7 +156,7 @@ export function AcceptInviteForm({
 
           {/* Always-visible hint when not yet touched */}
           {!pwTouched && (
-            <p className="mt-1.5 text-[11px] text-gray-400">
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
               Must include uppercase, lowercase, number, and special character.
             </p>
           )}
@@ -164,8 +164,8 @@ export function AcceptInviteForm({
 
         {/* Confirm password */}
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
-            Confirm Password <span className="text-red-500">*</span>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1">
+            Confirm Password <span className="text-problem">*</span>
           </label>
           <div className="relative">
             <input
@@ -175,33 +175,33 @@ export function AcceptInviteForm({
               onChange={e => setConfirm(e.target.value)}
               placeholder="Repeat your password"
               autoComplete="new-password"
-              className={`w-full text-sm border rounded-xl px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-emerald-300 transition ${
-                confirmMismatch ? 'border-red-300' : 'border-gray-200'
+              className={`w-full text-sm border rounded-xl px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-brand/40 transition ${
+                confirmMismatch ? 'border-problem/40' : 'border-line'
               }`}
             />
             <button
               type="button"
               onClick={() => setShowConfirm(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors"
               aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
             >
               {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
           {confirmMismatch && (
-            <p className="mt-1 text-[11px] font-medium text-red-500">Passwords do not match</p>
+            <p className="mt-1 text-[11px] font-medium text-problem">Passwords do not match</p>
           )}
         </div>
       </div>
 
       {error && (
-        <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-3 py-2">{error}</p>
+        <p className="text-sm text-problem bg-problem-bg border border-problem/20 rounded-xl px-3 py-2">{error}</p>
       )}
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full py-3 bg-emerald-600 text-white font-semibold text-sm rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+        className="w-full py-3 bg-brand-strong text-white font-semibold text-sm rounded-xl hover:opacity-90 disabled:opacity-50 transition-colors"
       >
         {pending ? 'Creating account…' : 'Accept Invitation & Get Started'}
       </button>

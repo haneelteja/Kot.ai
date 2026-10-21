@@ -149,7 +149,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
           </div>
 
           <div className="px-8 py-6">
-            <p className="text-slate-600 text-sm leading-relaxed text-center">
+            <p className="text-muted-foreground text-sm leading-relaxed text-center">
               You&apos;re moments away from having an AI bot responding to WhatsApp messages for your restaurant.
               Take a quick tour to see everything that&apos;s available.
             </p>
@@ -162,16 +162,16 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
                 { icon: BookOpen,      label: 'Knowledge Base'     },
                 { icon: BarChart2,     label: 'Analytics'          },
               ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
+                <div key={label} className="flex items-center gap-2 bg-sunken rounded-xl px-3 py-2.5">
                   <Icon size={13} className="text-brand-strong shrink-0" />
-                  <span className="text-xs font-medium text-slate-600">{label}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{label}</span>
                 </div>
               ))}
             </div>
 
             <div className="flex gap-3">
               <button type="button" onClick={skip}
-                className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-muted-foreground border border-line rounded-xl hover:bg-sunken transition-colors">
                 Skip tour
               </button>
               <button type="button" onClick={startSpotlight}
@@ -252,7 +252,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
           filter:       'drop-shadow(-1px 0 1px rgba(0,0,0,0.06))',
         }} />
 
-        <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+        <div className="bg-surface rounded-2xl shadow-2xl border border-line overflow-hidden">
           {/* Header */}
           <div className="bg-brand-wash px-5 py-4 border-b border-brand/20">
             <div className="flex items-center justify-between mb-2.5">
@@ -260,7 +260,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
                 Step {stepIdx + 1} of {STEPS.length}
               </span>
               <button type="button" onClick={skip}
-                className="w-5 h-5 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="w-5 h-5 rounded-md flex items-center justify-center text-muted-foreground hover:text-text hover:bg-sunken transition-colors"
                 aria-label="Skip tour">
                 <X size={11} />
               </button>
@@ -269,30 +269,30 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
               <div className="w-9 h-9 rounded-xl bg-brand-wash flex items-center justify-center shrink-0">
                 <StepIcon size={16} className="text-brand-strong" />
               </div>
-              <h3 className="text-sm font-bold text-slate-800">{step.title}</h3>
+              <h3 className="text-sm font-bold text-text">{step.title}</h3>
             </div>
           </div>
 
           <div className="px-5 py-4">
-            <p className="text-xs text-slate-500 leading-relaxed">{step.description}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{step.description}</p>
 
             {/* Progress dots */}
             <div className="flex items-center gap-1 mt-4 mb-4">
               {STEPS.map((_, i) => (
                 <div key={i} className={`rounded-full transition-all duration-200 ${
-                  i === stepIdx ? 'w-5 h-1.5 bg-brand-strong' : 'w-1.5 h-1.5 bg-slate-200'
+                  i === stepIdx ? 'w-5 h-1.5 bg-brand-strong' : 'w-1.5 h-1.5 bg-line'
                 }`} />
               ))}
             </div>
 
             <div className="flex items-center gap-2">
               <button type="button" onClick={skip}
-                className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition-colors mr-auto">
+                className="text-[11px] font-semibold text-muted-foreground hover:text-text transition-colors mr-auto">
                 Skip tour
               </button>
               {stepIdx > 0 && (
                 <button type="button" onClick={prev}
-                  className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors">
+                  className="w-7 h-7 rounded-lg border border-line flex items-center justify-center text-muted-foreground hover:bg-sunken transition-colors">
                   <ChevronLeft size={13} />
                 </button>
               )}

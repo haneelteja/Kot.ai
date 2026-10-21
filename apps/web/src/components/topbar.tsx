@@ -160,7 +160,7 @@ export function Topbar({
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <header className="h-[64px] shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-green-100">
+    <header className="h-[64px] shrink-0 flex items-center justify-between px-4 sm:px-6 bg-surface border-b border-line">
 
       {/* Left: hamburger (mobile) + breadcrumb */}
       <div className="flex items-center gap-3">
@@ -168,7 +168,7 @@ export function Topbar({
           type="button"
           onClick={onMenuClick}
           aria-label="Open navigation menu"
-          className="lg:hidden -ml-1 w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-green-50 hover:text-green-700 transition-colors"
+          className="lg:hidden -ml-1 w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken hover:text-text transition-colors"
         >
           <Menu size={18} />
         </button>
@@ -176,18 +176,18 @@ export function Topbar({
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-sm list-none" style={{ margin: 0, padding: 0 }}>
             <li>
-              <span className="text-green-600/50 font-medium truncate max-w-[120px] sm:max-w-none block">{tenantName}</span>
+              <span className="text-muted-foreground font-medium truncate max-w-[120px] sm:max-w-none block">{tenantName}</span>
             </li>
-            <li aria-hidden="true"><ChevronRight size={14} className="text-green-300" /></li>
+            <li aria-hidden="true"><ChevronRight size={14} className="text-line" /></li>
             <li>
-              <span className={`font-semibold ${isDetail ? 'text-green-600/50' : 'text-gray-800'}`}>
+              <span className={`font-semibold ${isDetail ? 'text-muted-foreground' : 'text-text'}`}>
                 {isDetail ? 'Conversations' : title}
               </span>
             </li>
             {isDetail && (
               <>
-                <li aria-hidden="true"><ChevronRight size={14} className="text-green-300" /></li>
-                <li><span className="font-semibold text-gray-800">Detail</span></li>
+                <li aria-hidden="true"><ChevronRight size={14} className="text-line" /></li>
+                <li><span className="font-semibold text-text">Detail</span></li>
               </>
             )}
           </ol>
@@ -206,11 +206,11 @@ export function Topbar({
             aria-haspopup="true"
             aria-expanded={isOpen}
             onClick={() => setIsOpen(v => !v)}
-            className="relative w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-green-50 hover:text-green-600 transition-colors"
+            className="relative w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken hover:text-brand-strong transition-colors"
           >
             <Bell size={16} aria-hidden="true" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 rounded-full bg-problem text-white text-[10px] font-bold flex items-center justify-center leading-none">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -218,14 +218,14 @@ export function Topbar({
 
           {/* Dropdown */}
           {isOpen && (
-            <div className="absolute right-0 top-[calc(100%+6px)] w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+            <div className="absolute right-0 top-[calc(100%+6px)] w-80 bg-surface rounded-2xl shadow-float border border-line z-50 overflow-hidden">
 
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
-                <p className="text-sm font-bold text-gray-900">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-line">
+                <p className="text-sm font-bold text-text">
                   Notifications
                   {unreadCount > 0 && (
-                    <span className="ml-2 text-xs font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">
+                    <span className="ml-2 text-xs font-semibold text-problem bg-problem-bg px-1.5 py-0.5 rounded-full">
                       {unreadCount} new
                     </span>
                   )}
@@ -234,7 +234,7 @@ export function Topbar({
                   <button
                     type="button"
                     onClick={markAllReadOptimistic}
-                    className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded-lg transition-colors"
+                    className="flex items-center gap-1 text-[11px] font-semibold text-brand-strong hover:bg-brand-wash px-2 py-1 rounded-lg transition-colors"
                   >
                     <CheckCheck size={12} /> Mark all read
                   </button>
@@ -242,14 +242,14 @@ export function Topbar({
               </div>
 
               {/* List */}
-              <div className="max-h-[420px] overflow-y-auto divide-y divide-gray-50">
+              <div className="max-h-[420px] overflow-y-auto divide-y divide-line">
                 {notifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
-                      <Bell size={18} className="text-gray-300" />
+                    <div className="w-10 h-10 rounded-xl bg-sunken flex items-center justify-center mb-2">
+                      <Bell size={18} className="text-line" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-400">No notifications yet</p>
-                    <p className="text-xs text-gray-300 mt-0.5">New customer messages will appear here</p>
+                    <p className="text-sm font-semibold text-muted-foreground">No notifications yet</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">New customer messages will appear here</p>
                   </div>
                 ) : (
                   notifications.map(n => {
@@ -259,11 +259,11 @@ export function Topbar({
                         key={n.id}
                         type="button"
                         onClick={() => handleNotificationClick(n)}
-                        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50/80 ${isUnread ? 'bg-emerald-50/30' : ''}`}
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50/80 ${isUnread ? 'bg-brand-wash/40' : ''}`}
                       >
                         {/* Avatar */}
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                          isUnread ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                          isUnread ? 'bg-brand-wash text-brand-strong' : 'bg-sunken text-muted-foreground'
                         }`}>
                           {n.title.slice(0, 2).toUpperCase()}
                         </div>
@@ -271,22 +271,22 @@ export function Topbar({
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <p className={`text-sm leading-snug truncate ${isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-600'}`}>
+                            <p className={`text-sm leading-snug truncate ${isUnread ? 'font-semibold text-text' : 'font-medium text-muted-foreground'}`}>
                               {n.title}
                             </p>
-                            <span className="text-[10px] text-gray-400 shrink-0 tabular-nums" suppressHydrationWarning>
+                            <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums" suppressHydrationWarning>
                               {timeAgo(n.created_at)}
                             </span>
                           </div>
                           {n.body && (
-                            <p className="text-xs text-gray-400 mt-0.5 line-clamp-2 text-left">{n.body}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 text-left">{n.body}</p>
                           )}
                           <div className="flex items-center gap-1.5 mt-1">
-                            <MessageSquare size={9} className="text-gray-300" />
-                            <span className="text-[10px] text-gray-400">New message</span>
+                            <MessageSquare size={9} className="text-line" />
+                            <span className="text-[10px] text-muted-foreground">New message</span>
                             {isUnread
-                              ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-auto shrink-0" />
-                              : <Check size={10} className="text-gray-300 ml-auto shrink-0" />
+                              ? <span className="w-1.5 h-1.5 rounded-full bg-brand ml-auto shrink-0" />
+                              : <Check size={10} className="text-line ml-auto shrink-0" />
                             }
                           </div>
                         </div>
@@ -298,11 +298,11 @@ export function Topbar({
 
               {/* Footer */}
               {notifications.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-gray-50">
+                <div className="px-4 py-2.5 border-t border-line">
                   <button
                     type="button"
                     onClick={() => { setIsOpen(false); router.push('/conversations'); }}
-                    className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                    className="text-xs font-semibold text-brand-strong hover:underline transition-colors"
                   >
                     View all conversations →
                   </button>
@@ -314,19 +314,19 @@ export function Topbar({
 
         {/* User pill */}
         <div
-          className="flex items-center gap-2.5 pl-2 ml-1 border-l border-green-100"
+          className="flex items-center gap-2.5 pl-2 ml-1 border-l border-line"
           role="img"
           aria-label={`Signed in as ${email}`}
         >
           <div
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-emerald-200"
+            className="w-8 h-8 rounded-full bg-brand-strong flex items-center justify-center text-white text-xs font-bold"
             aria-hidden="true"
           >
             {initial}
           </div>
           <div className="hidden sm:block">
-            <p className="text-xs font-semibold text-gray-700 leading-tight">{email.split('@')[0]}</p>
-            <p className="text-[10px] text-gray-400 leading-tight">{email}</p>
+            <p className="text-xs font-semibold text-text leading-tight">{email.split('@')[0]}</p>
+            <p className="text-[10px] text-muted-foreground leading-tight">{email}</p>
           </div>
         </div>
       </div>

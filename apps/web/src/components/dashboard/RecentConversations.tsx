@@ -6,20 +6,21 @@ import { ChevronDown, ChevronUp, MessageSquare, ArrowRight, Bot, User, Loader2 }
 import { getRecentConversationsAction, type RecentConv } from '@/app/actions/recent-conversations';
 
 const STATUS_STYLES: Record<string, { dot: string; badge: string }> = {
-  open:       { dot: 'bg-emerald-400', badge: 'bg-emerald-50 text-emerald-700 ring-emerald-100' },
+  open:       { dot: 'bg-done',    badge: 'bg-done-bg text-done ring-transparent' },
   escalated:  { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 ring-red-100' },
   resolved:   { dot: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-500 ring-gray-200' },
   bot_paused: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-700 ring-amber-100' },
 };
 
 const PRODUCT_LABELS: Record<string, { label: string; color: string }> = {
-  support_bot:   { label: 'Support',   color: 'bg-sky-50 text-sky-600' },
-  sales_bot:     { label: 'Sales',     color: 'bg-violet-50 text-violet-600' },
-  lifecycle_bot: { label: 'Lifecycle', color: 'bg-orange-50 text-orange-600' },
+  support_bot:    { label: 'Support',    color: 'bg-sky-50 text-sky-600' },
+  sales_bot:      { label: 'Sales',      color: 'bg-violet-50 text-violet-600' },
+  lifecycle_bot:  { label: 'Lifecycle',  color: 'bg-orange-50 text-orange-600' },
+  restaurant_bot: { label: 'Restaurant', color: 'bg-brand-wash text-brand-strong' },
 };
 
 const AVATAR_COLORS = [
-  'bg-emerald-100 text-emerald-700',
+  'bg-brand-wash text-brand-strong',
   'bg-sky-100 text-sky-700',
   'bg-violet-100 text-violet-700',
   'bg-amber-100 text-amber-700',
@@ -107,17 +108,17 @@ function ConvRow({ conv }: { conv: RecentConv }) {
             conv.messages.map(msg => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? '' : 'flex-row-reverse'}`}>
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                  msg.role === 'user' ? 'bg-gray-200' : (primaryBot ? 'bg-emerald-100' : 'bg-emerald-100')
+                  msg.role === 'user' ? 'bg-sunken' : 'bg-brand-wash'
                 }`}>
                   {msg.role === 'user'
                     ? <User size={10} className="text-gray-500" />
-                    : <Bot  size={10} className="text-emerald-600" />
+                    : <Bot  size={10} className="text-brand-strong" />
                   }
                 </div>
                 <div className={`max-w-[75%] rounded-xl px-3 py-1.5 text-[11px] leading-relaxed ${
                   msg.role === 'user'
                     ? 'bg-white border border-gray-200 text-gray-700 rounded-tl-none'
-                    : 'bg-emerald-50 border border-emerald-100 text-gray-700 rounded-tr-none'
+                    : 'bg-brand-wash border border-transparent text-text rounded-tr-none'
                 }`}>
                   {msg.content}
                 </div>
@@ -128,7 +129,7 @@ function ConvRow({ conv }: { conv: RecentConv }) {
           <div className="pt-1">
             <Link
               href={`/conversations/${conv.id}`}
-              className="text-[11px] font-semibold text-emerald-600 hover:underline flex items-center gap-1"
+              className="text-[11px] font-semibold text-brand-strong hover:underline flex items-center gap-1"
             >
               Open {primaryBot?.label ?? ''} conversation <ArrowRight size={10} />
             </Link>
@@ -156,8 +157,8 @@ export function RecentConversations({ initial }: { initial: RecentConv[] }) {
   if (convs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-3 border border-emerald-100">
-          <MessageSquare size={20} className="text-emerald-400" />
+        <div className="w-12 h-12 rounded-2xl bg-sunken flex items-center justify-center mb-3 border border-line">
+          <MessageSquare size={20} className="text-muted-foreground" />
         </div>
         <p className="text-sm font-semibold text-gray-600">No conversations yet</p>
         <p className="text-xs text-gray-400 mt-1 max-w-xs">
@@ -179,7 +180,7 @@ export function RecentConversations({ initial }: { initial: RecentConv[] }) {
             type="button"
             onClick={loadMore}
             disabled={isPending}
-            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-semibold text-brand-strong hover:underline disabled:opacity-50 transition-colors"
           >
             {isPending
               ? <><Loader2 size={12} className="animate-spin" /> Loading...</>

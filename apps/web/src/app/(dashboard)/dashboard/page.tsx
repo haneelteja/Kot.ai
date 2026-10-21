@@ -50,6 +50,15 @@ const BOT_META: Record<string, {
     accent:   'text-orange-600',
     accentBg: 'bg-orange-50',
   },
+  restaurant_bot: {
+    name:     'Restaurant Bot',
+    desc:     'Menu, booking, and ordering assistant',
+    border:   'border-line',
+    headerBg: 'bg-brand-strong',
+    dotColor: 'bg-white',
+    accent:   'text-brand-strong',
+    accentBg: 'bg-brand-wash',
+  },
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -228,10 +237,10 @@ export default async function DashboardPage() {
   const activeSlugs  = (activeProducts ?? []).map(p => p.product_type as string);
 
   const stats = [
-    { label: 'Open',      value: openCount      ?? 0, sub: 'Active right now',    href: '/conversations?tab=chats&status=open',      icon: MessageSquare, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', valColor: 'text-emerald-700' },
-    { label: 'Escalated', value: escalationCount ?? 0, sub: 'Need attention',     href: '/conversations?tab=chats&status=escalated', icon: AlertCircle,   iconBg: 'bg-red-100',     iconColor: 'text-red-600',     valColor: 'text-red-700'     },
-    { label: 'Resolved',  value: resolvedCount   ?? 0, sub: 'All time',           href: '/conversations?tab=chats&status=resolved',  icon: CheckCircle2,  iconBg: 'bg-sky-100',     iconColor: 'text-sky-600',     valColor: 'text-sky-700'     },
-    { label: 'Total',     value: totalCount      ?? 0, sub: 'All conversations',  href: '/conversations?tab=chats',                  icon: Bot,           iconBg: 'bg-violet-100',  iconColor: 'text-violet-600',  valColor: 'text-violet-700'  },
+    { label: 'Open',      value: openCount      ?? 0, sub: 'Active right now',    href: '/conversations?tab=chats&status=open',      icon: MessageSquare, iconBg: 'bg-progress-bg', iconColor: 'text-progress', valColor: 'text-progress' },
+    { label: 'Escalated', value: escalationCount ?? 0, sub: 'Need attention',     href: '/conversations?tab=chats&status=escalated', icon: AlertCircle,   iconBg: 'bg-problem-bg',  iconColor: 'text-problem',  valColor: 'text-problem'  },
+    { label: 'Resolved',  value: resolvedCount   ?? 0, sub: 'All time',           href: '/conversations?tab=chats&status=resolved',  icon: CheckCircle2,  iconBg: 'bg-done-bg',     iconColor: 'text-done',     valColor: 'text-done'     },
+    { label: 'Total',     value: totalCount      ?? 0, sub: 'All conversations',  href: '/conversations?tab=chats',                  icon: Bot,           iconBg: 'bg-sunken',      iconColor: 'text-text',     valColor: 'text-text'     },
   ];
 
   return (
@@ -240,11 +249,11 @@ export default async function DashboardPage() {
       {/* ── Page header ─────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Monitor your WhatsApp AI agents in real time</p>
+          <h2 className="text-xl font-bold text-text">Dashboard</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Monitor your WhatsApp AI agent in real time</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="flex items-center gap-2 text-xs text-ready font-semibold bg-ready-bg px-3 py-1.5 rounded-full border border-transparent">
+          <span className="w-1.5 h-1.5 rounded-full bg-ready animate-pulse" />
           Live
         </div>
       </div>
@@ -255,7 +264,7 @@ export default async function DashboardPage() {
           <Link
             key={s.label}
             href={s.href}
-            className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex items-center gap-3 hover:border-emerald-200 hover:shadow-md transition-all group"
+            className="bg-surface rounded-md border border-line p-4 flex items-center gap-3 hover:border-brand/40 transition-all group"
             aria-label={`${s.value} ${s.label} conversations — ${s.sub}`}
           >
             <div className={`w-9 h-9 rounded-lg ${s.iconBg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
@@ -263,8 +272,8 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className={`text-2xl font-bold tabular-nums leading-none ${s.valColor}`}>{s.value}</p>
-              <p className="text-xs font-semibold text-gray-700 mt-0.5">{s.label}</p>
-              <p className="text-[10px] text-gray-400">{s.sub}</p>
+              <p className="text-xs font-semibold text-text mt-0.5">{s.label}</p>
+              <p className="text-[10px] text-muted-foreground">{s.sub}</p>
             </div>
           </Link>
         ))}
@@ -274,8 +283,8 @@ export default async function DashboardPage() {
       {activeSlugs.length > 0 && (
         <div>
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-gray-800">Bot Capabilities</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Real-time overview of what each bot knows, how it handles queries, and what it avoids</p>
+            <h3 className="text-sm font-semibold text-text">Bot Capabilities</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Real-time overview of what your bot knows, how it handles queries, and what it avoids</p>
           </div>
 
           <div className={`grid gap-5 ${
@@ -346,10 +355,10 @@ export default async function DashboardPage() {
                     {/* LEFT: Knows About */}
                     <div className="px-3.5 py-3 space-y-2">
                       <div className="flex items-center gap-1 mb-1">
-                        <BookOpen size={10} className="text-emerald-500" />
-                        <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Knows About</p>
+                        <BookOpen size={10} className="text-done" />
+                        <p className="text-[10px] font-bold text-done uppercase tracking-wider">Knows About</p>
                         {totalEntries > 0 && (
-                          <span className="ml-auto text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-px rounded-full border border-emerald-100 tabular-nums">
+                          <span className="ml-auto text-[10px] font-semibold text-done bg-done-bg px-1.5 py-px rounded-full border border-transparent tabular-nums">
                             {totalEntries}
                           </span>
                         )}
@@ -366,7 +375,7 @@ export default async function DashboardPage() {
                         <>
                           {collections.map((col) => (
                             <div key={col.id} className="flex items-center gap-1.5">
-                              <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />
+                              <CheckCircle2 size={10} className="text-done shrink-0" />
                               <p className="text-[10px] text-gray-700 font-medium truncate flex-1">{col.name}</p>
                               <span className="text-[10px] text-gray-400 tabular-nums shrink-0">
                                 {col.entry_count === 0
@@ -481,15 +490,15 @@ export default async function DashboardPage() {
       <AiInsightsPanel insight={insightRow} />
 
       {/* ── Recent Conversations ─────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+      <div className="bg-surface rounded-md border border-line overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
           <div>
-            <h3 className="text-sm font-semibold text-gray-800">Recent Conversations</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Latest activity across all bots · expand to preview messages</p>
+            <h3 className="text-sm font-semibold text-text">Recent Conversations</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Latest activity · expand to preview messages</p>
           </div>
           <Link
             href="/conversations"
-            className="flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-100"
+            className="flex items-center gap-1.5 text-xs text-brand-strong hover:underline font-semibold transition-colors bg-brand-wash px-3 py-1.5 rounded-lg border border-transparent"
           >
             View all <ArrowRight size={12} />
           </Link>

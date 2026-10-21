@@ -91,29 +91,26 @@ export function DashboardNav({
 
   return (
     <aside
-      className="w-[240px] shrink-0 flex flex-col h-screen bg-[#071c0f] border-r border-emerald-900/40"
+      className="w-[240px] shrink-0 flex flex-col h-screen bg-rail border-r border-white/10"
       aria-label="Main navigation"
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-[64px] shrink-0 border-b border-emerald-900/40">
+      <div className="flex items-center gap-3 px-5 h-[64px] shrink-0 border-b border-white/10">
         <div
-          className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-900/60 shrink-0"
+          className="w-8 h-8 rounded-lg bg-brand-strong flex items-center justify-center shrink-0"
           aria-hidden="true"
         >
           <Bot size={15} className="text-white" />
         </div>
         <div className="min-w-0">
-          {/* #fff — white text on #071c0f: 19:1 contrast */}
           <p className="text-white font-bold text-sm tracking-tight truncate">{tenantName}</p>
-          {/* #6ee7b7 (emerald-300) on #071c0f: ~5:1 contrast — passes WCAG AA */}
-          <p className="text-emerald-300 text-[10px] leading-none mt-0.5 font-medium capitalize">{roleLabel}</p>
+          <p className="text-white/50 text-[10px] leading-none mt-0.5 font-medium capitalize">{roleLabel}</p>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" role="navigation" aria-label="Dashboard sections">
-        {/* #6ee7b7 (emerald-300) on #071c0f: ~5:1 — passes AA */}
-        <p className="text-emerald-300/50 text-[10px] font-semibold uppercase tracking-widest px-3 pb-2" aria-hidden="true">
+        <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest px-3 pb-2" aria-hidden="true">
           Navigation
         </p>
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -130,16 +127,14 @@ export function DashboardNav({
               data-tour-id={tourId}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 group ${
                 active
-                  /* active: #6ee7b7 emerald-300 on #071c0f — ~5:1 contrast ✓ */
-                  ? 'bg-emerald-500/10 text-emerald-300'
-                  /* inactive: #a7f3d0 emerald-200 on #071c0f — ~5.2:1 contrast ✓ */
-                  : 'text-emerald-200/70 hover:bg-white/5 hover:text-emerald-200'
+                  ? 'bg-[#3A2216] text-brand'
+                  : 'text-white/60 hover:bg-white/5 hover:text-white/90'
               }`}
             >
               {active && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-emerald-400" aria-hidden="true" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-brand" aria-hidden="true" />
               )}
-              <Icon size={15} className={`shrink-0 ${active ? 'text-emerald-300' : 'text-emerald-200/50 group-hover:text-emerald-200'}`} aria-hidden="true" />
+              <Icon size={15} className={`shrink-0 ${active ? 'text-brand' : 'text-white/40 group-hover:text-white/80'}`} aria-hidden="true" />
               <span className="font-medium">{label}</span>
             </Link>
           );
@@ -147,12 +142,12 @@ export function DashboardNav({
       </nav>
 
       {/* Bottom */}
-      <div className="p-3 border-t border-emerald-900/40">
+      <div className="p-3 border-t border-white/10">
         <button
           type="button"
           onClick={handleSignOut}
           aria-label="Sign out of KOT.ai"
-          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-emerald-200/50 hover:bg-white/5 hover:text-emerald-200 transition-all group"
+          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-white/50 hover:bg-white/5 hover:text-white/90 transition-all group"
         >
           <LogOut size={15} className="shrink-0" aria-hidden="true" />
           <span className="font-medium">Sign out</span>

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { dismissInsightAction, type InsightRow, type InsightSuggestion } from '@/app/actions/insights';
 
 const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
-  knowledge_base: { icon: BookOpen,          color: 'text-emerald-600', bg: 'bg-emerald-50',  label: 'Knowledge Base' },
+  knowledge_base: { icon: BookOpen,          color: 'text-done', bg: 'bg-done-bg',  label: 'Knowledge Base' },
   guardrails:     { icon: ShieldCheck,       color: 'text-violet-600',  bg: 'bg-violet-50',   label: 'Guardrails'     },
   bot_config:     { icon: Zap,               color: 'text-sky-600',     bg: 'bg-sky-50',       label: 'Bot Config'     },
   campaigns:      { icon: Megaphone,         color: 'text-orange-600',  bg: 'bg-orange-50',   label: 'Campaigns'      },
@@ -203,7 +203,7 @@ export function AiInsightsPanel({ insight }: { insight: InsightRow | null }) {
             {medium.length > 0 && <span className="text-[10px] font-bold bg-amber-50 text-amber-600 ring-1 ring-amber-200 px-2 py-0.5 rounded-full">{medium.length} Med</span>}
           </div>
         ) : (
-          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full ring-1 ring-emerald-200 shrink-0">All clear</span>
+          <span className="text-[10px] font-semibold text-done bg-done-bg px-2 py-0.5 rounded-full ring-1 ring-transparent shrink-0">All clear</span>
         )}
         <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`} />
       </button>
@@ -213,8 +213,8 @@ export function AiInsightsPanel({ insight }: { insight: InsightRow | null }) {
         <div className="p-4 space-y-3">
           {visible.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                <CheckCircle2 size={28} className="text-emerald-500" />
+              <div className="w-14 h-14 rounded-2xl bg-done-bg flex items-center justify-center">
+                <CheckCircle2 size={28} className="text-done" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-slate-700">You&apos;re on top of everything</p>
@@ -237,8 +237,8 @@ export function AiInsightsPanel({ insight }: { insight: InsightRow | null }) {
                   </p>
                   {addressedCount > 0 && (
                     <div className="flex items-center gap-1 mt-1.5">
-                      <TrendingUp size={11} className="text-emerald-500" />
-                      <span className="text-[10px] font-semibold text-emerald-600">Great progress!</span>
+                      <TrendingUp size={11} className="text-done" />
+                      <span className="text-[10px] font-semibold text-done">Great progress!</span>
                     </div>
                   )}
                 </div>

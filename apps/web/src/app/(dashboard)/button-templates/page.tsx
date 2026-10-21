@@ -33,8 +33,8 @@ export default async function ButtonTemplatesPage() {
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Button Templates</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl font-bold text-text">Button Templates</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Define reusable WhatsApp interactive button menus. The AI references these by name and sends them automatically at key decision points.
           </p>
         </div>

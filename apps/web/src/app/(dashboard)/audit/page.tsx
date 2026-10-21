@@ -19,20 +19,20 @@ export default async function ClientAuditPage() {
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-          <ClipboardList size={18} className="text-emerald-600" />
+        <div className="w-9 h-9 rounded-xl bg-brand-wash flex items-center justify-center shrink-0">
+          <ClipboardList size={18} className="text-brand-strong" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Activity Log</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h2 className="text-xl font-bold text-text">Activity Log</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
             All actions taken in your workspace — bot changes, team invites, campaigns, guardrail updates. Last 300 events.
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+      <div className="bg-surface rounded-2xl border border-line p-5">
         {error ? (
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-problem">{error}</p>
         ) : (
           <AuditLogTable logs={logs} showTenant={false} />
         )}

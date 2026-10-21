@@ -56,10 +56,10 @@ export default async function ReturnsPage({ searchParams }: { searchParams: Sear
           <RotateCcw size={18} className="text-orange-600" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Return Requests</h1>
-          <p className="text-sm text-slate-500">Review and process customer return and replacement requests</p>
+          <h1 className="text-xl font-semibold text-text">Return Requests</h1>
+          <p className="text-sm text-muted-foreground">Review and process customer return and replacement requests</p>
         </div>
-        <span className="ml-auto text-sm text-slate-500 font-medium">
+        <span className="ml-auto text-sm text-muted-foreground font-medium">
           {(requests ?? []).length} request{(requests ?? []).length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -75,8 +75,8 @@ export default async function ReturnsPage({ searchParams }: { searchParams: Sear
               href={s === 'all' ? '/returns' : `/returns?status=${s}`}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 isActive
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-brand-strong text-white'
+                  : 'bg-sunken text-muted-foreground hover:bg-line'
               }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -88,7 +88,7 @@ export default async function ReturnsPage({ searchParams }: { searchParams: Sear
 
       {/* Request list */}
       {(requests ?? []).length === 0 ? (
-        <div className="text-center py-16 text-slate-400">
+        <div className="text-center py-16 text-muted-foreground">
           <RotateCcw size={32} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm font-medium">No return requests</p>
           <p className="text-xs mt-1">They&apos;ll appear here when customers request returns via WhatsApp</p>

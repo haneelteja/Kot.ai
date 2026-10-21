@@ -113,12 +113,12 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button type="button" onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+        <button type="button" onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-sunken text-muted-foreground hover:text-text transition-colors">
           <ChevronLeft size={18} />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">New Scheduled Message</h1>
-          <p className="text-xs text-gray-400">Configure and schedule your outbound WhatsApp message</p>
+          <h1 className="text-xl font-bold text-text">New Scheduled Message</h1>
+          <p className="text-xs text-muted-foreground">Configure and schedule your outbound WhatsApp message</p>
         </div>
       </div>
 
@@ -131,49 +131,49 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
           return (
             <div key={s.id} className="flex items-center gap-2">
               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                active ? 'bg-violet-600 text-white' : done ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'
+                active ? 'bg-brand-strong text-white' : done ? 'bg-done-bg text-done' : 'bg-sunken text-muted-foreground'
               }`}>
                 <Icon size={11} />
                 {s.label}
               </div>
-              {i < STEPS.length - 1 && <div className={`w-6 h-px ${done ? 'bg-emerald-300' : 'bg-gray-200'}`} />}
+              {i < STEPS.length - 1 && <div className={`w-6 h-px ${done ? 'bg-done/40' : 'bg-line'}`} />}
             </div>
           );
         })}
       </div>
 
       {/* Step content */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <div className="bg-surface rounded-2xl border border-line shadow-float p-6 space-y-5">
 
         {/* ── Step 1: Recipients ─────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-gray-800">Select Recipients</h2>
+            <h2 className="text-sm font-semibold text-text">Select Recipients</h2>
 
             {/* Search existing contacts */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Search contacts</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Search contacts</label>
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search by name or number..."
-                  className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300"
+                  className="w-full pl-9 pr-4 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40"
                 />
               </div>
               {search && filtered.length > 0 && (
-                <div className="mt-1 border border-gray-100 rounded-xl shadow-sm bg-white max-h-48 overflow-y-auto divide-y divide-gray-50">
+                <div className="mt-1 border border-line rounded-xl shadow-float bg-surface max-h-48 overflow-y-auto divide-y divide-line">
                   {filtered.slice(0, 20).map(c => (
                     <button key={c.phone} type="button" onClick={() => addContact(c)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-violet-50 transition-colors flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 text-xs font-bold shrink-0">
+                      className="w-full text-left px-4 py-2.5 hover:bg-brand-wash transition-colors flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full bg-brand-wash flex items-center justify-center text-brand-strong text-xs font-bold shrink-0">
                         {(c.name ?? c.phone).charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-800">{c.name ?? c.phone}</p>
-                        {c.name && <p className="text-xs text-gray-400">{c.phone}</p>}
+                        <p className="text-sm font-medium text-text">{c.name ?? c.phone}</p>
+                        {c.name && <p className="text-xs text-muted-foreground">{c.phone}</p>}
                       </div>
                     </button>
                   ))}
@@ -183,14 +183,14 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
 
             {/* Manual entry */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Or add number manually</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Or add number manually</label>
               <div className="flex gap-2">
                 <input type="text" value={manualNum} onChange={e => setManualNum(e.target.value)}
-                  placeholder="+919XXXXXXXXX" className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300" />
+                  placeholder="+919XXXXXXXXX" className="flex-1 px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40" />
                 <input type="text" value={manualName} onChange={e => setManualName(e.target.value)}
-                  placeholder="Name (optional)" className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300" />
+                  placeholder="Name (optional)" className="flex-1 px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40" />
                 <button type="button" onClick={addManual}
-                  className="px-3 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors">
+                  className="px-3 py-2.5 bg-brand-strong hover:bg-brand text-white rounded-xl transition-colors">
                   <Plus size={15} />
                 </button>
               </div>
@@ -199,12 +199,12 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
             {/* Selected list */}
             {selected.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-2">{selected.length} recipient{selected.length > 1 ? 's' : ''} selected</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">{selected.length} recipient{selected.length > 1 ? 's' : ''} selected</p>
                 <div className="flex flex-wrap gap-2">
                   {selected.map(s => (
-                    <span key={s.phone} className="inline-flex items-center gap-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 px-2.5 py-1 rounded-full">
+                    <span key={s.phone} className="inline-flex items-center gap-1.5 text-xs font-medium bg-brand-wash text-brand-strong border border-transparent px-2.5 py-1 rounded-full">
                       {s.name ?? s.phone}
-                      <button type="button" onClick={() => removeSelected(s.phone)} className="hover:text-red-500 transition-colors"><X size={11} /></button>
+                      <button type="button" onClick={() => removeSelected(s.phone)} className="hover:text-problem transition-colors"><X size={11} /></button>
                     </span>
                   ))}
                 </div>
@@ -216,7 +216,7 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
         {/* ── Step 2: Message ────────────────────────────────────────────── */}
         {step === 2 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-gray-800">Compose Message</h2>
+            <h2 className="text-sm font-semibold text-text">Compose Message</h2>
 
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex gap-2.5 text-xs text-amber-700">
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
@@ -225,24 +225,24 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
 
             {/* Free-form */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Message body <span className="text-gray-400">(sent to active-session contacts)</span></label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Message body <span className="text-muted-foreground">(sent to active-session contacts)</span></label>
               <textarea
                 value={msgBody}
                 onChange={e => setMsgBody(e.target.value)}
                 rows={5}
                 placeholder="Type your message here..."
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300 resize-none"
+                className="w-full px-4 py-3 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40 resize-none"
               />
-              <p className="text-xs text-gray-400 mt-1">{msgBody.length} characters</p>
+              <p className="text-xs text-muted-foreground mt-1">{msgBody.length} characters</p>
             </div>
 
             {/* Template */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-medium text-gray-500">Template fallback <span className="text-gray-400">(for out-of-window contacts)</span></label>
+                <label className="text-xs font-medium text-muted-foreground">Template fallback <span className="text-muted-foreground">(for out-of-window contacts)</span></label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="text-xs text-gray-500">Enable</span>
-                  <div className={`w-8 h-4 rounded-full transition-colors ${useTemplate ? 'bg-violet-600' : 'bg-gray-200'}`}
+                  <span className="text-xs text-muted-foreground">Enable</span>
+                  <div className={`w-8 h-4 rounded-full transition-colors ${useTemplate ? 'bg-brand-strong' : 'bg-line'}`}
                     onClick={() => setUseTemplate(v => !v)}>
                     <div className={`w-3 h-3 bg-white rounded-full shadow mt-0.5 transition-transform ${useTemplate ? 'translate-x-4' : 'translate-x-0.5'}`} />
                   </div>
@@ -252,7 +252,7 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
               {useTemplate && (
                 <div className="space-y-3 pt-1">
                   {templates.length === 0 ? (
-                    <div className="flex items-center gap-2 text-xs text-gray-400 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground p-3 bg-sunken rounded-xl border border-line">
                       <Info size={13} />
                       No approved templates found. Create and approve templates in Meta Business Manager.
                     </div>
@@ -261,7 +261,7 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
                       const t = templates.find(t => t.name === e.target.value);
                       setTemplateName(e.target.value);
                       if (t) setTemplateLang(t.language);
-                    }} className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white">
+                    }} className="w-full px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40 bg-surface">
                       <option value="">Select a template...</option>
                       {templates.map(t => (
                         <option key={`${t.name}-${t.language}`} value={t.name}>
@@ -271,8 +271,8 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
                     </select>
                   )}
                   {selectedTemplate && (
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-600">
-                      <p className="font-semibold text-gray-700 mb-1">Template preview</p>
+                    <div className="p-3 bg-sunken rounded-xl border border-line text-xs text-muted-foreground">
+                      <p className="font-semibold text-text mb-1">Template preview</p>
                       <p className="font-mono whitespace-pre-wrap">
                         {(selectedTemplate.components as { type: string; text?: string }[])
                           .find(c => c.type === 'BODY')?.text ?? 'No body text'}
@@ -288,22 +288,22 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
         {/* ── Step 3: Schedule ───────────────────────────────────────────── */}
         {step === 3 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-gray-800">Schedule Settings</h2>
+            <h2 className="text-sm font-semibold text-text">Schedule Settings</h2>
 
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Send date & time</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Send date & time</label>
               <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300" />
+                className="w-full px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40" />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-2 block">Recurrence</label>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Recurrence</label>
               <div className="grid grid-cols-4 gap-2">
                 {(['once', 'daily', 'weekly', 'monthly'] as const).map(type => (
                   <button key={type} type="button"
                     onClick={() => setRecurrenceType(type)}
                     className={`py-2 rounded-xl text-xs font-semibold border transition-colors capitalize ${
-                      recurrenceType === type ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'
+                      recurrenceType === type ? 'bg-brand-strong text-white border-brand-strong' : 'bg-surface text-muted-foreground border-line hover:border-brand/40'
                     }`}>
                     {type}
                   </button>
@@ -313,12 +313,12 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
 
             {recurrenceType === 'weekly' && (
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-2 block">Days of week</label>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">Days of week</label>
                 <div className="flex gap-2">
                   {DAYS_OF_WEEK.map((d, i) => (
                     <button key={d} type="button" onClick={() => toggleWeekDay(i)}
                       className={`w-9 h-9 rounded-full text-xs font-semibold border transition-colors ${
-                        weekDays.includes(i) ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-500 border-gray-200 hover:border-violet-300'
+                        weekDays.includes(i) ? 'bg-brand-strong text-white border-brand-strong' : 'bg-surface text-muted-foreground border-line hover:border-brand/40'
                       }`}>
                       {d}
                     </button>
@@ -329,10 +329,10 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
 
             {recurrenceType === 'monthly' && (
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Day of month</label>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Day of month</label>
                 <input type="number" min={1} max={28} value={dayOfMonth} onChange={e => setDayOfMonth(parseInt(e.target.value, 10))}
-                  className="w-24 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300" />
-                <p className="text-xs text-gray-400 mt-1">Max 28 to avoid month-end issues</p>
+                  className="w-24 px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40" />
+                <p className="text-xs text-muted-foreground mt-1">Max 28 to avoid month-end issues</p>
               </div>
             )}
           </div>
@@ -341,34 +341,34 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
         {/* ── Step 4: Settings & Review ──────────────────────────────────── */}
         {step === 4 && (
           <div className="space-y-5">
-            <h2 className="text-sm font-semibold text-gray-800">Settings & Review</h2>
+            <h2 className="text-sm font-semibold text-text">Settings & Review</h2>
 
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Schedule name</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Schedule name</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)}
                 placeholder="e.g. Monday follow-up, Offer reminder..."
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300" />
+                className="w-full px-3 py-2.5 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40" />
             </div>
 
-            <div className="flex items-start justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
+            <div className="flex items-start justify-between p-4 rounded-xl border border-line bg-sunken">
               <div>
-                <p className="text-sm font-semibold text-gray-800">Bot handles replies</p>
-                <p className="text-xs text-gray-400 mt-0.5">When enabled, replies from recipients are handled by the AI bot. Only works with Meta Cloud API.</p>
+                <p className="text-sm font-semibold text-text">Bot handles replies</p>
+                <p className="text-xs text-muted-foreground mt-0.5">When enabled, replies from recipients are handled by the AI bot. Only works with Meta Cloud API.</p>
               </div>
               <button type="button" onClick={() => setBotHandlesReplies(v => !v)}
-                className={`ml-4 w-10 h-5 rounded-full shrink-0 transition-colors ${botHandlesReplies ? 'bg-violet-600' : 'bg-gray-200'}`}>
+                className={`ml-4 w-10 h-5 rounded-full shrink-0 transition-colors ${botHandlesReplies ? 'bg-brand-strong' : 'bg-line'}`}>
                 <div className={`w-4 h-4 bg-white rounded-full shadow mt-0.5 transition-transform ${botHandlesReplies ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </button>
             </div>
 
             {/* Summary */}
-            <div className="p-4 rounded-xl border border-violet-100 bg-violet-50 space-y-2 text-xs text-violet-800">
-              <p className="font-semibold text-violet-900 mb-1">Summary</p>
-              <p><span className="text-violet-500">Recipients:</span> {selected.length}</p>
-              <p><span className="text-violet-500">Message:</span> {msgBody ? `Free-form (${msgBody.length} chars)` : '—'}{templateName ? ` + template "${templateName}"` : ''}</p>
-              <p><span className="text-violet-500">Scheduled:</span> {scheduledAt ? new Date(scheduledAt).toLocaleString('en-IN') : '—'}</p>
-              <p><span className="text-violet-500">Recurrence:</span> {recurrenceType}</p>
-              <p><span className="text-violet-500">Bot replies:</span> {botHandlesReplies ? 'Yes' : 'No'}</p>
+            <div className="p-4 rounded-xl border border-line bg-brand-wash space-y-2 text-xs text-brand-strong">
+              <p className="font-semibold text-brand-strong mb-1">Summary</p>
+              <p><span className="text-brand-strong/70">Recipients:</span> {selected.length}</p>
+              <p><span className="text-brand-strong/70">Message:</span> {msgBody ? `Free-form (${msgBody.length} chars)` : '—'}{templateName ? ` + template "${templateName}"` : ''}</p>
+              <p><span className="text-brand-strong/70">Scheduled:</span> {scheduledAt ? new Date(scheduledAt).toLocaleString('en-IN') : '—'}</p>
+              <p><span className="text-brand-strong/70">Recurrence:</span> {recurrenceType}</p>
+              <p><span className="text-brand-strong/70">Bot replies:</span> {botHandlesReplies ? 'Yes' : 'No'}</p>
             </div>
           </div>
         )}
@@ -376,7 +376,7 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+        <div className="flex items-center gap-2 text-sm text-problem bg-problem-bg border border-transparent rounded-xl px-4 py-3">
           <AlertTriangle size={14} className="shrink-0" />
           {error}
         </div>
@@ -387,18 +387,18 @@ export function NewScheduledMessageForm({ contacts, templates }: { contacts: Con
         <button type="button"
           onClick={() => setStep(s => Math.max(1, s - 1))}
           disabled={step === 1}
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-30 transition-colors">
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-text disabled:opacity-30 transition-colors">
           <ChevronLeft size={15} /> Back
         </button>
         {step < 4 ? (
           <button type="button"
             onClick={() => setStep(s => s + 1)}
-            className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors shadow-sm">
+            className="inline-flex items-center gap-2 bg-brand-strong hover:bg-brand text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors shadow-float">
             Continue <ChevronRight size={15} />
           </button>
         ) : (
           <button type="button" onClick={() => void handleSubmit()} disabled={saving}
-            className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-6 py-2 rounded-xl transition-colors shadow-sm disabled:opacity-60">
+            className="inline-flex items-center gap-2 bg-brand-strong hover:bg-brand text-white text-sm font-semibold px-6 py-2 rounded-xl transition-colors shadow-float disabled:opacity-60">
             {saving ? 'Scheduling...' : 'Schedule Message'}
           </button>
         )}

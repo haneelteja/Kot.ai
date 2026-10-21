@@ -2,61 +2,51 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import {
-  LayoutDashboard, MessageSquare, Target, BookOpen,
-  ShieldCheck, Megaphone, BarChart2, Settings,
+  LayoutDashboard, MessageSquare, BookOpen,
+  ShieldCheck, BarChart2, Settings,
   Sparkles, ArrowRight, X, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { markTourCompleteAction } from '@/app/actions/tour';
 
 // ── Tour steps (one per sidebar section) ─────────────────────────────────────
+// Only covers sections that exist today. Restaurant-specific screens (orders,
+// bookings, menu) get their own steps once built (DSH epic, docs/BACKLOG.md).
 
 const STEPS = [
   {
     id:          'overview',
     title:       'Overview',
-    description: 'Your command centre. See live stats — active conversations, leads captured today, bot success rate, and pending escalations at a glance.',
+    description: 'Your command centre. See live stats — active conversations, bot reply rate, and pending escalations at a glance.',
     icon:        LayoutDashboard,
   },
   {
     id:          'conversations',
     title:       'Conversations',
-    description: 'Every WhatsApp chat your bot handles appears here. Monitor bot replies in real time, jump in manually, assign chats to agents, or escalate to your team.',
+    description: 'Every WhatsApp chat your bot handles appears here. Monitor bot replies in real time, jump in manually, or escalate to your team.',
     icon:        MessageSquare,
-  },
-  {
-    id:          'leads',
-    title:       'Leads',
-    description: 'Every contact your bot talks to is captured as a lead. Track qualification status, view conversation history, and assign to your sales team.',
-    icon:        Target,
   },
   {
     id:          'knowledge-base',
     title:       'Knowledge Base',
-    description: 'Upload FAQs, product docs, and policies. Your bot answers customer questions directly from this content — the richer your KB, the smarter your bot.',
+    description: 'Upload menus, FAQs, and policies. Your bot answers customer questions directly from this content — the richer your KB, the smarter your bot.',
     icon:        BookOpen,
   },
   {
     id:          'guardrails',
     title:       'Guardrails',
-    description: 'Control what your bot can and cannot say. Block topics, restrict keywords, set tone, and configure when the bot should hand off to a human agent.',
+    description: 'Control what your bot can and cannot say. Block topics, restrict keywords, set tone, and configure when the bot should hand off to a human.',
     icon:        ShieldCheck,
-  },
-  {
-    id:          'campaigns',
-    title:       'Campaigns',
-    description: 'Send broadcast messages to your leads at scale. Schedule delivery, let the bot handle replies automatically, and track open and response rates.',
-    icon:        Megaphone,
   },
   {
     id:          'analytics',
     title:       'Analytics',
-    description: 'Track bot performance, conversation volumes, lead conversion rates, and campaign results — all in one dashboard. Export for your reports.',
+    description: 'Track bot performance, conversation volumes, and response times — all in one dashboard. Export for your reports.',
     icon:        BarChart2,
   },
   {
     id:          'settings',
     title:       'Settings',
-    description: 'Add your WhatsApp number, activate bots, invite team members, and configure AI models. Start here to get your first bot live.',
+    description: 'Add your WhatsApp number, invite team members, and configure your AI model. Start here to get your bot live.',
     icon:        Settings,
   },
 ];
@@ -154,13 +144,13 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
             <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Sparkles size={28} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Welcome to Alphabot</h1>
-            <p className="text-emerald-100 text-sm mt-1">Your AI-powered WhatsApp assistant</p>
+            <h1 className="text-2xl font-bold text-white">Welcome to KOT.ai</h1>
+            <p className="text-emerald-100 text-sm mt-1">Orders, straight to the kitchen.</p>
           </div>
 
           <div className="px-8 py-6">
             <p className="text-slate-600 text-sm leading-relaxed text-center">
-              You&apos;re moments away from having an AI bot responding to WhatsApp messages for your business.
+              You&apos;re moments away from having an AI bot responding to WhatsApp messages for your restaurant.
               Take a quick tour to see everything that&apos;s available.
             </p>
 
@@ -168,7 +158,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
             <div className="grid grid-cols-2 gap-2 mt-5 mb-6">
               {[
                 { icon: MessageSquare, label: 'Live Conversations' },
-                { icon: Target,        label: 'Lead Tracking'      },
+                { icon: ShieldCheck,   label: 'Guardrails'         },
                 { icon: BookOpen,      label: 'Knowledge Base'     },
                 { icon: BarChart2,     label: 'Analytics'          },
               ].map(({ icon: Icon, label }) => (
@@ -214,7 +204,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
         aria-hidden="true"
       >
         <defs>
-          <mask id="alphabot-tour-spotlight">
+          <mask id="kotai-tour-spotlight">
             <rect width="100%" height="100%" fill="white" />
             {rect && (
               <rect
@@ -232,7 +222,7 @@ export function GuidedTour({ initialCompleted }: { initialCompleted: boolean }) 
           width="100%"
           height="100%"
           fill="rgba(0,0,0,0.65)"
-          mask="url(#alphabot-tour-spotlight)"
+          mask="url(#kotai-tour-spotlight)"
         />
       </svg>
 

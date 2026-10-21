@@ -111,8 +111,8 @@ export default async function GuardrailsPage({
       <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-xs text-emerald-700 space-y-1">
         <p className="font-semibold text-emerald-800">Your guardrail layers (Layers 3 &amp; 4)</p>
         <ol className="list-decimal ml-4 space-y-0.5 text-emerald-600">
-          <li className="text-emerald-400">Platform global rules — always active, set by Alphabot</li>
-          <li className="text-emerald-400">Bot-type defaults — set by Alphabot per bot type</li>
+          <li className="text-emerald-400">Platform global rules — always active, set by KOT.ai</li>
+          <li className="text-emerald-400">Bot-type defaults — set by KOT.ai per bot type</li>
           <li><span className="font-semibold">General rules (all bots)</span> — you set these, apply across every bot you use <span className="italic">(below)</span></li>
           <li><span className="font-semibold">Per-bot rules</span> — fine-tune each bot individually <span className="italic">(below)</span></li>
         </ol>

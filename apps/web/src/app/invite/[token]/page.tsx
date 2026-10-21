@@ -60,7 +60,7 @@ export default async function InvitePage({
           </div>
           <h1 className="text-xl font-bold text-slate-900">You&apos;re invited!</h1>
           <p className="text-sm text-slate-500">
-            Set up your account to get started on Alphabot.
+            Set up your account to get started on KOT.ai.
           </p>
         </div>
 

@@ -13,7 +13,7 @@ const PLANS = [
     priceLabel: '₹8,000',
     desc:     'One Support Bot for teams getting started with WhatsApp AI.',
     cta:      'Get started',
-    ctaHref:  'https://wa.me/919642917777?text=Hi%2C+I%27d+like+to+subscribe+to+the+Alphabot+Starter+Plan',
+    ctaHref:  'https://wa.me/919642917777?text=Hi%2C+I%27d+like+to+subscribe+to+the+KOT.ai+Starter+Plan',
     highlight: false,
     features: [
       'Support Bot (1 WhatsApp number)',
@@ -173,7 +173,7 @@ export default function PricingPage() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
             <Bot size={15} className="text-white" />
           </div>
-          <span className="font-bold text-gray-900 text-base">Alphabot</span>
+          <span className="font-bold text-gray-900 text-base">KOT.ai</span>
         </Link>
         <Link
           href="/login"

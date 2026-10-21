@@ -111,7 +111,7 @@ function StatusShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-6">
       <div className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8 text-center">
         {children}
-        <p className="text-[11px] text-slate-300 mt-8">Powered by Alphabot</p>
+        <p className="text-[11px] text-slate-300 mt-8">Powered by KOT.ai</p>
       </div>
     </div>
   );

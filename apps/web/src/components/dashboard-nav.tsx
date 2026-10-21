@@ -151,7 +151,7 @@ export function DashboardNav({
         <button
           type="button"
           onClick={handleSignOut}
-          aria-label="Sign out of Alphabot"
+          aria-label="Sign out of KOT.ai"
           className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-emerald-200/50 hover:bg-white/5 hover:text-emerald-200 transition-all group"
         >
           <LogOut size={15} className="shrink-0" aria-hidden="true" />

@@ -43,7 +43,7 @@ function getTitle(pathname: string): string {
   if (pathname.startsWith('/campaigns/'))     return 'Campaign';
   if (pathname.startsWith('/voice/'))         return 'Call Detail';
   if (pathname.startsWith('/groups/'))        return 'Group';
-  return PAGE_TITLES[pathname] ?? 'Alphabot';
+  return PAGE_TITLES[pathname] ?? 'KOT.ai';
 }
 
 function timeAgo(ts: string): string {

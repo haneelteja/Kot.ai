@@ -176,7 +176,7 @@ export default async function BillingPage({
           <div>
             <p className="text-sm font-semibold text-red-800">Account suspended</p>
             <p className="text-xs text-red-600 mt-0.5">
-              Your bot has stopped replying to messages. Contact your Alphabot account manager to restore access.
+              Your bot has stopped replying to messages. Contact your KOT.ai account manager to restore access.
             </p>
           </div>
         </div>
@@ -268,7 +268,7 @@ export default async function BillingPage({
         </ul>
 
         <p className="text-xs text-slate-500 border-t border-slate-200 pt-3 mt-3">
-          Upgrade anytime using the options below. For custom plans or billing queries, contact your Alphabot account manager.
+          Upgrade anytime using the options below. For custom plans or billing queries, contact your KOT.ai account manager.
         </p>
       </div>
 

@@ -182,7 +182,7 @@ export default function NewClientPage() {
         )}
         <div>
           <h2 className="text-xl font-bold text-slate-900">Add New Client</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Onboard a new client onto the Alphabot platform</p>
+          <p className="text-sm text-slate-500 mt-0.5">Onboard a new client onto the KOT.ai platform</p>
         </div>
       </div>
 

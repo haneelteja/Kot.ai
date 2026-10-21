@@ -79,7 +79,7 @@ export default async function SubscriptionStatusPage({ params, searchParams }: P
           We could not verify this payment. Please contact us and we&apos;ll sort it out immediately.
         </p>
         <a
-          href="mailto:nalluruhaneel@gmail.com?subject=Alphabot payment issue"
+          href="mailto:nalluruhaneel@gmail.com?subject=KOT.ai payment issue"
           className="mt-6 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
         >
           Contact support &rarr;
@@ -113,10 +113,10 @@ function Shell({ children }: { children: React.ReactNode }) {
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
             <Bot size={13} className="text-white" />
           </div>
-          Alphabot
+          KOT.ai
         </Link>
         {children}
-        <p className="text-[11px] text-gray-300 mt-8">Powered by Alphabot</p>
+        <p className="text-[11px] text-gray-300 mt-8">Powered by KOT.ai</p>
       </div>
     </div>
   );

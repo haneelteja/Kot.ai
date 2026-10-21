@@ -9,9 +9,6 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
-
   const form = await request.formData();
   const file = form.get('file') as File | null;
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -23,6 +20,10 @@ export async function POST(request: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   if (mimeType === 'application/pdf') {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'PDF extraction requires ANTHROPIC_API_KEY. Upload a .txt/.csv/.md/.json file instead, or paste the content directly.' }, { status: 501 });
+    }
     const base64 = buffer.toString('base64');
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

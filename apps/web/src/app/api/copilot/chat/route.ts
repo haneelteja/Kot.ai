@@ -185,6 +185,95 @@ async function callAnthropic(
   return res.json() as Promise<{ content: ContentBlock[] }>;
 }
 
+// ─── OpenRouter fallback (OpenAI-compatible function-calling) ──────────────────
+// Used when ANTHROPIC_API_KEY isn't set. Converts Anthropic-shaped tool defs and
+// message history to/from OpenAI's chat-completions + function-calling format so
+// the rest of this route (tool execution, history persistence) stays unchanged.
+
+const OPENROUTER_MODEL = 'google/gemma-4-31b-it:free';
+
+type OpenAiMessage =
+  | { role: 'system'; content: string }
+  | { role: 'user'; content: string }
+  | { role: 'assistant'; content: string | null; tool_calls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }> }
+  | { role: 'tool'; tool_call_id: string; content: string };
+
+function toOpenAiTools(tools: AnthropicTool[]) {
+  return tools.map(t => ({
+    type: 'function' as const,
+    function: { name: t.name, description: t.description, parameters: t.input_schema },
+  }));
+}
+
+function toOpenAiMessages(systemPrompt: string, messages: MessageParam[]): OpenAiMessage[] {
+  const out: OpenAiMessage[] = [{ role: 'system', content: systemPrompt }];
+  for (const m of messages) {
+    if (m.role === 'user') {
+      if (typeof m.content === 'string') {
+        out.push({ role: 'user', content: m.content });
+      } else {
+        for (const block of m.content) {
+          out.push({ role: 'tool', tool_call_id: block.tool_use_id, content: block.content });
+        }
+      }
+    } else {
+      if (typeof m.content === 'string') {
+        out.push({ role: 'assistant', content: m.content });
+      } else {
+        const textBlock = m.content.find(b => b.type === 'text') as { type: 'text'; text: string } | undefined;
+        const toolBlock = m.content.find(b => b.type === 'tool_use') as { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> } | undefined;
+        out.push({
+          role: 'assistant',
+          content: textBlock?.text ?? null,
+          ...(toolBlock ? { tool_calls: [{ id: toolBlock.id, type: 'function', function: { name: toolBlock.name, arguments: JSON.stringify(toolBlock.input) } }] } : {}),
+        });
+      }
+    }
+  }
+  return out;
+}
+
+async function callOpenRouter(
+  apiKey: string,
+  systemPrompt: string,
+  messages: MessageParam[],
+  tools: AnthropicTool[],
+): Promise<{ content: ContentBlock[] }> {
+  const body: Record<string, unknown> = {
+    model: OPENROUTER_MODEL,
+    messages: toOpenAiMessages(systemPrompt, messages),
+  };
+  if (tools.length > 0) body['tools'] = toOpenAiTools(tools);
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey.trim()}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`OpenRouter ${res.status}: ${text}`);
+  }
+
+  const data = await res.json() as {
+    choices: Array<{ message: { content: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> } }>;
+  };
+  const msg = data.choices[0]?.message;
+  const content: ContentBlock[] = [];
+  if (msg?.content) content.push({ type: 'text', text: msg.content });
+  const call = msg?.tool_calls?.[0];
+  if (call) {
+    let input: Record<string, unknown> = {};
+    try { input = JSON.parse(call.function.arguments); } catch { /* leave empty on malformed args */ }
+    content.push({ type: 'tool_use', id: call.id, name: call.function.name, input });
+  }
+  return { content };
+}
+
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
@@ -207,7 +296,10 @@ export async function POST(request: NextRequest) {
     if (!message?.trim()) return NextResponse.json({ error: 'Empty message' }, { status: 400 });
 
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (!anthropicKey && !openRouterKey) {
+      return NextResponse.json({ error: 'No AI provider configured (set ANTHROPIC_API_KEY or OPENROUTER_API_KEY)' }, { status: 500 });
+    }
 
     // Load copilot config — check enabled + get instructions/allowed_actions
     const { data: tenantRow } = await admin.from('tenants').select('copilot_config').eq('id', tenantId).single();
@@ -295,7 +387,9 @@ Before calling a tool, briefly describe what you'll do. Keep responses concise.$
     claudeMessages.push({ role: 'user', content: message });
 
     const enabledTools = TOOLS.filter(t => allowedActions.includes(t.name));
-    const response = await callAnthropic(anthropicKey, systemPrompt, claudeMessages, enabledTools);
+    const response = anthropicKey
+      ? await callAnthropic(anthropicKey, systemPrompt, claudeMessages, enabledTools)
+      : await callOpenRouter(openRouterKey as string, systemPrompt, claudeMessages, enabledTools);
 
     // Save user message
     await admin.from('copilot_messages').insert({

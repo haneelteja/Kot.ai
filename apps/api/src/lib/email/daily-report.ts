@@ -3,7 +3,7 @@ import { getServerClient } from '@alphabot/database';
 import { WhatsAppGateway } from '../../services/whatsapp/gateway.js';
 import type { WhatsAppProvider } from '@alphabot/shared';
 
-const resend = new Resend(process.env['RESEND_API_KEY']);
+const resend = new Resend(process.env['RESEND_API_KEY'] || 're_placeholder');
 
 interface BotStat {
   product_type: string;

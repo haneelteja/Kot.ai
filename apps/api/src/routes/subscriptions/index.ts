@@ -6,7 +6,7 @@ import {
   verifyEasebuzzCallback,
 } from '../../services/payment/easebuzz.js';
 
-const resend = new Resend(process.env['RESEND_API_KEY']);
+const resend = new Resend(process.env['RESEND_API_KEY'] || 're_placeholder');
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {

@@ -78,7 +78,7 @@ export default function SignupForm() {
             <CheckCircle2 size={28} className="text-ready" />
           </div>
           <h1 className="text-[22px] font-semibold text-text mb-2">Check your email</h1>
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             We sent a confirmation link to <strong className="text-text">{email}</strong>.<br />
             Click it to activate your account.
           </p>
@@ -98,7 +98,7 @@ export default function SignupForm() {
         <div className="bg-surface border border-line rounded-lg p-8">
           <div className="mb-6">
             <h1 className="text-[22px] font-semibold text-text">Create account</h1>
-            <p className="text-sm text-muted mt-1">Get started with KOT.ai for free</p>
+            <p className="text-sm text-muted-foreground mt-1">Get started with KOT.ai for free</p>
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
@@ -135,7 +135,7 @@ export default function SignupForm() {
                 <button
                   type="button"
                   onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors"
                   aria-label={showPw ? 'Hide password' : 'Show password'}
                 >
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -177,7 +177,7 @@ export default function SignupForm() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors"
                   aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
                 >
                   {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -200,7 +200,7 @@ export default function SignupForm() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
             <Link href="/login" className="text-brand-strong font-medium hover:underline">
               Sign in

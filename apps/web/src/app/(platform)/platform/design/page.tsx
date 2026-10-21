@@ -32,7 +32,7 @@ export default function DesignPreviewPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-h1 font-display font-bold text-[30px]">KOT.ai design system</h1>
-          <p className="text-sm text-muted mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Live reference for docs/DESIGN.md — the binding source of truth for every screen&rsquo;s look.
           </p>
         </div>
@@ -52,7 +52,7 @@ export default function DesignPreviewPage() {
               />
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{s.name}</p>
-                <p className="text-xs text-muted font-mono truncate">{s.varName}</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">{s.varName}</p>
               </div>
             </div>
           ))}
@@ -76,7 +76,7 @@ export default function DesignPreviewPage() {
           <p className="text-[22px] font-semibold leading-7">Heading 2 — 22</p>
           <p className="text-[18px] font-semibold leading-6">Heading 3 — 18</p>
           <p className="text-[15px] leading-[22px]">Body 15 — the quick brown fox jumps over the lazy dog</p>
-          <p className="text-[13px] leading-[18px] text-muted">Small 13 — meta, helper text</p>
+          <p className="text-[13px] leading-[18px] text-muted-foreground">Small 13 — meta, helper text</p>
           <p className="font-mono text-[14px] leading-5">Ticket 14 mono — 2 × Chicken Dum Biryani</p>
           <p className="font-mono text-[13px] tracking-[0.06em]">KOT-HYD1-000123</p>
         </div>
@@ -113,7 +113,7 @@ export default function DesignPreviewPage() {
         <h2 className="text-[22px] font-semibold mb-4">Card</h2>
         <Card className="max-w-sm">
           <CardHeader><CardTitle>Branch details</CardTitle></CardHeader>
-          <CardContent className="text-sm text-muted">
+          <CardContent className="text-sm text-muted-foreground">
             Madhapur · Open till 11 pm · Last delivery order 10:30 pm.
           </CardContent>
         </Card>

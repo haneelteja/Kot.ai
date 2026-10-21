@@ -50,13 +50,13 @@ export default function ResetPasswordPage() {
                 </svg>
               </div>
               <h1 className="text-[20px] font-semibold text-text">Password updated</h1>
-              <p className="text-sm text-muted">Redirecting you to the dashboard…</p>
+              <p className="text-sm text-muted-foreground">Redirecting you to the dashboard…</p>
             </div>
           ) : (
             <>
               <div className="mb-6">
                 <h1 className="text-[22px] font-semibold text-text">Set new password</h1>
-                <p className="text-sm text-muted mt-1">Choose a strong password for your account.</p>
+                <p className="text-sm text-muted-foreground mt-1">Choose a strong password for your account.</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
                     <button
                       type="button"
                       onClick={() => setShowPw(!showPw)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors"
                       aria-label={showPw ? 'Hide password' : 'Show password'}
                     >
                       {showPw ? <EyeOff size={16} /> : <Eye size={16} />}

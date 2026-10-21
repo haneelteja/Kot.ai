@@ -60,7 +60,7 @@ export function TicketCard({
         <StatusPill status={status} />
       </div>
 
-      <div className="flex items-center justify-between text-xs text-muted mb-3">
+      <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
         <span className="capitalize">{fulfilmentType}</span>
         {countdownSeconds != null && countdownTotalSeconds != null && (
           <Countdown seconds={countdownSeconds} totalSeconds={countdownTotalSeconds} />
@@ -71,7 +71,7 @@ export function TicketCard({
         {lines.map((line, i) => (
           <div key={i}>
             <span>{line.qty} &times; {line.name}</span>
-            {line.note && <div className="text-muted text-[12px] pl-4">{line.note}</div>}
+            {line.note && <div className="text-muted-foreground text-[12px] pl-4">{line.note}</div>}
           </div>
         ))}
       </div>

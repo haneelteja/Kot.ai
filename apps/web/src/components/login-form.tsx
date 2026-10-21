@@ -36,7 +36,7 @@ export default function LoginForm() {
         <div className="bg-surface border border-line rounded-lg p-8">
           <div className="mb-6">
             <h1 className="text-[22px] font-semibold text-text">Welcome back</h1>
-            <p className="text-sm text-muted mt-1">Sign in to your restaurant&rsquo;s dashboard</p>
+            <p className="text-sm text-muted-foreground mt-1">Sign in to your restaurant&rsquo;s dashboard</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -74,7 +74,7 @@ export default function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-text transition-colors"
                   aria-label={showPw ? 'Hide password' : 'Show password'}
                 >
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -95,7 +95,7 @@ export default function LoginForm() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-muted mt-6">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           New to KOT.ai?{' '}
           <Link href="/signup" className="text-brand-strong font-medium hover:underline">
             Create a free account

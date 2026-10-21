@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
                 </svg>
               </div>
               <h1 className="text-[20px] font-semibold text-text">Check your inbox</h1>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted-foreground">
                 We&rsquo;ve sent a password reset link to <span className="font-medium text-text">{email}</span>.
                 The link expires in 1 hour.
               </p>
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
             <>
               <div className="mb-6">
                 <h1 className="text-[22px] font-semibold text-text">Forgot password?</h1>
-                <p className="text-sm text-muted mt-1">Enter your email and we&rsquo;ll send you a reset link.</p>
+                <p className="text-sm text-muted-foreground mt-1">Enter your email and we&rsquo;ll send you a reset link.</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
                 </Button>
               </form>
 
-              <Link href="/login" className="flex items-center justify-center gap-1.5 text-sm text-muted hover:text-text mt-6 transition-colors">
+              <Link href="/login" className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-text mt-6 transition-colors">
                 <ArrowLeft size={14} /> Back to sign in
               </Link>
             </>

@@ -27,7 +27,7 @@ export function EmptyState({ title, description, action, className }: EmptyState
         <rect x="16" y="27" width="18" height="2" rx="1" className="fill-line" />
       </svg>
       <p className="text-sm font-semibold text-text">{title}</p>
-      {description && <p className="text-xs text-muted mt-1 max-w-xs">{description}</p>}
+      {description && <p className="text-xs text-muted-foreground mt-1 max-w-xs">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

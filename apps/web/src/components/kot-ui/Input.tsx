@@ -17,7 +17,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         ref={ref}
         id={id}
         className={cn(
-          'h-10 w-full rounded-sm border bg-surface px-3 text-sm text-text placeholder:text-muted',
+          'h-10 w-full rounded-sm border bg-surface px-3 text-sm text-text placeholder:text-muted-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--focus)]',
           error ? 'border-problem' : 'border-line',
           className,

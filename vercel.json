@@ -1,4 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "buildCommand": "npx turbo run build --filter=@alphabot/web...",
+  "outputDirectory": "apps/web/.next",
   "crons": [
     {
       "path": "/api/cron/refresh-models",

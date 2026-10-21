@@ -19,7 +19,7 @@ const PRODUCT_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 const AVATAR_COLORS = [
-  'bg-emerald-100 text-emerald-700',
+  'bg-brand-wash text-brand-strong',
   'bg-sky-100 text-sky-700',
   'bg-violet-100 text-violet-700',
   'bg-amber-100 text-amber-700',
@@ -28,15 +28,15 @@ const AVATAR_COLORS = [
 // ── Chats section ─────────────────────────────────────────────────────────────
 
 const CONV_STATUS_STYLES: Record<string, { dot: string; badge: string }> = {
-  open:       { dot: 'bg-emerald-400', badge: 'bg-emerald-50 text-emerald-700 ring-emerald-100' },
+  open:       { dot: 'bg-done',    badge: 'bg-done-bg text-done ring-transparent' },
   escalated:  { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 ring-red-100' },
   resolved:   { dot: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-500 ring-gray-200' },
   bot_paused: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-700 ring-amber-100' },
 };
 
 const SENTIMENT_META: Record<ContactSentiment, { emoji: string; bg: string; text: string; label: string }> = {
-  positive:   { emoji: '😊', bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Positive'   },
-  neutral:    { emoji: '😐', bg: 'bg-slate-100',  text: 'text-slate-500',  label: 'Neutral'    },
+  positive:   { emoji: '😊', bg: 'bg-done-bg',    text: 'text-done',    label: 'Positive'   },
+  neutral:    { emoji: '😐', bg: 'bg-neutral-bg', text: 'text-neutral', label: 'Neutral'    },
   negative:   { emoji: '😟', bg: 'bg-amber-50',   text: 'text-amber-700',  label: 'Unhappy'    },
   frustrated: { emoji: '😤', bg: 'bg-red-50',     text: 'text-red-700',    label: 'Frustrated' },
 };
@@ -201,7 +201,7 @@ export default async function ConversationsPage({
         {activeTab === 'chats' && conversations.length > 0 && (() => {
           const uniqueContacts = new Set((conversations as { contact_id?: string; id: string }[]).map(c => c.contact_id ?? c.id)).size;
           return (
-            <span className="text-xs font-semibold text-gray-500 bg-white border border-green-100 px-3 py-1.5 rounded-full shadow-sm self-start">
+            <span className="text-xs font-semibold text-gray-500 bg-white border border-line px-3 py-1.5 rounded-full shadow-sm self-start">
               {uniqueContacts} contact{uniqueContacts !== 1 ? 's' : ''}
             </span>
           );
@@ -212,7 +212,7 @@ export default async function ConversationsPage({
       <div
         role="tablist"
         aria-label="Conversation sections"
-        className="flex items-center gap-1 bg-white border border-green-100 rounded-xl shadow-sm p-1 w-fit"
+        className="flex items-center gap-1 bg-white border border-line rounded-xl shadow-sm p-1 w-fit"
       >
         {tabs.map(({ key, label, icon: Icon }) => (
           <Link
@@ -222,7 +222,7 @@ export default async function ConversationsPage({
             aria-selected={activeTab === key}
             aria-controls={`tabpanel-${key}`}
             className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === key ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              activeTab === key ? 'bg-brand-strong text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             <Icon size={14} aria-hidden="true" /> {label}
@@ -236,10 +236,10 @@ export default async function ConversationsPage({
           {/* Status filters */}
           <div className="flex items-center gap-2 flex-wrap">
             {([
-              { key: null,         label: 'All',        cls: !statusFilter ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50' },
-              { key: 'open',       label: 'Open',       cls: statusFilter === 'open'       ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50' },
-              { key: 'resolved',   label: 'Resolved',   cls: statusFilter === 'resolved'   ? 'bg-gray-200 text-gray-700 border-gray-300 font-bold' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50' },
-              { key: 'bot_paused', label: 'Bot Paused', cls: statusFilter === 'bot_paused' ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50' },
+              { key: null,         label: 'All',        cls: !statusFilter ? 'bg-brand-strong text-white border-brand-strong shadow-sm' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
+              { key: 'open',       label: 'Open',       cls: statusFilter === 'open'       ? 'bg-done-bg text-done border-done font-bold' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
+              { key: 'resolved',   label: 'Resolved',   cls: statusFilter === 'resolved'   ? 'bg-gray-200 text-gray-700 border-gray-300 font-bold' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
+              { key: 'bot_paused', label: 'Bot Paused', cls: statusFilter === 'bot_paused' ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
             ] as const).map(tab => (
               <Link key={tab.key ?? 'all'} href={statusHref(tab.key)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${tab.cls}`}>
@@ -285,19 +285,19 @@ export default async function ConversationsPage({
             const groups = [...grouped.values()];
 
             return groups.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-green-100 shadow-sm flex flex-col items-center justify-center py-24 text-center">
+              <div className="bg-white rounded-2xl border border-line shadow-sm flex flex-col items-center justify-center py-24 text-center">
                 {statusFilter === 'escalated' ? (
                   <>
-                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 border border-emerald-100">
-                      <AlertCircle size={28} className="text-emerald-400" />
+                    <div className="w-16 h-16 rounded-2xl bg-done-bg flex items-center justify-center mb-4">
+                      <AlertCircle size={28} className="text-done" />
                     </div>
                     <p className="text-sm font-semibold text-gray-600">All clear — no escalations</p>
                     <p className="text-xs text-gray-400 mt-1 max-w-xs">No conversations are currently waiting for human attention.</p>
                   </>
                 ) : (
                   <>
-                    <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center mb-4 border border-green-100">
-                      <MessageSquare size={28} className="text-green-400" />
+                    <div className="w-16 h-16 rounded-2xl bg-sunken flex items-center justify-center mb-4 border border-line">
+                      <MessageSquare size={28} className="text-muted-foreground" />
                     </div>
                     <p className="text-sm font-semibold text-gray-600">No conversations yet</p>
                     <p className="text-xs text-gray-400 mt-1 max-w-xs">
@@ -307,8 +307,8 @@ export default async function ConversationsPage({
                 )}
               </div>
             ) : (
-              <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${statusFilter === 'escalated' ? 'border-red-100' : 'border-green-100'}`}>
-                <div className="divide-y divide-green-50">
+              <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${statusFilter === 'escalated' ? 'border-red-100' : 'border-line'}`}>
+                <div className="divide-y divide-line">
                   {groups.map(({ convs, contact }) => {
                     const primary     = convs[0]!;
                     const displayName = contact?.name ?? contact?.phone ?? 'Unknown';
@@ -321,12 +321,12 @@ export default async function ConversationsPage({
 
                     return (
                       <Link key={primary.id} href={`/conversations/${primary.id}`}
-                        className="flex items-center gap-4 px-6 py-4 hover:bg-green-50/60 transition-colors group">
+                        className="flex items-center gap-4 px-6 py-4 hover:bg-sunken transition-colors group">
                         <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[colorIdx]} flex items-center justify-center font-bold text-sm shrink-0`}>
                           {displayName[0]?.toUpperCase() ?? '?'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-emerald-700 transition-colors">{displayName}</p>
+                          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-done transition-colors">{displayName}</p>
                           {contact?.name && <p className="text-xs text-gray-400 truncate">{contact.phone}</p>}
                           {/* Bot badges — one per conversation this contact has */}
                           <div className="flex items-center gap-1 mt-0.5 flex-wrap">
@@ -371,16 +371,16 @@ export default async function ConversationsPage({
           {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { icon: <Users size={18} className="text-emerald-600" />,  label: 'Total Contacts',    value: contactStats.total,          bg: 'bg-emerald-50' },
+              { icon: <Users size={18} className="text-done" />,  label: 'Total Contacts',    value: contactStats.total,          bg: 'bg-done-bg' },
               { icon: <Clock size={18} className="text-blue-600" />,     label: 'Active This Week',  value: contactStats.activeThisWeek, bg: 'bg-blue-50'    },
               { icon: <Star size={18} className="text-amber-500" />,     label: 'Positive Sentiment',value: contactStats.positive,        bg: 'bg-amber-50'   },
               { icon: <AlertCircle size={18} className="text-red-500" />,label: 'Frustrated',        value: contactStats.frustrated,      bg: 'bg-red-50'     },
             ].map(s => (
-              <div key={s.label} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+              <div key={s.label} className="bg-white rounded-xl border border-line p-4 flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>{s.icon}</div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900 tabular-nums">{s.value.toLocaleString()}</p>
-                  <p className="text-xs text-slate-500">{s.label}</p>
+                  <p className="text-xl font-bold text-text tabular-nums">{s.value.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               </div>
             ))}
@@ -391,13 +391,13 @@ export default async function ConversationsPage({
             <form method="GET" className="relative flex-1 max-w-xs">
               <input type="hidden" name="tab" value="contacts" />
               {sentimentFilter !== 'all' && <input type="hidden" name="sentiment" value={sentimentFilter} />}
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 name="q"
                 defaultValue={search}
                 placeholder="Search by name or phone…"
                 aria-label="Search contacts by name or phone"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-line rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
               />
             </form>
             <div className="flex gap-1 flex-wrap">
@@ -410,11 +410,11 @@ export default async function ConversationsPage({
                 return (
                   <Link key={tab.key} href={`/conversations?${p.toString()}`}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      active ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 hover:text-emerald-700'
+                      active ? 'bg-brand-strong text-white' : 'bg-white text-muted-foreground border border-line hover:border-brand hover:text-brand-strong'
                     }`}>
                     {tab.label}
                     {tab.count !== null && tab.count > 0 && (
-                      <span className={`ml-1.5 ${active ? 'text-emerald-200' : 'text-slate-400'}`}>{tab.count}</span>
+                      <span className={`ml-1.5 ${active ? 'text-white/70' : 'text-muted-foreground'}`}>{tab.count}</span>
                     )}
                   </Link>
                 );
@@ -446,7 +446,7 @@ export default async function ConversationsPage({
             })}
           />
 
-          <p className="text-xs text-slate-400 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             {contactRows.length} contact{contactRows.length !== 1 ? 's' : ''}
             {sentimentFilter !== 'all' ? ` · filtered by ${sentimentFilter}` : ''}
             {search ? ` · matching &ldquo;${search}&rdquo;` : ''}

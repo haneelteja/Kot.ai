@@ -38,7 +38,7 @@ const BOT_AVATAR: Record<string, { label: string; bg: string }> = {
   appointment_bot: { label: 'APT', bg: 'bg-pink-500'   },
 };
 const AVATAR_COLORS = [
-  'bg-emerald-100 text-emerald-700',
+  'bg-brand-wash text-brand-strong',
   'bg-sky-100 text-sky-700',
   'bg-violet-100 text-violet-700',
   'bg-amber-100 text-amber-700',
@@ -84,7 +84,7 @@ function ConvRow({
       type="button"
       onClick={onClick}
       className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0 ${
-        selected ? 'bg-emerald-50' : 'hover:bg-gray-50/70'
+        selected ? 'bg-brand-wash' : 'hover:bg-gray-50/70'
       }`}
     >
       <div className={`relative w-9 h-9 rounded-full ${AVATAR_COLORS[colorIdx]} flex items-center justify-center font-bold text-sm shrink-0`}>
@@ -94,7 +94,7 @@ function ConvRow({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold truncate ${selected ? 'text-emerald-800' : 'text-gray-800'}`}>{name}</p>
+        <p className={`text-sm font-semibold truncate ${selected ? 'text-brand-strong' : 'text-gray-800'}`}>{name}</p>
         <div className="flex items-center gap-1.5 mt-0.5">
           <span className={`text-[10px] font-medium px-1.5 py-px rounded capitalize ${PRODUCT_COLORS[conv.product_type] ?? 'bg-gray-100 text-gray-500'}`}>
             {PRODUCT_LABEL[conv.product_type] ?? conv.product_type}
@@ -111,7 +111,7 @@ function ConvRow({
       </div>
       <div className="flex flex-col items-end gap-1 shrink-0">
         <span className="text-[10px] text-gray-400 tabular-nums">{timeAgo(conv.updated_at)}</span>
-        <ChevronRight size={12} className={selected ? 'text-emerald-400' : 'text-gray-200'} />
+        <ChevronRight size={12} className={selected ? 'text-brand' : 'text-gray-200'} />
       </div>
     </button>
   );
@@ -121,7 +121,7 @@ function ConvRow({
 
 function MsgBubble({ msg, productType }: { msg: InboxMessage; productType: string }) {
   const isUser = msg.role === 'user';
-  const botAv  = BOT_AVATAR[productType] ?? { label: 'AI', bg: 'bg-emerald-500' };
+  const botAv  = BOT_AVATAR[productType] ?? { label: 'AI', bg: 'bg-brand-strong' };
   const ts     = new Date(msg.timestamp).toLocaleTimeString('en-IN', {
     hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata',
   });
@@ -149,7 +149,7 @@ function MsgBubble({ msg, productType }: { msg: InboxMessage; productType: strin
         <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
           isUser
             ? 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm shadow-sm'
-            : 'bg-emerald-600 text-white rounded-tr-sm'
+            : 'bg-brand-strong text-white rounded-tr-sm'
         }`}>
           {msg.content}
         </div>
@@ -373,8 +373,8 @@ export default function InboxPage() {
     <div className="flex flex-col h-[calc(100vh-64px)]">
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-white shrink-0">
-        <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-          <Inbox size={16} className="text-emerald-600" />
+        <div className="w-8 h-8 rounded-xl bg-brand-wash flex items-center justify-center shrink-0">
+          <Inbox size={16} className="text-brand-strong" />
         </div>
         <div className="flex-1">
           <h2 className="text-base font-bold text-gray-900">Agent Inbox</h2>
@@ -389,7 +389,7 @@ export default function InboxPage() {
               aria-label="Filter by WhatsApp number"
               value={selectedNumber}
               onChange={e => void handleNumberChange(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand cursor-pointer"
             >
               <option value="">All numbers</option>
               {numbers.map(n => (
@@ -413,8 +413,8 @@ export default function InboxPage() {
             </div>
           ) : convs.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-3">
-                <CheckCircle2 size={22} className="text-emerald-400" />
+              <div className="w-12 h-12 rounded-2xl bg-done-bg flex items-center justify-center mb-3">
+                <CheckCircle2 size={22} className="text-done" />
               </div>
               <p className="text-sm font-semibold text-gray-600">All clear</p>
               <p className="text-xs text-gray-400 mt-1">No escalated conversations right now.</p>
@@ -519,7 +519,7 @@ export default function InboxPage() {
                       type="button"
                       onClick={handleClaim}
                       disabled={actioning}
-                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 shadow-sm"
+                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-brand-strong hover:bg-brand text-white font-semibold transition-colors disabled:opacity-50 shadow-sm"
                     >
                       <UserCheck size={13} />
                       {actioning ? 'Claiming…' : 'Claim & take over'}
@@ -540,7 +540,7 @@ export default function InboxPage() {
                         type="button"
                         onClick={handleResolve}
                         disabled={actioning}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-medium transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-done text-done hover:bg-done-bg font-medium transition-colors disabled:opacity-50"
                       >
                         <CheckCircle2 size={13} />
                         {actioning ? '…' : 'Mark resolved'}
@@ -561,12 +561,12 @@ export default function InboxPage() {
                         value={draft}
                         onChange={e => { setDraft(e.target.value); setSendError(null); }}
                         placeholder="Type a reply…"
-                        className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                       />
                       <button
                         type="submit"
                         disabled={sending || !draft.trim()}
-                        className="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors shadow-sm shrink-0"
+                        className="w-9 h-9 rounded-xl bg-brand-strong hover:bg-brand text-white flex items-center justify-center disabled:opacity-40 transition-colors shadow-sm shrink-0"
                       >
                         {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                       </button>

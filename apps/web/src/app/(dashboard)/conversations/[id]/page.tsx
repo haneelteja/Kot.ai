@@ -8,7 +8,7 @@ import { ConversationMessages } from '@/components/conversation-messages';
 import { ConversationActions } from '@/components/conversation-actions';
 
 const STATUS_STYLES: Record<string, { dot: string; badge: string }> = {
-  open:       { dot: 'bg-emerald-400', badge: 'bg-emerald-50 text-emerald-700 ring-emerald-100' },
+  open:       { dot: 'bg-done',    badge: 'bg-done-bg text-done ring-transparent' },
   escalated:  { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 ring-red-100' },
   resolved:   { dot: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-500 ring-gray-200' },
   bot_paused: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-700 ring-amber-100' },
@@ -90,20 +90,20 @@ export default async function ConversationDetailPage({
   const contact = conversation.contacts as { phone: string; name: string | null } | null;
   const displayName = contact?.name ?? contact?.phone ?? 'Unknown';
   const style = STATUS_STYLES[conversation.status] ?? STATUS_STYLES.resolved;
-  const productColor = PRODUCT_COLORS[conversation.product_type] ?? 'bg-slate-100 text-slate-500';
+  const productColor = PRODUCT_COLORS[conversation.product_type] ?? 'bg-neutral-bg text-neutral';
 
   return (
-    <div className="flex flex-col h-full bg-[#f3fdf5]">
+    <div className="flex flex-col h-full bg-sunken">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-3.5 bg-white border-b border-green-100 shrink-0">
+      <div className="flex items-center gap-3 px-5 py-3.5 bg-white border-b border-line shrink-0">
         <Link
           href="/conversations"
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-green-50 hover:text-emerald-600 transition-colors"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-sunken hover:text-brand-strong transition-colors"
         >
           <ChevronLeft size={18} />
         </Link>
 
-        <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm shrink-0">
+        <div className="w-9 h-9 rounded-full bg-brand-wash flex items-center justify-center text-brand-strong font-bold text-sm shrink-0">
           {displayName[0]?.toUpperCase() ?? '?'}
         </div>
 

@@ -26,7 +26,7 @@ export default function ConversationError({
         <button
           type="button"
           onClick={reset}
-          className="text-sm text-emerald-600 underline hover:text-emerald-700"
+          className="text-sm text-brand-strong underline hover:text-brand"
         >
           Retry
         </button>

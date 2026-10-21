@@ -18,19 +18,14 @@ coverage/
 # TypeScript incremental build cache — regenerated on each build, never commit
 *.tsbuildinfo
 
-# Non-code assets and generated documents — store outside the repo
+# Non-code binary assets — store outside the repo (or use the brand asset
+# exception below for small logo files already under the 100KB hook limit)
 *.docx
 *.pdf
 *.xlsx
 *.mp4
 *.pptx
-generate_brd.py
-generate_brd_docx.py
-MASTER_PROMPT.md
-Content/
-docs/generate_user_guide.py
-docs/*.md
-amicorp-live.jsx
+*.zip
 logs/
 
 .vercel

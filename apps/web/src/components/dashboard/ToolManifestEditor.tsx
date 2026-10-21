@@ -141,7 +141,7 @@ function ToolPanel({ productSlug, initialTools }: ToolPanelProps) {
               const isOn = enabled.has(tool.id);
               return (
                 <label key={tool.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  isOn ? 'bg-emerald-50/60 border-emerald-200' : 'bg-gray-50/50 border-gray-100 opacity-60'
+                  isOn ? 'bg-ready-bg/60 border-ready/30' : 'bg-gray-50/50 border-gray-100 opacity-60'
                 }`}>
                   <div className="relative mt-0.5 shrink-0">
                     <input
@@ -151,7 +151,7 @@ function ToolPanel({ productSlug, initialTools }: ToolPanelProps) {
                       onChange={() => toggle(tool.id)}
                     />
                     <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
-                      isOn ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300 bg-white'
+                      isOn ? 'bg-ready border-ready' : 'border-gray-300 bg-white'
                     }`}>
                       {isOn && <Check size={10} className="text-white" strokeWidth={3} />}
                     </div>
@@ -181,7 +181,7 @@ function ToolPanel({ productSlug, initialTools }: ToolPanelProps) {
               type="button"
               onClick={handleSave}
               disabled={pending}
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 bg-brand-strong hover:opacity-90 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
             >
               {pending ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Wrench size={14} />}
               {saved ? 'Saved!' : 'Save Tools'}

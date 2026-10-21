@@ -157,18 +157,18 @@ export function NotificationSettings({
   }
 
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-gray-100">
       {/* Resend configuration */}
       <div className="px-5 py-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Resend email configuration</p>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Resend email configuration</p>
+            <p className="text-xs text-gray-400 mt-0.5">
               Provide your own Resend API key and a verified sender address so escalation emails are sent from your account.
             </p>
           </div>
           {resendConfigured && (
-            <span className="shrink-0 flex items-center gap-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+            <span className="shrink-0 flex items-center gap-1 text-[11px] font-semibold bg-done-bg text-done border border-done/30 px-2 py-0.5 rounded-full">
               <CheckCircle2 size={11} />
               Configured
             </span>
@@ -177,19 +177,19 @@ export function NotificationSettings({
 
         {/* From email */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">From email address</label>
+          <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">From email address</label>
           <input
             type="email"
             value={fromEmail}
             onChange={e => { setFromEmail(e.target.value); setValidationState('idle'); }}
             placeholder="noreply@yourdomain.com"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-mono"
           />
         </div>
 
         {/* API key */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Resend API key</label>
+          <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Resend API key</label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input
@@ -197,12 +197,12 @@ export function NotificationSettings({
                 value={resendKey}
                 onChange={e => { setResendKey(e.target.value); setValidationState('idle'); }}
                 placeholder={resendConfigured ? resendKeyMasked || '••••••••' : 're_xxxxxxxxxxxx'}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-9 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 pr-9 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-mono"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(s => !s)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
@@ -211,7 +211,7 @@ export function NotificationSettings({
               type="button"
               onClick={handleValidate}
               disabled={validationState === 'validating'}
-              className="shrink-0 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+              className="shrink-0 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-1.5"
             >
               {validationState === 'validating' ? <Loader2 size={13} className="animate-spin" /> : null}
               Validate
@@ -222,7 +222,7 @@ export function NotificationSettings({
         {/* Validation feedback */}
         {validationState !== 'idle' && validationState !== 'validating' && (
           <div className={`flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs ${
-            validationState === 'ok'   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+            validationState === 'ok'   ? 'bg-done-bg text-done border border-done/30' :
             validationState === 'warn' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                                         'bg-red-50 text-red-600 border border-red-200'
           }`}>
@@ -234,23 +234,23 @@ export function NotificationSettings({
         )}
 
         {resendConfigured && !resendKey && (
-          <p className="text-[11px] text-slate-400 italic">A key is already saved. Enter a new key above only if you want to replace it.</p>
+          <p className="text-[11px] text-gray-400 italic">A key is already saved. Enter a new key above only if you want to replace it.</p>
         )}
       </div>
 
       {/* Escalation emails */}
       <div className="px-5 py-4 space-y-3">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Alert emails</p>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Alert emails</p>
         <div className="flex flex-wrap gap-2">
           {emails.map(email => (
-            <span key={email} className="flex items-center gap-1.5 text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full">
+            <span key={email} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
               {email}
-              <button type="button" onClick={() => removeEmail(email)} className="text-slate-400 hover:text-red-500 transition-colors">
+              <button type="button" onClick={() => removeEmail(email)} className="text-gray-400 hover:text-red-500 transition-colors">
                 <X size={11} />
               </button>
             </span>
           ))}
-          {emails.length === 0 && <p className="text-xs text-slate-400 italic">No emails configured</p>}
+          {emails.length === 0 && <p className="text-xs text-gray-400 italic">No emails configured</p>}
         </div>
         <div className="flex gap-2">
           <input
@@ -259,12 +259,12 @@ export function NotificationSettings({
             onChange={e => setEmailInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addEmail())}
             placeholder="team@company.com"
-            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
           <button
             type="button"
             onClick={addEmail}
-            className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 transition-colors shrink-0"
+            className="w-9 h-9 rounded-xl bg-brand-strong text-white flex items-center justify-center hover:opacity-90 transition-colors shrink-0"
           >
             <Plus size={15} />
           </button>
@@ -273,18 +273,18 @@ export function NotificationSettings({
 
       {/* WhatsApp numbers */}
       <div className="px-5 py-4 space-y-3">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Alert WhatsApp numbers</p>
-        <p className="text-xs text-slate-400">Include country code, e.g. +919XXXXXXXXX</p>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Alert WhatsApp numbers</p>
+        <p className="text-xs text-gray-400">Include country code, e.g. +919XXXXXXXXX</p>
         <div className="flex flex-wrap gap-2">
           {waNumbers.map(num => (
-            <span key={num} className="flex items-center gap-1.5 text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-mono">
+            <span key={num} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-mono">
               {num}
-              <button type="button" onClick={() => removeWa(num)} className="text-slate-400 hover:text-red-500 transition-colors">
+              <button type="button" onClick={() => removeWa(num)} className="text-gray-400 hover:text-red-500 transition-colors">
                 <X size={11} />
               </button>
             </span>
           ))}
-          {waNumbers.length === 0 && <p className="text-xs text-slate-400 italic">No numbers configured</p>}
+          {waNumbers.length === 0 && <p className="text-xs text-gray-400 italic">No numbers configured</p>}
         </div>
         <div className="flex gap-2">
           <input
@@ -293,12 +293,12 @@ export function NotificationSettings({
             onChange={e => setWaInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWa())}
             placeholder="+919XXXXXXXXX"
-            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono"
+            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-mono"
           />
           <button
             type="button"
             onClick={addWa}
-            className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 transition-colors shrink-0"
+            className="w-9 h-9 rounded-xl bg-brand-strong text-white flex items-center justify-center hover:opacity-90 transition-colors shrink-0"
           >
             <Plus size={15} />
           </button>
@@ -307,26 +307,26 @@ export function NotificationSettings({
 
       {/* Customer acknowledgment message */}
       <div className="px-5 py-4 space-y-3">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Customer acknowledgment message</p>
-        <p className="text-xs text-slate-400">Sent to the customer on WhatsApp when their conversation is escalated</p>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer acknowledgment message</p>
+        <p className="text-xs text-gray-400">Sent to the customer on WhatsApp when their conversation is escalated</p>
         <textarea
           value={customerMsg}
           onChange={e => setCustomerMsg(e.target.value)}
           rows={3}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-none"
         />
       </div>
 
       {/* Save */}
       <div className="px-5 py-4 flex items-center justify-between">
-        <p className={`text-xs transition-opacity ${saved ? 'text-emerald-600 opacity-100' : 'opacity-0'}`}>
+        <p className={`text-xs transition-opacity ${saved ? 'text-done opacity-100' : 'opacity-0'}`}>
           Saved successfully
         </p>
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+          className="px-5 py-2 rounded-xl bg-brand-strong text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>

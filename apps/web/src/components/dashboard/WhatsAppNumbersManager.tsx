@@ -50,7 +50,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-semibold shadow-sm"
+              className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-brand-strong text-white hover:opacity-90 transition-colors font-semibold shadow-sm"
             >
               <Plus size={14} />
               Add WhatsApp Number
@@ -69,7 +69,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-gray-400 capitalize">{num.provider.replace(/_/g, ' ')}</span>
                   {num.routing_mode === 'multi' ? (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-brand-wash text-brand-strong">
                       Multi-bot
                     </span>
                   ) : (
@@ -79,7 +79,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
                         : num.product_slug === 'sales_bot'       ? 'bg-violet-50 text-violet-600'
                         : num.product_slug === 'lifecycle_bot'   ? 'bg-orange-50 text-orange-600'
                         : num.product_slug === 'appointment_bot' ? 'bg-pink-50 text-pink-600'
-                        : 'bg-slate-100 text-slate-500'
+                        : 'bg-gray-100 text-gray-500'
                         : 'bg-amber-50 text-amber-600'
                     }`}>
                       {botLabel(num.product_slug)}
@@ -89,7 +89,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
                     type="button"
                     aria-label={`Edit ${num.phone_number}`}
                     onClick={() => setEditTarget(num)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-brand-strong hover:bg-brand-wash transition-colors"
                   >
                     <Pencil size={13} />
                   </button>
@@ -101,7 +101,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium hover:text-emerald-700 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-brand-strong font-medium hover:opacity-90 transition-colors"
             >
               <Plus size={13} />
               Add another number

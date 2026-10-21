@@ -24,7 +24,7 @@ interface ListSection      { title: string; rows: ListRow[] }
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const TYPE_META: Record<TemplateType, { label: string; icon: React.ElementType; color: string }> = {
-  quick_reply: { label: 'Quick Reply',  icon: MessageSquareMore, color: 'text-emerald-600 bg-emerald-50 border-emerald-200'  },
+  quick_reply: { label: 'Quick Reply',  icon: MessageSquareMore, color: 'text-done bg-done-bg border-done/30'  },
   list:        { label: 'List Menu',    icon: List,              color: 'text-sky-600     bg-sky-50     border-sky-200'       },
   cta_url:     { label: 'CTA URL',      icon: LinkIcon,          color: 'text-violet-600  bg-violet-50  border-violet-200'    },
 };
@@ -81,10 +81,10 @@ function QuickReplyEditor({ buttons, onChange }: {
               onChange={e => update(i, 'title', e.target.value)}
               maxLength={20}
               placeholder={`Button ${i + 1} label (max 20 chars)`}
-              className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-emerald-400 outline-none"
+              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand outline-none"
             />
-            <span className="text-[10px] text-slate-400 shrink-0">{b.title.length}/20</span>
-            <button type="button" onClick={() => remove(i)} className="text-slate-400 hover:text-red-500"><X size={14}/></button>
+            <span className="text-[10px] text-gray-400 shrink-0">{b.title.length}/20</span>
+            <button type="button" onClick={() => remove(i)} className="text-gray-400 hover:text-red-500"><X size={14}/></button>
           </div>
           <label className="flex items-center gap-1.5 cursor-pointer w-fit pl-1">
             <input
@@ -93,13 +93,13 @@ function QuickReplyEditor({ buttons, onChange }: {
               onChange={e => update(i, 'escalate', e.target.checked)}
               className="w-3 h-3 accent-orange-500"
             />
-            <span className="text-[10px] text-slate-500">Escalate to agent when tapped</span>
+            <span className="text-[10px] text-gray-500">Escalate to agent when tapped</span>
           </label>
         </div>
       ))}
       {buttons.length < 3 && (
         <button type="button" onClick={add}
-          className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 font-medium">
+          className="flex items-center gap-1 text-xs text-brand-strong hover:opacity-80 font-medium">
           <Plus size={12}/> Add button
         </button>
       )}
@@ -146,16 +146,16 @@ function ListSectionEditor({ sections, onChange }: {
   return (
     <div className="space-y-4">
       {sections.map((s, si) => (
-        <div key={si} className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-2">
+        <div key={si} className="bg-gray-50 rounded-xl border border-gray-200 p-3 space-y-2">
           <div className="flex items-center gap-2">
             <input
               value={s.title}
               onChange={e => updateSection(si, e.target.value)}
               placeholder="Section title"
-              className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:ring-1 focus:ring-sky-400 outline-none"
+              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:ring-1 focus:ring-sky-400 outline-none"
             />
             {sections.length > 1 && (
-              <button type="button" onClick={() => removeSection(si)} className="text-slate-400 hover:text-red-500"><X size={14}/></button>
+              <button type="button" onClick={() => removeSection(si)} className="text-gray-400 hover:text-red-500"><X size={14}/></button>
             )}
           </div>
           <div className="space-y-1.5 pl-2">
@@ -167,17 +167,17 @@ function ListSectionEditor({ sections, onChange }: {
                     onChange={e => updateRow(si, ri, 'title', e.target.value)}
                     maxLength={24}
                     placeholder="Row title (max 24 chars)"
-                    className="w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-sky-400 outline-none"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-sky-400 outline-none"
                   />
                   <input
                     value={r.description}
                     onChange={e => updateRow(si, ri, 'description', e.target.value)}
                     placeholder="Description (optional)"
-                    className="w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 text-slate-500 focus:ring-1 focus:ring-sky-400 outline-none"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-500 focus:ring-1 focus:ring-sky-400 outline-none"
                   />
                 </div>
                 {s.rows.length > 1 && (
-                  <button type="button" onClick={() => removeRow(si, ri)} className="mt-1 text-slate-400 hover:text-red-500"><X size={12}/></button>
+                  <button type="button" onClick={() => removeRow(si, ri)} className="mt-1 text-gray-400 hover:text-red-500"><X size={12}/></button>
                 )}
               </div>
             ))}
@@ -194,7 +194,7 @@ function ListSectionEditor({ sections, onChange }: {
         className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium">
         <Plus size={12}/> Add section
       </button>
-      <p className="text-[10px] text-slate-400">{totalRows}/10 rows used</p>
+      <p className="text-[10px] text-gray-400">{totalRows}/10 rows used</p>
     </div>
   );
 }
@@ -308,8 +308,8 @@ function TemplateForm({
   }
 
   return (
-    <form onSubmit={e => void handleSubmit(e)} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-      <h3 className="font-semibold text-slate-800">{initial ? 'Edit template' : 'New button template'}</h3>
+    <form onSubmit={e => void handleSubmit(e)} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
+      <h3 className="font-semibold text-gray-800">{initial ? 'Edit template' : 'New button template'}</h3>
 
       {error && (
         <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
@@ -320,29 +320,29 @@ function TemplateForm({
       {/* Basic info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Name (used by AI) <span className="text-red-500">*</span></label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Name (used by AI) <span className="text-red-500">*</span></label>
           <input
             required value={form.name}
             onChange={e => set({ name: e.target.value })}
             placeholder="e.g. product_interest"
-            className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-emerald-400 outline-none"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand outline-none"
           />
-          {form.name && <p className="text-[10px] text-slate-400 mt-1">Saved as: <code className="font-mono">{slug(form.name)}</code></p>}
+          {form.name && <p className="text-[10px] text-gray-400 mt-1">Saved as: <code className="font-mono">{slug(form.name)}</code></p>}
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Description</label>
           <input
             value={form.description}
             onChange={e => set({ description: e.target.value })}
             placeholder="What does this template do?"
-            className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-emerald-400 outline-none"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand outline-none"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Button type</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Button type</label>
           <div className="grid grid-cols-3 gap-1.5">
             {(Object.keys(TYPE_META) as TemplateType[]).map(t => {
               const m = TYPE_META[t];
@@ -351,8 +351,8 @@ function TemplateForm({
                 <button key={t} type="button" onClick={() => set({ type: t })}
                   className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-[11px] font-medium transition-colors ${
                     form.type === t
-                      ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                      ? 'border-brand bg-brand-wash text-brand-strong'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}>
                   <Icon size={14}/>
                   {m.label}
@@ -362,11 +362,11 @@ function TemplateForm({
           </div>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Bot scope</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Bot scope</label>
           <select
             value={form.product_slug ?? ''}
             onChange={e => set({ product_slug: e.target.value || null })}
-            className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-emerald-400 outline-none bg-white"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand outline-none bg-white"
           >
             {PRODUCTS.map(p => (
               <option key={p.slug ?? 'all'} value={p.slug ?? ''}>{p.label}</option>
@@ -376,21 +376,21 @@ function TemplateForm({
       </div>
 
       {/* Type-specific fields */}
-      <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
         {form.type === 'quick_reply' && (
           <>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Message body</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Message body</label>
               <textarea
                 value={form.qr_body} rows={2}
                 onChange={e => set({ qr_body: e.target.value })}
                 placeholder="The question or context shown above the buttons"
-                className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 resize-none focus:ring-1 focus:ring-emerald-400 outline-none bg-white"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:ring-1 focus:ring-brand outline-none bg-white"
               />
-              <p className="text-[10px] text-slate-400 mt-0.5">Note: the AI&apos;s actual reply replaces this at send time.</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Note: the AI&apos;s actual reply replaces this at send time.</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Buttons (up to 3)</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Buttons (up to 3)</label>
               <QuickReplyEditor buttons={form.qr_buttons} onChange={b => set({ qr_buttons: b })} />
             </div>
           </>
@@ -399,25 +399,25 @@ function TemplateForm({
         {form.type === 'list' && (
           <>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Message body</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Message body</label>
               <textarea
                 value={form.list_body} rows={2}
                 onChange={e => set({ list_body: e.target.value })}
                 placeholder="Intro text above the list picker"
-                className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 resize-none focus:ring-1 focus:ring-sky-400 outline-none bg-white"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:ring-1 focus:ring-sky-400 outline-none bg-white"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">List button label</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">List button label</label>
               <input
                 value={form.list_button_label}
                 onChange={e => set({ list_button_label: e.target.value })}
                 placeholder="e.g. View options"
-                className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-400 outline-none bg-white"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-400 outline-none bg-white"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Sections &amp; rows (up to 10 rows total)</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Sections &amp; rows (up to 10 rows total)</label>
               <ListSectionEditor sections={form.list_sections} onChange={s => set({ list_sections: s })} />
             </div>
           </>
@@ -426,31 +426,31 @@ function TemplateForm({
         {form.type === 'cta_url' && (
           <>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Message body</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Message body</label>
               <textarea
                 value={form.cta_body} rows={2}
                 onChange={e => set({ cta_body: e.target.value })}
                 placeholder="Text shown above the CTA button"
-                className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 resize-none focus:ring-1 focus:ring-violet-400 outline-none bg-white"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:ring-1 focus:ring-violet-400 outline-none bg-white"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Button text</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Button text</label>
                 <input
                   value={form.cta_button_text}
                   onChange={e => set({ cta_button_text: e.target.value })}
                   placeholder="e.g. View Catalogue"
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-violet-400 outline-none bg-white"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-violet-400 outline-none bg-white"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">URL</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">URL</label>
                 <input
                   type="url" value={form.cta_url}
                   onChange={e => set({ cta_url: e.target.value })}
                   placeholder="https://..."
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-violet-400 outline-none bg-white"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-violet-400 outline-none bg-white"
                 />
               </div>
             </div>
@@ -460,15 +460,15 @@ function TemplateForm({
 
       {/* Trigger keywords */}
       <div>
-        <label className="block text-xs font-semibold text-slate-600 mb-1">
+        <label className="block text-xs font-semibold text-gray-600 mb-1">
           Rule-based trigger keywords
-          <span className="text-slate-400 font-normal ml-1">(comma-separated — auto-suggest this template when user message contains any keyword)</span>
+          <span className="text-gray-400 font-normal ml-1">(comma-separated — auto-suggest this template when user message contains any keyword)</span>
         </label>
         <input
           value={form.trigger_keywords}
           onChange={e => set({ trigger_keywords: e.target.value })}
           placeholder="e.g. price, product, interested, buy"
-          className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-emerald-400 outline-none"
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand outline-none"
         />
       </div>
 
@@ -477,20 +477,20 @@ function TemplateForm({
           <input
             type="checkbox" checked={form.is_active}
             onChange={e => set({ is_active: e.target.checked })}
-            className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400"
+            className="rounded border-gray-300 text-brand-strong focus:ring-brand"
           />
-          <span className="text-sm text-slate-600">Active</span>
+          <span className="text-sm text-gray-600">Active</span>
         </label>
       </div>
 
       <div className="flex items-center gap-3 pt-1">
         <button type="submit" disabled={saving}
-          className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+          className="flex items-center gap-1.5 px-4 py-2 bg-brand-strong text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-colors">
           {saving ? <Loader2 size={13} className="animate-spin"/> : <Check size={13}/>}
           {initial ? 'Save changes' : 'Create template'}
         </button>
         <button type="button" onClick={onCancel}
-          className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+          className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
           Cancel
         </button>
       </div>
@@ -536,15 +536,15 @@ function TemplateCard({
 
   return (
     <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
-      row.is_active ? 'border-slate-200' : 'border-slate-200 opacity-60'
+      row.is_active ? 'border-gray-200' : 'border-gray-200 opacity-60'
     }`}>
       <div className="flex items-center gap-3 px-4 py-3">
         <TypeChip type={row.type} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 font-mono">{row.name}</p>
-          {row.description && <p className="text-xs text-slate-500 truncate">{row.description}</p>}
+          <p className="text-sm font-semibold text-gray-800 font-mono">{row.name}</p>
+          {row.description && <p className="text-xs text-gray-500 truncate">{row.description}</p>}
         </div>
-        <span className="text-[11px] text-slate-400 shrink-0">{scopeLabel}</span>
+        <span className="text-[11px] text-gray-400 shrink-0">{scopeLabel}</span>
         {/* Active toggle */}
         <button
           type="button"
@@ -552,36 +552,36 @@ function TemplateCard({
           disabled={toggling}
           title={row.is_active ? 'Click to deactivate' : 'Click to activate'}
           className={`relative w-9 h-5 rounded-full transition-colors shrink-0 focus:outline-none ${
-            row.is_active ? 'bg-emerald-500' : 'bg-slate-200'
+            row.is_active ? 'bg-ready' : 'bg-gray-200'
           } ${toggling ? 'opacity-50' : ''}`}
         >
           <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${row.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
         </button>
-        <button type="button" onClick={() => setExpanded(e => !e)} className="text-slate-400 hover:text-slate-600">
+        <button type="button" onClick={() => setExpanded(e => !e)} className="text-gray-400 hover:text-gray-600">
           {expanded ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
         </button>
-        <button type="button" onClick={onEdit} className="text-slate-400 hover:text-slate-700"><Pencil size={14}/></button>
+        <button type="button" onClick={onEdit} className="text-gray-400 hover:text-gray-700"><Pencil size={14}/></button>
         {confirmDel ? (
           <div className="flex items-center gap-1 shrink-0">
             <button type="button" disabled={deleting} onClick={() => void handleDelete()}
               className="text-xs text-red-600 font-semibold hover:text-red-700">
               {deleting ? '…' : 'Delete?'}
             </button>
-            <button type="button" onClick={() => setConfirmDel(false)} className="text-slate-400 text-xs">Cancel</button>
+            <button type="button" onClick={() => setConfirmDel(false)} className="text-gray-400 text-xs">Cancel</button>
           </div>
         ) : (
-          <button type="button" onClick={() => setConfirmDel(true)} className="text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
+          <button type="button" onClick={() => setConfirmDel(true)} className="text-gray-400 hover:text-red-500"><Trash2 size={14}/></button>
         )}
       </div>
 
       {expanded && (
-        <div className="border-t border-slate-100 px-4 py-3 bg-slate-50 space-y-2 text-xs text-slate-600">
+        <div className="border-t border-gray-100 px-4 py-3 bg-gray-50 space-y-2 text-xs text-gray-600">
           {row.type === 'quick_reply' && (
             <>
               <p className="font-medium">Body: <span className="font-normal">{(j['body'] as string | undefined) ?? '—'}</span></p>
               <div className="flex gap-2 flex-wrap">
                 {((j['buttons'] as QuickReplyButton[] | undefined) ?? []).map(b => (
-                  <span key={b.id} className="bg-white border border-slate-200 rounded-lg px-3 py-1">{b.title}</span>
+                  <span key={b.id} className="bg-white border border-gray-200 rounded-lg px-3 py-1">{b.title}</span>
                 ))}
               </div>
             </>
@@ -591,7 +591,7 @@ function TemplateCard({
               <p className="font-medium">Body: <span className="font-normal">{(j['body'] as string | undefined) ?? '—'}</span></p>
               {((j['sections'] as ListSection[] | undefined) ?? []).map((s, i) => (
                 <div key={i}>
-                  <p className="font-semibold text-slate-700">{s.title || '(untitled section)'}</p>
+                  <p className="font-semibold text-gray-700">{s.title || '(untitled section)'}</p>
                   <ul className="ml-3 space-y-0.5">
                     {s.rows.map(r => <li key={r.id}>• {r.title}{r.description ? ` — ${r.description}` : ''}</li>)}
                   </ul>
@@ -609,7 +609,7 @@ function TemplateCard({
           {row.trigger_keywords.length > 0 && (
             <div className="flex items-center gap-1.5 pt-1">
               <Zap size={11} className="text-amber-500 shrink-0"/>
-              <span className="text-slate-500">Triggers on:</span>
+              <span className="text-gray-500">Triggers on:</span>
               {row.trigger_keywords.map(k => (
                 <span key={k} className="bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">{k}</span>
               ))}
@@ -654,22 +654,22 @@ export function ButtonTemplatesManager({ initialTemplates }: { initialTemplates:
   return (
     <div className="space-y-4">
       {/* How it works */}
-      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-1.5">
-        <p className="text-xs font-semibold text-emerald-800">How it works</p>
-        <ul className="text-xs text-emerald-700 space-y-1 list-disc ml-4">
-          <li>Create a template here and give it a short name (e.g. <code className="font-mono bg-emerald-100 px-1 rounded">product_interest</code>)</li>
-          <li>The AI sees available templates and appends <code className="font-mono bg-emerald-100 px-1 rounded">[BUTTONS:product_interest]</code> when appropriate</li>
+      <div className="bg-brand-wash border border-brand/20 rounded-2xl p-4 space-y-1.5">
+        <p className="text-xs font-semibold text-brand-strong">How it works</p>
+        <ul className="text-xs text-brand-strong space-y-1 list-disc ml-4">
+          <li>Create a template here and give it a short name (e.g. <code className="font-mono bg-brand-wash px-1 rounded">product_interest</code>)</li>
+          <li>The AI sees available templates and appends <code className="font-mono bg-brand-wash px-1 rounded">[BUTTONS:product_interest]</code> when appropriate</li>
           <li>You can also set trigger keywords — if the customer&apos;s message matches, the AI is nudged to use that template</li>
           <li>When a customer taps a button, their selection flows back to the AI as regular text</li>
         </ul>
       </div>
 
       {templates.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-12 text-center">
-          <MessageSquareMore size={32} className="text-slate-300 mx-auto mb-3"/>
-          <p className="text-sm text-slate-500 mb-4">No button templates yet</p>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-12 text-center">
+          <MessageSquareMore size={32} className="text-gray-300 mx-auto mb-3"/>
+          <p className="text-sm text-gray-500 mb-4">No button templates yet</p>
           <button type="button" onClick={() => setMode('new')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors mx-auto">
+            className="flex items-center gap-1.5 px-4 py-2 bg-brand-strong text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-colors mx-auto">
             <Plus size={14}/> Create first template
           </button>
         </div>
@@ -687,7 +687,7 @@ export function ButtonTemplatesManager({ initialTemplates }: { initialTemplates:
             ))}
           </div>
           <button type="button" onClick={() => setMode('new')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors">
+            className="flex items-center gap-1.5 px-4 py-2 bg-brand-strong text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-colors">
             <Plus size={14}/> New template
           </button>
         </>

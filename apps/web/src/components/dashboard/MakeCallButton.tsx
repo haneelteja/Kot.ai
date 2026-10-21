@@ -121,7 +121,7 @@ export function MakeCallButton({
       <button
         type="button"
         onClick={handleOpen}
-        className="flex items-center gap-2 text-sm font-medium bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition-colors"
+        className="flex items-center gap-2 text-sm font-medium bg-brand-strong text-white px-4 py-2 rounded-xl hover:opacity-90 transition-colors"
       >
         <Phone size={14} />
         Make a Call
@@ -135,8 +135,8 @@ export function MakeCallButton({
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <Phone size={15} className="text-emerald-600" />
+                <div className="w-8 h-8 rounded-lg bg-brand-wash flex items-center justify-center">
+                  <Phone size={15} className="text-brand-strong" />
                 </div>
                 <h3 className="text-sm font-bold text-gray-900">Dispatch a Call</h3>
               </div>
@@ -152,7 +152,7 @@ export function MakeCallButton({
                 <select
                   value={fromNumber}
                   onChange={e => setFromNumber(e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-300 font-mono"
+                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand font-mono"
                 >
                   {voiceNumbers.map(n => (
                     <option key={n.id} value={n.number}>
@@ -180,7 +180,7 @@ export function MakeCallButton({
                   value={toPhone}
                   onChange={e => setToPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 font-mono focus:outline-none focus:ring-2 focus:ring-brand"
                   onKeyDown={e => e.key === 'Enter' && handleDispatch()}
                 />
                 <p className="text-[11px] text-gray-400 mt-1">Include country code, e.g. +91 for India</p>
@@ -194,7 +194,7 @@ export function MakeCallButton({
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Rahul"
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand"
                   onKeyDown={e => e.key === 'Enter' && handleDispatch()}
                 />
               </div>
@@ -249,7 +249,7 @@ export function MakeCallButton({
             {result && (
               <div className={`text-xs px-3 py-2.5 rounded-xl border ${
                 result.ok
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  ? 'bg-done-bg border-done/30 text-done'
                   : 'bg-red-50 border-red-200 text-red-700'
               }`}>
                 {result.message}
@@ -270,7 +270,7 @@ export function MakeCallButton({
                 onClick={handleDispatch}
                 disabled={!canDispatch}
                 className={`flex-1 flex items-center justify-center gap-2 text-sm font-medium text-white px-4 py-2.5 rounded-xl disabled:opacity-50 transition-colors ${
-                  bridgeMode ? 'bg-violet-600 hover:bg-violet-700' : 'bg-emerald-600 hover:bg-emerald-700'
+                  bridgeMode ? 'bg-violet-600 hover:bg-violet-700' : 'bg-brand-strong hover:opacity-90'
                 }`}
               >
                 {isPending

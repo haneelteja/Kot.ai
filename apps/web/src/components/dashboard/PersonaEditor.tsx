@@ -70,7 +70,7 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
             {meta.label}
           </span>
           {hasData && (
-            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full font-medium">Persona set</span>
+            <span className="text-[10px] text-done bg-done-bg px-1.5 py-0.5 rounded-full font-medium">Persona set</span>
           )}
         </div>
         {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
@@ -86,7 +86,7 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Bot Name</label>
               <input
-                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 placeholder:text-gray-300"
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-gray-300"
                 placeholder="e.g. Aria"
                 {...field('persona_name')}
               />
@@ -95,7 +95,7 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Role / Title</label>
               <input
-                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 placeholder:text-gray-300"
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-gray-300"
                 placeholder="e.g. Customer Success Specialist at Acme"
                 {...field('persona_role')}
               />
@@ -106,7 +106,7 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
             <label className="block text-xs font-medium text-gray-600 mb-1">Company Description</label>
             <textarea
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 resize-none placeholder:text-gray-300"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-gray-300"
               placeholder="e.g. Acme Corp is a B2B SaaS platform helping logistics companies automate dispatch."
               {...field('company_description')}
             />
@@ -116,7 +116,7 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
             <label className="block text-xs font-medium text-gray-600 mb-1">Company Values / Tone</label>
             <textarea
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 resize-none placeholder:text-gray-300"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-gray-300"
               placeholder="e.g. Be concise, transparent, and customer-first. Never over-promise."
               {...field('company_values')}
             />
@@ -126,7 +126,7 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
             <label className="block text-xs font-medium text-gray-600 mb-1">Conversation Purpose</label>
             <textarea
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 resize-none placeholder:text-gray-300"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-gray-300"
               placeholder="e.g. Help customers resolve billing issues quickly and escalate to a human when the issue is complex."
               {...field('conversation_purpose')}
             />
@@ -141,7 +141,7 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
               type="button"
               onClick={handleSave}
               disabled={pending}
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 bg-brand-strong hover:opacity-90 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
             >
               {pending ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
               {saved ? 'Saved!' : 'Save Persona'}

@@ -77,11 +77,11 @@ export function BotSelector({ bots }: { bots: ActiveBot[] }) {
         onClick={() => setOpen(o => !o)}
         className={`flex items-center gap-2 h-8 px-3 text-xs font-semibold rounded-lg border transition-all ${
           activeBot
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+            ? 'bg-brand-wash border-brand/30 text-brand-strong hover:opacity-90'
             : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
         }`}
       >
-        <Bot size={13} className={activeBot ? 'text-emerald-600' : 'text-gray-400'} />
+        <Bot size={13} className={activeBot ? 'text-brand-strong' : 'text-gray-400'} />
         <span>{activeBot?.name ?? 'All Bots'}</span>
         {isDefaultingToPrimary && <Star size={9} className="text-amber-400" />}
         <ChevronDown size={11} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
@@ -94,7 +94,7 @@ export function BotSelector({ bots }: { bots: ActiveBot[] }) {
               type="button"
               onClick={() => selectBot(null)}
               className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors text-left ${
-                !activeBot ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'
+                !activeBot ? 'bg-brand-wash text-brand-strong font-semibold' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               <div className="w-5 h-5 rounded-md bg-gray-100 flex items-center justify-center shrink-0">
@@ -114,7 +114,7 @@ export function BotSelector({ bots }: { bots: ActiveBot[] }) {
                   onClick={() => selectBot(bot.slug)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors text-left ${
                     isActive
-                      ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                      ? 'bg-brand-wash text-brand-strong font-semibold'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >

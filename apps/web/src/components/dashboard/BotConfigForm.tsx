@@ -48,12 +48,12 @@ function TagInput({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
           placeholder={placeholder}
-          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
         />
         <button
           type="button"
           onClick={add}
-          className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 font-medium"
+          className="px-3 py-2 text-sm bg-brand-wash text-brand-strong rounded-lg hover:opacity-90 font-medium"
         >
           Add
         </button>
@@ -100,7 +100,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
       aria-label={`${label}: ${value ? 'on' : 'off'}`}
       title={label}
       onClick={() => onChange(!value)}
-      className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${value ? 'bg-emerald-500' : 'bg-gray-200'}`}
+      className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${value ? 'bg-ready' : 'bg-gray-200'}`}
     >
       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : ''}`} />
     </button>
@@ -189,7 +189,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
         className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Bot size={15} className="text-emerald-600" />
+          <Bot size={15} className="text-brand-strong" />
           <span className="font-semibold text-sm text-gray-800">
             {PRODUCT_LABELS[config.product_slug] ?? config.product_slug}
           </span>
@@ -220,7 +220,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={5}
               placeholder={defaultPrompt}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-300 resize-y font-mono"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand resize-y font-mono"
             />
           </div>
 
@@ -251,7 +251,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                 id={`tone-${config.product_slug}`}
                 value={tone}
                 onChange={(e) => setTone(e.target.value as GuardrailsConfig['tone'])}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
               >
                 <option value="professional">Professional</option>
                 <option value="casual">Casual</option>
@@ -272,7 +272,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                   step="0.05"
                   value={confidence}
                   onChange={(e) => setConfidence(parseFloat(e.target.value))}
-                  className="flex-1 accent-emerald-500"
+                  className="flex-1 accent-brand-strong"
                 />
                 <span className="text-sm font-mono text-gray-700 w-10 text-right">{confidence.toFixed(2)}</span>
               </div>
@@ -291,7 +291,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                   step="1"
                   value={maxReprompts}
                   onChange={(e) => setMaxReprompts(parseInt(e.target.value, 10))}
-                  className="flex-1 accent-emerald-500"
+                  className="flex-1 accent-brand-strong"
                 />
                 <span className="text-sm font-mono text-gray-700 w-6 text-right">{maxReprompts}</span>
               </div>
@@ -311,7 +311,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               max={4000}
               value={maxLength}
               onChange={(e) => setMaxLength(parseInt(e.target.value, 10))}
-              className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             />
           </div>
 
@@ -326,7 +326,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               placeholder="e.g. I want to make sure I understand you correctly — could you rephrase?"
               value={repromptMessage}
               onChange={(e) => setRepromptMessage(e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             />
             <p className="text-xs text-gray-400">Sent to the customer on each low-confidence reply before escalating. Leave blank to escalate silently.</p>
           </div>
@@ -344,7 +344,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               placeholder="e.g. 24"
               value={autoEscalateHours}
               onChange={(e) => setAutoEscalateHours(e.target.value)}
-              className="w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              className="w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             />
             <p className="text-xs text-gray-400">Escalate open conversations to a human if they have no resolution after this many hours. Leave blank to disable.</p>
           </div>
@@ -378,7 +378,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               id={`onblocked-${config.product_slug}`}
               value={onBlocked}
               onChange={(e) => setOnBlocked(e.target.value as GuardrailsConfig['on_blocked_topic'])}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="escalate">Escalate to human agent</option>
               <option value="ignore">Send custom message (no escalation)</option>
@@ -389,7 +389,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                 value={customBlockedMessage}
                 onChange={(e) => setCustomBlockedMessage(e.target.value)}
                 placeholder="I'm sorry, I can't help with that topic."
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 mt-2"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand mt-2"
               />
             )}
           </div>
@@ -416,7 +416,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                   type="checkbox"
                   checked={value}
                   onChange={(e) => set(e.target.checked)}
-                  className="w-4 h-4 accent-emerald-500"
+                  className="w-4 h-4 accent-brand-strong"
                 />
                 <span className="text-sm text-gray-700">{label}</span>
               </label>
@@ -532,12 +532,12 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               type="button"
               onClick={handleSave}
               disabled={pending}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-strong text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-colors"
             >
               <Save size={14} />
               {pending ? 'Saving…' : 'Save Configuration'}
             </button>
-            {saved && <span className="text-sm text-emerald-600 font-medium">Saved!</span>}
+            {saved && <span className="text-sm text-done font-medium">Saved!</span>}
           </div>
         </div>
       )}

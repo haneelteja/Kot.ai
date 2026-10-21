@@ -114,9 +114,9 @@ export function LlmConfigCard({
   const [isValidating, startValidate] = useTransition();
   const [isDeleting,   startDelete]   = useTransition();
 
-  const ring       = accent === 'emerald' ? 'focus:ring-2 focus:ring-emerald-300' : 'focus:ring-2 focus:ring-indigo-300';
-  const btnBg      = accent === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700';
-  const accentText = accent === 'emerald' ? 'text-emerald-600' : 'text-indigo-600';
+  const ring       = accent === 'emerald' ? 'focus:ring-2 focus:ring-brand' : 'focus:ring-2 focus:ring-indigo-300';
+  const btnBg      = accent === 'emerald' ? 'bg-brand-strong hover:opacity-90' : 'bg-indigo-600 hover:bg-indigo-700';
+  const accentText = accent === 'emerald' ? 'text-brand-strong' : 'text-indigo-600';
 
   const useDropdown = PROVIDERS_WITH_MODEL_DROPDOWN.includes(provider);
 
@@ -244,9 +244,9 @@ export function LlmConfigCard({
   const providerLabel = PROVIDERS.find(p => p.value === (config?.provider ?? provider))?.label ?? config?.provider;
 
   return (
-    <div className={`rounded-xl border ${accent === 'emerald' ? 'border-emerald-100' : 'border-slate-200'} bg-white overflow-hidden`}>
+    <div className={`rounded-xl border ${accent === 'emerald' ? 'border-brand/20' : 'border-gray-200'} bg-white overflow-hidden`}>
       {/* Header */}
-      <div className={`flex items-start justify-between gap-3 px-4 py-3.5 ${accent === 'emerald' ? 'border-b border-emerald-50' : 'border-b border-slate-100'}`}>
+      <div className={`flex items-start justify-between gap-3 px-4 py-3.5 ${accent === 'emerald' ? 'border-b border-brand/10' : 'border-b border-gray-100'}`}>
         <div>
           <div className="flex items-center gap-2">
             <Key size={13} className={accentText} />
@@ -279,7 +279,7 @@ export function LlmConfigCard({
               </>
             )}
             <button type="button" onClick={openEdit}
-              className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${accent === 'emerald' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}>
+              className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${accent === 'emerald' ? 'bg-brand-wash text-brand-strong hover:opacity-80' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}>
               {editing ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               {config ? 'Edit' : 'Configure'}
             </button>
@@ -467,7 +467,7 @@ export function LlmConfigCard({
 
       {/* Toast */}
       {toast && (
-        <div className={`mx-4 mb-3 flex items-start gap-2 text-xs px-3 py-2.5 rounded-lg ${toast.type === 'ok' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+        <div className={`mx-4 mb-3 flex items-start gap-2 text-xs px-3 py-2.5 rounded-lg ${toast.type === 'ok' ? 'bg-done-bg text-done border border-done/20' : 'bg-red-50 text-red-600 border border-red-100'}`}>
           {toast.type === 'ok'
             ? <CheckCircle size={13} className="shrink-0 mt-0.5" />
             : <AlertCircle size={13} className="shrink-0 mt-0.5" />}
@@ -482,7 +482,7 @@ export function LlmConfigCard({
 
 function StatusBadge({ status }: { status: 'pending' | 'valid' | 'invalid' }) {
   if (status === 'valid') return (
-    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold ring-1 ring-emerald-200">
+    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-done-bg text-done font-semibold ring-1 ring-done/30">
       <CheckCircle size={10} /> Valid
     </span>
   );

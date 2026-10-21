@@ -48,11 +48,11 @@ const PLANS = [
     name:     'Scale',
     price:    '₹25,000',
     period:   '/month',
-    color:    'text-emerald-700',
-    bg:       'bg-emerald-50',
-    border:   'border-emerald-200',
-    buttonBg: 'bg-emerald-600 hover:bg-emerald-700',
-    icon:     <Zap size={16} className="text-emerald-500" />,
+    color:    'text-brand-strong',
+    bg:       'bg-brand-wash',
+    border:   'border-brand/30',
+    buttonBg: 'bg-brand-strong hover:opacity-90',
+    icon:     <Zap size={16} className="text-brand-strong" />,
     features: [
       'All 4 bots (Support + Sales + Appointment + Lifecycle)',
       '10,000 conversations / month',
@@ -216,7 +216,7 @@ export default function UpgradePlanSection({
         )}
 
         {success && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700 flex items-center gap-2">
+          <div className="bg-done-bg border border-done/30 rounded-xl px-4 py-3 text-sm text-done flex items-center gap-2">
             <CheckCircle size={15} className="shrink-0" />
             {success}
           </div>
@@ -237,7 +237,7 @@ export default function UpgradePlanSection({
 
                 <ul className="space-y-1.5 flex-1">
                   {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-600">
+                    <li key={f} className="flex items-center gap-2 text-xs text-gray-600">
                       <Check size={12} className={plan.color} />
                       {f}
                     </li>
@@ -259,16 +259,16 @@ export default function UpgradePlanSection({
 
         {/* Downgrade options — show when on growth or scale */}
         {downgradePlanKeys.length > 0 && (
-          <div className="border border-slate-200 rounded-xl p-4 bg-white">
-            <p className="text-sm font-medium text-slate-700 mb-1">Downgrade Plan</p>
-            <p className="text-xs text-slate-400 mb-3">Switch to a lower plan immediately. Bot access updates right away.</p>
+          <div className="border border-gray-200 rounded-xl p-4 bg-white">
+            <p className="text-sm font-medium text-gray-700 mb-1">Downgrade Plan</p>
+            <p className="text-xs text-gray-400 mb-3">Switch to a lower plan immediately. Bot access updates right away.</p>
             <div className="flex gap-2 flex-wrap">
               {downgradePlanKeys.map(key => (
                 <button
                   key={key}
                   onClick={() => setDowngradeTarget(key)}
                   disabled={!!loading || !!success}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Downgrade to {DOWNGRADE_PLAN_LABELS[key] ?? key}
                 </button>
@@ -280,7 +280,7 @@ export default function UpgradePlanSection({
         {/* Downgrade confirmation modal */}
         {downgradeTarget && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4 border border-slate-100">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4 border border-gray-100">
               <div className="flex items-start gap-3">
                 <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
                 <div>
@@ -310,7 +310,7 @@ export default function UpgradePlanSection({
                 <button
                   onClick={() => setDowngradeTarget(null)}
                   disabled={downgradePending}
-                  className="text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  className="text-xs font-semibold px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Keep current plan
                 </button>
@@ -320,12 +320,12 @@ export default function UpgradePlanSection({
         )}
 
         {hasActiveSub && (
-          <div className="border border-slate-200 rounded-xl p-4 bg-white">
+          <div className="border border-gray-200 rounded-xl p-4 bg-white">
             {!showCancelConfirm ? (
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Cancel subscription</p>
-                  <p className="text-xs text-slate-400 mt-0.5">You&apos;ll keep access until your current billing period ends.</p>
+                  <p className="text-sm font-medium text-gray-700">Cancel subscription</p>
+                  <p className="text-xs text-gray-400 mt-0.5">You&apos;ll keep access until your current billing period ends.</p>
                 </div>
                 <button
                   onClick={() => setShowCancelConfirm(true)}
@@ -351,7 +351,7 @@ export default function UpgradePlanSection({
                   </button>
                   <button
                     onClick={() => setShowCancelConfirm(false)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                   >
                     Keep my plan
                   </button>

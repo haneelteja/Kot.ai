@@ -35,7 +35,7 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
       type="button"
       onClick={handleCopy}
       title={`Copy ${label ?? 'value'}`}
-      className="shrink-0 p-1.5 rounded-md hover:bg-emerald-100 text-emerald-500 hover:text-emerald-700 transition-colors"
+      className="shrink-0 p-1.5 rounded-md hover:bg-done-bg text-done hover:text-done transition-colors"
     >
       {copied ? <Check size={13} /> : <Copy size={13} />}
     </button>
@@ -45,10 +45,10 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
 function CodeRow({ label, value, placeholder }: { label: string; value: string | null; placeholder?: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
-      <div className="flex items-center gap-2 bg-emerald-50 rounded-lg border border-emerald-100 px-3 py-2">
-        <code className="flex-1 text-xs text-emerald-700 font-mono break-all">
-          {value ?? <span className="text-slate-300 font-sans italic">{placeholder ?? 'Not configured'}</span>}
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+      <div className="flex items-center gap-2 bg-done-bg rounded-lg border border-done/20 px-3 py-2">
+        <code className="flex-1 text-xs text-done font-mono break-all">
+          {value ?? <span className="text-gray-300 font-sans italic">{placeholder ?? 'Not configured'}</span>}
         </code>
         {value && <CopyButton text={value} label={label} />}
       </div>
@@ -82,12 +82,12 @@ export function WhatsAppSetupSection({ tenantWebhookUrl, bots }: Props) {
       </div>
 
       {/* Single shared callback URL */}
-      <div className="border border-emerald-200 rounded-xl p-4 space-y-3 bg-emerald-50/40">
+      <div className="border border-done/30 rounded-xl p-4 space-y-3 bg-done-bg/40">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-slate-700">Callback URL (all bots)</p>
-          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Shared</span>
+          <p className="text-xs font-semibold text-gray-700">Callback URL (all bots)</p>
+          <span className="text-[10px] font-semibold text-done bg-done-bg px-2 py-0.5 rounded-full">Shared</span>
         </div>
-        <p className="text-[11px] text-slate-500">Use this single URL for all your bots. Messages are routed to the correct bot automatically based on the Phone Number ID.</p>
+        <p className="text-[11px] text-gray-500">Use this single URL for all your bots. Messages are routed to the correct bot automatically based on the Phone Number ID.</p>
         <CodeRow label="Callback URL (Webhook)" value={tenantWebhookUrl} />
       </div>
 
@@ -95,15 +95,15 @@ export function WhatsAppSetupSection({ tenantWebhookUrl, bots }: Props) {
       {bots.map(bot => {
         const meta = BOT_META[bot.productType];
         return (
-          <div key={bot.productType} className="border border-slate-200 rounded-xl p-4 space-y-3">
+          <div key={bot.productType} className="border border-gray-200 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${meta?.bg ?? 'bg-slate-50'} ${meta?.color ?? 'text-slate-600'}`}>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${meta?.bg ?? 'bg-gray-50'} ${meta?.color ?? 'text-gray-600'}`}>
                 {meta?.name ?? bot.productType}
               </span>
               {bot.configured ? (
-                <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Configured</span>
+                <span className="text-[10px] font-semibold text-done bg-done-bg px-2 py-0.5 rounded-full">Configured</span>
               ) : (
-                <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">Not configured</span>
+                <span className="text-[10px] font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">Not configured</span>
               )}
             </div>
 

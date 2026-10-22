@@ -126,53 +126,59 @@ export async function routedChatCompletion(params: {
           usage?: { prompt_tokens: number; completion_tokens: number };
         };
 
-        let okJson: OpenAiResponse | null = null;
-        let lastErrText = '';
-        for (const candidateModel of modelsToTry) {
-          const isLast = candidateModel === modelsToTry[modelsToTry.length - 1];
-          try {
-            const res = await fetch(`${baseUrl}/chat/completions`, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({ model: candidateModel, messages: openaiMessages, max_tokens }),
-              signal: AbortSignal.timeout(25_000),
-            });
+        // One pass over every candidate model. Returns null (never throws) so
+        // the caller can retry the whole chain once more on a transient burst
+        // instead of giving up the moment every model happens to be 429'd at
+        // the same instant — free-tier shared-pool limits are usually brief.
+        async function tryAllModels(): Promise<{ json: OpenAiResponse | null; lastErrText: string }> {
+          let lastErrText = '';
+          for (const candidateModel of modelsToTry) {
+            try {
+              const res = await fetch(`${baseUrl}/chat/completions`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ model: candidateModel, messages: openaiMessages, max_tokens }),
+                signal: AbortSignal.timeout(25_000),
+              });
 
-            if (!res.ok) {
-              const body = await res.text();
-              if (res.status === 429 && !isLast) { lastErrText = `429 on ${candidateModel}: ${body}`; continue; }
-              let detail = `HTTP ${res.status}`;
-              try { const j = JSON.parse(body) as { error?: { message?: string } }; detail = j.error?.message ?? detail; } catch { /* use status */ }
-              if (!isLast) { lastErrText = `${res.status} on ${candidateModel}: ${detail}`; continue; }
-              throw new Error(`${provider} API error ${res.status}: ${detail}`);
-            }
+              if (!res.ok) {
+                const body = await res.text();
+                let detail = `HTTP ${res.status}`;
+                try { const j = JSON.parse(body) as { error?: { message?: string } }; detail = j.error?.message ?? detail; } catch { /* use status */ }
+                lastErrText = `${res.status} on ${candidateModel}: ${detail}`;
+                continue;
+              }
 
-            const json = await res.json() as OpenAiResponse;
-            const content = json.choices[0]?.message.content;
-            // A 200 with empty/null content happens when a reasoning model burns
-            // its whole token budget on internal "thinking" — not an HTTP error,
-            // but equally unusable. Try the next model instead of returning blank.
-            if (!content?.trim()) {
-              if (!isLast) {
+              const json = await res.json() as OpenAiResponse;
+              const content = json.choices[0]?.message.content;
+              // A 200 with empty/null content happens when a reasoning model burns
+              // its whole token budget on internal "thinking" — not an HTTP error,
+              // but equally unusable. Try the next model instead of returning blank.
+              if (!content?.trim()) {
                 lastErrText = `empty content from ${candidateModel} (finish_reason: ${json.choices[0]?.finish_reason ?? 'unknown'})`;
                 continue;
               }
-              throw new Error(`${provider}: ${candidateModel} returned empty content (finish_reason: ${json.choices[0]?.finish_reason ?? 'unknown'})`);
-            }
 
-            okJson = json;
-            break;
-          } catch (fetchErr) {
-            // Network-level failures (timeout, DNS, connection reset) throw
-            // before a Response exists at all — treat the same as a bad
-            // response from this model and move on to the next one.
-            if (fetchErr instanceof Error && fetchErr.message.startsWith(`${provider} API error`)) throw fetchErr;
-            if (fetchErr instanceof Error && fetchErr.message.startsWith(`${provider}:`)) throw fetchErr;
-            if (!isLast) { lastErrText = `${candidateModel} threw: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`; continue; }
-            throw fetchErr;
+              return { json, lastErrText };
+            } catch (fetchErr) {
+              // Network-level failures (timeout, DNS, connection reset) throw
+              // before a Response exists at all — treat the same as a bad
+              // response from this model and move on to the next one.
+              lastErrText = `${candidateModel} threw: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`;
+            }
           }
+          return { json: null, lastErrText };
         }
-        if (!okJson) throw new Error(`${provider} API: all fallback models exhausted — ${lastErrText}`);
+
+        let { json: okJson, lastErrText } = await tryAllModels();
+        if (!okJson && modelsToTry.length > 1) {
+          // Every model failed on the first pass — give the shared free pool a
+          // moment to recover and try the whole chain again, once, before
+          // giving up for real.
+          await new Promise(r => setTimeout(r, 3_000));
+          ({ json: okJson, lastErrText } = await tryAllModels());
+        }
+        if (!okJson) throw new Error(`${provider} API: all fallback models exhausted (after retry) — ${lastErrText}`);
 
         return {
           content:      okJson.choices[0]?.message.content ?? '',

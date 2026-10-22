@@ -258,50 +258,54 @@ async function callOpenRouter(
     choices: Array<{ message: { content: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish_reason?: string }>;
   };
 
-  let okData: OpenRouterResponse | null = null;
-  let lastError = '';
-  for (const model of OPENROUTER_MODELS) {
-    const isLast = model === OPENROUTER_MODELS[OPENROUTER_MODELS.length - 1];
-    try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey.trim()}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ ...body, model }),
-        signal: AbortSignal.timeout(25_000),
-      });
+  // One pass over every candidate model. Never throws, so the caller can
+  // retry the whole chain once more on a transient burst instead of giving up
+  // the moment every model happens to be 429'd at the same instant — free-tier
+  // shared-pool limits are usually brief.
+  async function tryAllModels(): Promise<{ data: OpenRouterResponse | null; lastError: string }> {
+    let lastError = '';
+    for (const model of OPENROUTER_MODELS) {
+      try {
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey.trim()}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ...body, model }),
+          signal: AbortSignal.timeout(25_000),
+        });
 
-      if (!res.ok) {
-        const text = await res.text();
-        if (!isLast) { lastError = `OpenRouter ${res.status} on ${model}: ${text}`; continue; }
-        throw new Error(`OpenRouter ${res.status}: ${text}`);
-      }
+        if (!res.ok) {
+          const text = await res.text();
+          lastError = `OpenRouter ${res.status} on ${model}: ${text}`;
+          continue;
+        }
 
-      const data = await res.json() as OpenRouterResponse;
-      const msg = data.choices[0]?.message;
-      // A 200 with no text AND no tool call happens when a reasoning model burns
-      // its whole token budget on internal "thinking" — try the next model.
-      if (!msg?.content?.trim() && !msg?.tool_calls?.length) {
-        if (!isLast) {
+        const data = await res.json() as OpenRouterResponse;
+        const msg = data.choices[0]?.message;
+        // A 200 with no text AND no tool call happens when a reasoning model burns
+        // its whole token budget on internal "thinking" — try the next model.
+        if (!msg?.content?.trim() && !msg?.tool_calls?.length) {
           lastError = `OpenRouter: empty content from ${model} (finish_reason: ${data.choices[0]?.finish_reason ?? 'unknown'})`;
           continue;
         }
-        throw new Error(`OpenRouter: ${model} returned empty content (finish_reason: ${data.choices[0]?.finish_reason ?? 'unknown'})`);
+        return { data, lastError };
+      } catch (fetchErr) {
+        // Network-level failures (timeout, DNS, connection reset) throw before a
+        // Response exists at all — treat like a bad response and try the next model.
+        lastError = `${model} threw: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`;
       }
-      okData = data;
-      break;
-    } catch (fetchErr) {
-      // Network-level failures (timeout, DNS, connection reset) throw before a
-      // Response exists at all — treat like a bad response and try the next model.
-      if (fetchErr instanceof Error && fetchErr.message.startsWith('OpenRouter')) throw fetchErr;
-      if (!isLast) { lastError = `${model} threw: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`; continue; }
-      throw fetchErr;
     }
+    return { data: null, lastError };
   }
 
-  if (!okData) throw new Error(lastError || 'OpenRouter: all fallback models exhausted');
+  let { data: okData, lastError } = await tryAllModels();
+  if (!okData && OPENROUTER_MODELS.length > 1) {
+    await new Promise(r => setTimeout(r, 3_000));
+    ({ data: okData, lastError } = await tryAllModels());
+  }
+  if (!okData) throw new Error(lastError || 'OpenRouter: all fallback models exhausted (after retry)');
 
   const msg = okData.choices[0]?.message;
   const content: ContentBlock[] = [];

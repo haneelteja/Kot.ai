@@ -41,6 +41,23 @@ await server.register(multipart, {
   limits: { fileSize: 50 * 1024 * 1024, files: 1 },
 });
 
+// Capture the raw JSON body alongside the parsed one — needed to verify Meta's
+// X-Hub-Signature-256 HMAC on inbound webhooks (the signature is computed over
+// the exact raw bytes, not a re-serialized object).
+server.addContentTypeParser(
+  'application/json',
+  { parseAs: 'buffer' },
+  (request, rawBody: Buffer, done: (err: Error | null, body?: unknown) => void) => {
+    (request as typeof request & { rawBody?: Buffer }).rawBody = rawBody;
+    if (rawBody.length === 0) { done(null, {}); return; }
+    try {
+      done(null, JSON.parse(rawBody.toString('utf8')));
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  },
+);
+
 // ─── Security plugins ─────────────────────────────────────────────────────────
 await server.register(helmet);
 await server.register(cors, {

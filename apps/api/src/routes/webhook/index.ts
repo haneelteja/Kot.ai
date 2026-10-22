@@ -22,7 +22,29 @@ import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
 import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
 import { classifyMessageKind, KIND_CLASSIFIER_VERSION } from '../../lib/message-kind.js';
 import { maybeUpdateChatSummary } from '../../lib/chat-summary.js';
-import { createHash } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
+
+// ─── Meta webhook signature verification ────────────────────────────────────
+// Meta signs the raw JSON body with the app's secret (HMAC-SHA256) and sends it
+// as X-Hub-Signature-256. Twilio payloads are form-encoded (not JSON), so
+// `rawBody` is undefined for them and this check is skipped — Twilio has its
+// own, separate signature scheme not yet implemented here.
+function verifyMetaSignature(request: FastifyRequest): boolean {
+  const raw = (request as FastifyRequest & { rawBody?: Buffer }).rawBody;
+  if (!raw) return true; // not a JSON (Meta) payload — nothing to verify here
+
+  const secret = process.env['META_APP_SECRET'];
+  if (!secret) return true; // not configured yet — don't block until it is
+
+  const sigHeader = request.headers['x-hub-signature-256'] as string | undefined;
+  if (!sigHeader) return false;
+
+  const expected = 'sha256=' + createHmac('sha256', secret).update(raw).digest('hex');
+  const a = Buffer.from(sigHeader);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 // ── Reasoning Effort Tiers ───────────────────────────────────────────────────
 // Classify each inbound message into a tier that controls max_tokens and whether
@@ -1632,6 +1654,10 @@ Which branch works best for you?
 
   // ─── POST: Legacy URL /:tenantId/:productType — backward-compatible ───────
   fastify.post<{ Body: unknown }>('/:tenantId/:productType', async (request, reply) => {
+    if (!verifyMetaSignature(request)) {
+      fastify.log.warn('[Webhook] invalid X-Hub-Signature-256 — rejecting');
+      return reply.status(401).send('Invalid signature');
+    }
     reply.status(200).type('text/plain').send('');
     const { tenantId, productType } = request.params as {
       tenantId: string;
@@ -1642,6 +1668,10 @@ Which branch works best for you?
 
   // ─── POST: New URL /:tenantId — bot routed by phone_number_id in payload ──
   fastify.post<{ Body: unknown }>('/:tenantId', async (request, reply) => {
+    if (!verifyMetaSignature(request)) {
+      fastify.log.warn('[Webhook] invalid X-Hub-Signature-256 — rejecting');
+      return reply.status(401).send('Invalid signature');
+    }
     reply.status(200).type('text/plain').send('');
     const { tenantId } = request.params as { tenantId: string };
     const body = request.body as Record<string, unknown>;

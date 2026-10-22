@@ -1031,7 +1031,11 @@ Which branch works best for you?
       botConfig?.ai_model ??
       (botConfig?.product as Product | null)?.default_model ??
       null;
-    const dbModel = rawDbModel?.startsWith('claude-') ? rawDbModel : null;
+    // Only trust the DB-configured Anthropic model name if an Anthropic key is
+    // actually available — otherwise fall through to the router's own default
+    // (OpenRouter, when that's the only key configured) instead of forcing a
+    // provider whose key doesn't exist.
+    const dbModel = (rawDbModel?.startsWith('claude-') && process.env['ANTHROPIC_API_KEY']) ? rawDbModel : null;
 
     const llmOverride = (resolvedLlm?.validation_status === 'valid')
       ? { provider: resolvedLlm.provider, apiKey: resolvedLlm.api_key, model: resolvedLlm.model, baseUrl: resolvedLlm.base_url ?? undefined }

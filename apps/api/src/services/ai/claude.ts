@@ -1,5 +1,4 @@
 import type { Message, KnowledgeBase } from '@alphabot/shared';
-import { REPLY_MODEL } from '../../lib/anthropic.js';
 import { routedChatCompletion } from '../../lib/llm-router.js';
 import { heuristicConfidence } from './confidence.js';
 
@@ -57,13 +56,18 @@ export async function getAIResponse(
     content: m.content,
   }));
 
+  // Leave model/provider undefined when no explicit override is given — the
+  // router picks its own per-provider default (REPLY_MODEL for Anthropic, a
+  // free-tier fallback chain for OpenRouter) based on which API key is
+  // actually configured. Hardcoding REPLY_MODEL here would force an
+  // Anthropic-only model id onto whatever provider the router resolves to.
   const { content, inputTokens, outputTokens, costInr } = await routedChatCompletion({
     messages,
     system:     fullSystemPrompt,
     max_tokens: maxTokens ?? 560,
     override: {
       provider: llmOverride?.provider,
-      model:    llmOverride?.model ?? REPLY_MODEL,
+      model:    llmOverride?.model,
       apiKey:   llmOverride?.apiKey,
       baseUrl:  llmOverride?.baseUrl,
     },

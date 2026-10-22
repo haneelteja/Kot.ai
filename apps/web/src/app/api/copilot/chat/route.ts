@@ -261,33 +261,44 @@ async function callOpenRouter(
   let okData: OpenRouterResponse | null = null;
   let lastError = '';
   for (const model of OPENROUTER_MODELS) {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey.trim()}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ ...body, model }),
-    });
+    const isLast = model === OPENROUTER_MODELS[OPENROUTER_MODELS.length - 1];
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey.trim()}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ ...body, model }),
+        signal: AbortSignal.timeout(25_000),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      // 429 = upstream-provider-shared-pool exhausted — try the next model/provider.
-      // Any other failure is model/account-specific and won't improve by retrying.
-      if (res.status === 429) { lastError = `OpenRouter 429 on ${model}: ${text}`; continue; }
-      throw new Error(`OpenRouter ${res.status}: ${text}`);
-    }
+      if (!res.ok) {
+        const text = await res.text();
+        if (!isLast) { lastError = `OpenRouter ${res.status} on ${model}: ${text}`; continue; }
+        throw new Error(`OpenRouter ${res.status}: ${text}`);
+      }
 
-    const data = await res.json() as OpenRouterResponse;
-    const msg = data.choices[0]?.message;
-    // A 200 with no text AND no tool call happens when a reasoning model burns
-    // its whole token budget on internal "thinking" — try the next model.
-    if (!msg?.content?.trim() && !msg?.tool_calls?.length) {
-      lastError = `OpenRouter: empty content from ${model} (finish_reason: ${data.choices[0]?.finish_reason ?? 'unknown'})`;
-      continue;
+      const data = await res.json() as OpenRouterResponse;
+      const msg = data.choices[0]?.message;
+      // A 200 with no text AND no tool call happens when a reasoning model burns
+      // its whole token budget on internal "thinking" — try the next model.
+      if (!msg?.content?.trim() && !msg?.tool_calls?.length) {
+        if (!isLast) {
+          lastError = `OpenRouter: empty content from ${model} (finish_reason: ${data.choices[0]?.finish_reason ?? 'unknown'})`;
+          continue;
+        }
+        throw new Error(`OpenRouter: ${model} returned empty content (finish_reason: ${data.choices[0]?.finish_reason ?? 'unknown'})`);
+      }
+      okData = data;
+      break;
+    } catch (fetchErr) {
+      // Network-level failures (timeout, DNS, connection reset) throw before a
+      // Response exists at all — treat like a bad response and try the next model.
+      if (fetchErr instanceof Error && fetchErr.message.startsWith('OpenRouter')) throw fetchErr;
+      if (!isLast) { lastError = `${model} threw: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`; continue; }
+      throw fetchErr;
     }
-    okData = data;
-    break;
   }
 
   if (!okData) throw new Error(lastError || 'OpenRouter: all fallback models exhausted');

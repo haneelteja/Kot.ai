@@ -193,10 +193,13 @@ async function callAnthropic(
 // Tried in order — OpenRouter's free tier is a shared pool per upstream provider,
 // so one model (e.g. Google AI Studio's gemma) getting 429'd doesn't take the
 // whole fallback down; the next entry is served by a different upstream.
+// Reasoning models (e.g. nvidia/nemotron-*) are deliberately excluded — they
+// can burn the entire max_tokens budget on internal "thinking" and return a
+// 200 OK with content: null, which isn't an HTTP failure but is still unusable.
 const OPENROUTER_MODELS = [
   'google/gemma-4-31b-it:free',
-  'nvidia/nemotron-3.5-lightning:free',
   'liquid/lfm-2.5-2.6b:free',
+  'minimax/minimax-m3.1-flash:free',
 ] as const;
 
 type OpenAiMessage =
@@ -251,10 +254,14 @@ async function callOpenRouter(
   };
   if (tools.length > 0) body['tools'] = toOpenAiTools(tools);
 
-  let res: Response | null = null;
+  type OpenRouterResponse = {
+    choices: Array<{ message: { content: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish_reason?: string }>;
+  };
+
+  let okData: OpenRouterResponse | null = null;
   let lastError = '';
   for (const model of OPENROUTER_MODELS) {
-    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey.trim()}`,
@@ -262,24 +269,30 @@ async function callOpenRouter(
       },
       body: JSON.stringify({ ...body, model }),
     });
-    if (res.ok) break;
-    // 429 = upstream-provider-shared-pool exhausted — try the next model/provider.
-    // Any other failure is model/account-specific and won't improve by retrying.
-    if (res.status !== 429) break;
-    lastError = `OpenRouter 429 on ${model}: ${await res.text()}`;
-    res = null;
+
+    if (!res.ok) {
+      const text = await res.text();
+      // 429 = upstream-provider-shared-pool exhausted — try the next model/provider.
+      // Any other failure is model/account-specific and won't improve by retrying.
+      if (res.status === 429) { lastError = `OpenRouter 429 on ${model}: ${text}`; continue; }
+      throw new Error(`OpenRouter ${res.status}: ${text}`);
+    }
+
+    const data = await res.json() as OpenRouterResponse;
+    const msg = data.choices[0]?.message;
+    // A 200 with no text AND no tool call happens when a reasoning model burns
+    // its whole token budget on internal "thinking" — try the next model.
+    if (!msg?.content?.trim() && !msg?.tool_calls?.length) {
+      lastError = `OpenRouter: empty content from ${model} (finish_reason: ${data.choices[0]?.finish_reason ?? 'unknown'})`;
+      continue;
+    }
+    okData = data;
+    break;
   }
 
-  if (!res) throw new Error(lastError || 'OpenRouter: all fallback models exhausted');
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`OpenRouter ${res.status}: ${text}`);
-  }
+  if (!okData) throw new Error(lastError || 'OpenRouter: all fallback models exhausted');
 
-  const data = await res.json() as {
-    choices: Array<{ message: { content: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> } }>;
-  };
-  const msg = data.choices[0]?.message;
+  const msg = okData.choices[0]?.message;
   const content: ContentBlock[] = [];
   if (msg?.content) content.push({ type: 'text', text: msg.content });
   const call = msg?.tool_calls?.[0];

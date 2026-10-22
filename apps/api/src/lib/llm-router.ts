@@ -27,10 +27,13 @@ export interface CompletionResult {
 // Free models tried in order when routed to OpenRouter with no explicit model
 // override — different upstream providers, so one provider's 429 (shared free
 // pool exhausted) doesn't take the whole fallback chain down.
+// Reasoning models (e.g. nvidia/nemotron-*) are deliberately excluded — they
+// can burn the entire max_tokens budget on internal "thinking" and return a
+// 200 OK with content: null, which isn't an HTTP failure but is still unusable.
 const OPENROUTER_FALLBACK_MODELS = [
   'google/gemma-4-31b-it:free',
-  'nvidia/nemotron-3.5-lightning:free',
   'liquid/lfm-2.5-2.6b:free',
+  'minimax/minimax-m3.1-flash:free',
 ] as const;
 
 /**
@@ -118,38 +121,51 @@ export async function routedChatCompletion(params: {
             ? [...OPENROUTER_FALLBACK_MODELS]
             : (() => { throw new Error(`No model specified for provider: ${provider}`); })();
 
-        let res: Response | null = null;
+        type OpenAiResponse = {
+          choices: Array<{ message: { content: string | null }; finish_reason?: string }>;
+          usage?: { prompt_tokens: number; completion_tokens: number };
+        };
+
+        let okJson: OpenAiResponse | null = null;
         let lastErrText = '';
         for (const candidateModel of modelsToTry) {
-          res = await fetch(`${baseUrl}/chat/completions`, {
+          const res = await fetch(`${baseUrl}/chat/completions`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ model: candidateModel, messages: openaiMessages, max_tokens }),
             signal: AbortSignal.timeout(25_000),
           });
-          if (res.ok) break;
-          if (res.status !== 429 || modelsToTry.length === 1) break;
-          lastErrText = await res.text();
-          res = null;
-        }
-        if (!res) throw new Error(`${provider} API error 429 (all fallback models exhausted): ${lastErrText}`);
 
-        if (!res.ok) {
-          const body = await res.text();
-          let detail = `HTTP ${res.status}`;
-          try { const j = JSON.parse(body) as { error?: { message?: string } }; detail = j.error?.message ?? detail; } catch { /* use status */ }
-          throw new Error(`${provider} API error ${res.status}: ${detail}`);
-        }
+          if (!res.ok) {
+            const body = await res.text();
+            if (res.status === 429 && modelsToTry.length > 1) { lastErrText = `429 on ${candidateModel}: ${body}`; continue; }
+            let detail = `HTTP ${res.status}`;
+            try { const j = JSON.parse(body) as { error?: { message?: string } }; detail = j.error?.message ?? detail; } catch { /* use status */ }
+            throw new Error(`${provider} API error ${res.status}: ${detail}`);
+          }
 
-        const json = await res.json() as {
-          choices: Array<{ message: { content: string } }>;
-          usage?: { prompt_tokens: number; completion_tokens: number };
-        };
+          const json = await res.json() as OpenAiResponse;
+          const content = json.choices[0]?.message.content;
+          // A 200 with empty/null content happens when a reasoning model burns
+          // its whole token budget on internal "thinking" — not an HTTP error,
+          // but equally unusable. Try the next model instead of returning blank.
+          if (!content?.trim()) {
+            if (modelsToTry.length > 1 && candidateModel !== modelsToTry[modelsToTry.length - 1]) {
+              lastErrText = `empty content from ${candidateModel} (finish_reason: ${json.choices[0]?.finish_reason ?? 'unknown'})`;
+              continue;
+            }
+            throw new Error(`${provider}: ${candidateModel} returned empty content (finish_reason: ${json.choices[0]?.finish_reason ?? 'unknown'})`);
+          }
+
+          okJson = json;
+          break;
+        }
+        if (!okJson) throw new Error(`${provider} API: all fallback models exhausted — ${lastErrText}`);
 
         return {
-          content:      json.choices[0]?.message.content ?? '',
-          inputTokens:  Math.max(0, json.usage?.prompt_tokens    ?? 0),
-          outputTokens: Math.max(0, json.usage?.completion_tokens ?? 0),
+          content:      okJson.choices[0]?.message.content ?? '',
+          inputTokens:  Math.max(0, okJson.usage?.prompt_tokens    ?? 0),
+          outputTokens: Math.max(0, okJson.usage?.completion_tokens ?? 0),
         };
       }
 

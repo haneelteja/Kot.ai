@@ -43,9 +43,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
   let query = admin
     .from('orders')
     .select(`
-      id, total, status, created_at, updated_at, items_json,
+      id, total, total_paise, order_ref, source, status, created_at, updated_at, items_json,
       contact:contacts(phone, name),
-      payments(id, status, link_url, webhook_received_at)
+      payments(id, status, link_url, webhook_received_at),
+      order_items(id, name, unit_price_paise, quantity, line_total_paise)
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
@@ -71,7 +72,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
 
   const totalRevenue = orders
     ?.filter(o => (o.payments as Array<{ status: string }>)?.[0]?.status === 'paid')
-    .reduce((sum, o) => sum + Number(o.total), 0) ?? 0;
+    .reduce((sum, o) => sum + (o.total_paise != null ? o.total_paise / 100 : Number(o.total)), 0) ?? 0;
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-5">
@@ -134,24 +135,39 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
         ) : (
           <div className="divide-y divide-line">
             {orders.map(order => {
-              const contact  = order.contact as unknown as { phone: string; name: string | null } | null;
-              const payment  = (order.payments as Array<{ id: string; status: string; link_url: string | null; webhook_received_at: string | null }>)?.[0];
-              const items    = (order.items_json as Array<{ name: string; quantity: number; price: number }>) ?? [];
+              const contact    = order.contact as unknown as { phone: string; name: string | null } | null;
+              const payment    = (order.payments as Array<{ id: string; status: string; link_url: string | null; webhook_received_at: string | null }>)?.[0];
+              const lineItems  = (order.order_items as Array<{ id: string; name: string; quantity: number; unit_price_paise: number; line_total_paise: number }> | null) ?? [];
+              const legacyItems = (order.items_json as Array<{ name: string; quantity: number; price: number }>) ?? [];
+              // Render from real order_items when present (restaurant-bot orders), falling
+              // back to the legacy items_json blob for pre-existing manual orders.
+              const itemsSummary = lineItems.length > 0
+                ? lineItems.map(i => ({ name: i.name, quantity: i.quantity }))
+                : legacyItems.map(i => ({ name: i.name, quantity: i.quantity }));
+              const totalDisplay = order.total_paise != null ? order.total_paise / 100 : Number(order.total);
+              const isWhatsAppOrder = order.source === 'whatsapp_bot';
 
               return (
                 <div key={order.id} className="flex items-center gap-4 px-5 py-4">
                   <div className="shrink-0">{STATUS_ICON[order.status]}</div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-semibold text-text truncate">
                         {contact?.name ?? contact?.phone ?? '—'}
                       </p>
-                      <span className="text-[10px] text-muted-foreground font-mono">{order.id.slice(0, 8)}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {order.order_ref ?? order.id.slice(0, 8)}
+                      </span>
+                      {isWhatsAppOrder && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-brand-wash text-brand-strong">
+                          WhatsApp order
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {items.slice(0, 2).map(i => `${i.name} ×${i.quantity}`).join(', ')}
-                      {items.length > 2 ? ` +${items.length - 2} more` : ''}
+                      {itemsSummary.slice(0, 2).map(i => `${i.name} ×${i.quantity}`).join(', ')}
+                      {itemsSummary.length > 2 ? ` +${itemsSummary.length - 2} more` : ''}
                     </p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       {new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}
@@ -159,7 +175,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <p className="text-sm font-bold text-text tabular-nums">₹{Number(order.total).toLocaleString('en-IN')}</p>
+                    <p className="text-sm font-bold text-text tabular-nums">₹{totalDisplay.toLocaleString('en-IN')}</p>
 
                     {payment && (
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 capitalize ${PAYMENT_BADGE[payment.status] ?? PAYMENT_BADGE.pending}`}>

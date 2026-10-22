@@ -9,6 +9,38 @@ import { generateAndSendInvoice } from '../../services/invoice/generator.js';
 import type { WhatsAppProvider } from '@alphabot/shared';
 import { requireAuth } from '../../middleware/auth.js';
 
+type Db = ReturnType<typeof getServerClient>;
+
+/**
+ * Resolves which WhatsApp number to send an order-related message from.
+ * Prefers a number configured for the given product slug (e.g. the bot that
+ * actually created the order), falling back to any active number for the
+ * tenant — a tenant may only have a restaurant_bot number and no
+ * lifecycle_bot number (or vice versa), and nothing stops a tenant running
+ * both bot types at once.
+ */
+async function resolveOrderWhatsAppNumber(
+  db: Db, tenantId: string, preferredSlug: string,
+): Promise<{ config_json: Record<string, unknown>; provider: string } | null> {
+  const { data: preferred } = await db
+    .from('whatsapp_numbers')
+    .select('config_json, provider')
+    .eq('tenant_id', tenantId)
+    .eq('product_slug', preferredSlug)
+    .eq('active', true)
+    .maybeSingle();
+  if (preferred) return preferred as { config_json: Record<string, unknown>; provider: string };
+
+  const { data: fallback } = await db
+    .from('whatsapp_numbers')
+    .select('config_json, provider')
+    .eq('tenant_id', tenantId)
+    .eq('active', true)
+    .limit(1)
+    .maybeSingle();
+  return fallback as { config_json: Record<string, unknown>; provider: string } | null;
+}
+
 export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
   const db = getServerClient();
 
@@ -76,7 +108,7 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
         contactPhone: contact.phone,
         contactName:  contact.name ?? null,
         amountRupees: total,
-        description:  `Order #${order.id.slice(0, 8)} — Elma Industries`,
+        description:  `Order #${order.id.slice(0, 8)}`,
       });
       if (result.success && result.linkUrl) {
         linkUrl    = result.linkUrl;
@@ -93,13 +125,7 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
 
       // Send link via WhatsApp
       if (sendLink) {
-        const { data: wn } = await db
-          .from('whatsapp_numbers')
-          .select('config_json, provider')
-          .eq('tenant_id', tenantId)
-          .eq('product_slug', 'lifecycle_bot')
-          .eq('active', true)
-          .maybeSingle();
+        const wn = await resolveOrderWhatsAppNumber(db, tenantId, 'lifecycle_bot');
 
         if (wn) {
           const config  = wn.config_json as { phone_number_id: string; access_token: string };
@@ -171,7 +197,7 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post<{ Params: { id: string } }>('/:id/resend-link', async (request, reply) => {
     const { data: order } = await db
       .from('orders')
-      .select(`tenant_id, total, contact:contacts(phone), payments(link_url, status)`)
+      .select(`tenant_id, total, source, contact:contacts(phone), payments(link_url, status)`)
       .eq('id', request.params.id)
       .eq('tenant_id', request.tenantId)
       .single();
@@ -185,13 +211,8 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: 'No payment link available' });
     }
 
-    const { data: wn } = await db
-      .from('whatsapp_numbers')
-      .select('config_json, provider')
-      .eq('tenant_id', (order as { tenant_id: string }).tenant_id)
-      .eq('product_slug', 'lifecycle_bot')
-      .eq('active', true)
-      .maybeSingle();
+    const preferredSlug = (order as unknown as { source?: string }).source === 'whatsapp_bot' ? 'restaurant_bot' : 'lifecycle_bot';
+    const wn = await resolveOrderWhatsAppNumber(db, (order as { tenant_id: string }).tenant_id, preferredSlug);
 
     if (wn) {
       const config  = wn.config_json as { phone_number_id: string; access_token: string };
@@ -285,21 +306,22 @@ export async function easebuzzCallbackRoute(fastify: FastifyInstance): Promise<v
 
       const { data: order } = await db
         .from('orders')
-        .select('tenant_id, total, contact:contacts(phone)')
+        .select('tenant_id, total, total_paise, order_ref, source, contact:contacts(phone)')
         .eq('id', payment.order_id)
         .single();
 
       if (order) {
-        const tenantId = (order as unknown as { tenant_id: string }).tenant_id;
-        const contact  = (order as unknown as { contact: { phone: string } }).contact;
+        const tenantId   = (order as unknown as { tenant_id: string }).tenant_id;
+        const contact    = (order as unknown as { contact: { phone: string } }).contact;
+        const orderRow   = order as unknown as { total: number; total_paise: number | null; order_ref: string | null; source?: string };
+        const isRestaurantOrder = orderRow.source === 'whatsapp_bot';
+        const amountDisplay = orderRow.total_paise != null ? (orderRow.total_paise / 100) : orderRow.total;
 
-        const { data: wn } = await db
-          .from('whatsapp_numbers')
-          .select('config_json, provider')
-          .eq('tenant_id', tenantId)
-          .eq('product_slug', 'lifecycle_bot')
-          .eq('active', true)
-          .maybeSingle();
+        const wn = await resolveOrderWhatsAppNumber(db, tenantId, isRestaurantOrder ? 'restaurant_bot' : 'lifecycle_bot');
+
+        const confirmText = isRestaurantOrder
+          ? `✅ *Payment Received!*\n\nYour order ${orderRow.order_ref ?? ''} is confirmed and being prepared. Total: ₹${amountDisplay.toFixed(2)}.\n\nWe'll keep you updated! 🎉`
+          : `✅ *Payment Received!*\n\nThank you! Your payment of ₹${amountDisplay.toFixed(2)} is confirmed.\n\nYour order is being processed. We'll keep you updated! 🎉`;
 
         if (wn && contact?.phone) {
           const config  = wn.config_json as { phone_number_id: string; access_token: string };
@@ -307,7 +329,7 @@ export async function easebuzzCallbackRoute(fastify: FastifyInstance): Promise<v
           await gateway.sendMessage(config.phone_number_id, config.access_token, {
             type: 'text',
             to:   contact.phone,
-            text: `✅ *Payment Received!*\n\nThank you! Your payment of ₹${(order as { total: number }).total.toFixed(2)} is confirmed.\n\nYour order is being processed. We'll keep you updated! 🎉`,
+            text: confirmText,
           });
         }
       }

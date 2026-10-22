@@ -38,7 +38,7 @@ async function sendOrderStatusNotification(
 
   const { data: order } = await admin
     .from('orders')
-    .select('tenant_id, total, items_json, contacts(phone, name)')
+    .select('tenant_id, total, items_json, source, contacts(phone, name)')
     .eq('id', orderId)
     .single();
 
@@ -47,14 +47,26 @@ async function sendOrderStatusNotification(
   const contact = order.contacts as unknown as { phone: string | null; name: string | null } | null;
   if (!contact?.phone) return;
 
-  // Prefer the lifecycle_bot number, fall back to any active number for this tenant
-  const { data: wn } = await admin
+  // Prefer the number for the bot that actually created this order, falling
+  // back to any active number for the tenant — a tenant may only have a
+  // restaurant_bot or lifecycle_bot number configured, and nothing stops a
+  // tenant running both bot types at once.
+  const preferredSlug = (order as unknown as { source?: string }).source === 'whatsapp_bot' ? 'restaurant_bot' : 'lifecycle_bot';
+  const { data: preferredWn } = await admin
     .from('whatsapp_numbers')
     .select('config_json, provider')
     .eq('tenant_id', order.tenant_id)
-    .eq('product_slug', 'lifecycle_bot')
+    .eq('product_slug', preferredSlug)
     .eq('active', true)
     .maybeSingle();
+
+  const wn = preferredWn ?? (await admin
+    .from('whatsapp_numbers')
+    .select('config_json, provider')
+    .eq('tenant_id', order.tenant_id)
+    .eq('active', true)
+    .limit(1)
+    .maybeSingle()).data;
 
   if (!wn) return;
 

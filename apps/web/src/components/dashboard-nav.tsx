@@ -19,6 +19,7 @@ import {
   ClipboardList,
   RotateCcw,
   Inbox,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -38,17 +39,20 @@ const BASE_NAV = [
 const INTEGRATIONS_ITEM   = { href: '/integrations',   label: 'Integrations', icon: Plug        };
 const ORDERS_ITEM         = { href: '/orders',          label: 'Orders',       icon: ShoppingCart };
 const RETURNS_ITEM        = { href: '/returns',         label: 'Returns',      icon: RotateCcw   };
+const MENU_ITEM            = { href: '/menu',            label: 'Menu',         icon: UtensilsCrossed };
 
 export function DashboardNav({
   tenantName,
   userRole,
   hasLifecycleBot,
+  hasRestaurantBot = false,
   isAgency = false,
   onLinkClick,
 }: {
   tenantName: string;
   userRole: string;
   hasLifecycleBot: boolean;
+  hasRestaurantBot?: boolean;
   isAgency?: boolean;
   onLinkClick?: () => void;
 }) {
@@ -68,9 +72,15 @@ export function DashboardNav({
     const items = [...BASE_NAV];
     const convsIdx = items.findIndex(i => i.href === '/conversations');
     items.splice(convsIdx + 1, 0, INTEGRATIONS_ITEM);
+    if (hasRestaurantBot) {
+      const guardrailsIdx = items.findIndex(i => i.href === '/guardrails');
+      const toAdd = [MENU_ITEM, ...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM])];
+      items.splice(guardrailsIdx + 1, 0, ...toAdd);
+    }
     if (hasLifecycleBot) {
       const guardrailsIdx = items.findIndex(i => i.href === '/guardrails');
-      items.splice(guardrailsIdx + 1, 0, ORDERS_ITEM, RETURNS_ITEM);
+      const toAdd = [...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM]), RETURNS_ITEM];
+      items.splice(guardrailsIdx + 1, 0, ...toAdd);
     }
     // Audit log — client_admin and client_manager only.
     // tenant_users.role is constrained to 'client_admin' | 'client_manager' | 'agent'.

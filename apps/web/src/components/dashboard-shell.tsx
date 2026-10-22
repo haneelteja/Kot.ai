@@ -13,6 +13,7 @@ export function DashboardShell({
   tenantId,
   userRole,
   hasLifecycleBot,
+  hasRestaurantBot = false,
   isAgency = false,
   activeBots = [],
   tourCompleted = true,
@@ -24,6 +25,7 @@ export function DashboardShell({
   tenantId: string;
   userRole: string;
   hasLifecycleBot: boolean;
+  hasRestaurantBot?: boolean;
   isAgency?: boolean;
   activeBots?: ActiveBot[];
   tourCompleted?: boolean;
@@ -79,6 +81,7 @@ export function DashboardShell({
             tenantName={tenantName}
             userRole={userRole}
             hasLifecycleBot={hasLifecycleBot}
+            hasRestaurantBot={hasRestaurantBot}
             isAgency={isAgency}
             onLinkClick={() => setSidebarOpen(false)}
           />

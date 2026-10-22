@@ -441,6 +441,39 @@ export interface ProductCatalogueItem {
   updated_at: string;
 }
 
+export interface MenuCategory {
+  id: string;
+  tenant_id: string;
+  name: string;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MenuItemRow {
+  id: string;
+  tenant_id: string;
+  category_id: string | null;
+  name: string;
+  description: string | null;
+  price_paise: number;
+  is_veg: boolean;
+  in_stock: boolean;
+  image_url: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CartItemRow {
+  id: string;
+  cart_id: string;
+  menu_item_id: string;
+  quantity: number;
+}
+
 export interface KnowledgeBase {
   id: string;
   tenant_id: string;
@@ -477,6 +510,11 @@ export interface Order {
   status: OrderStatus;
   created_at: string;
   updated_at: string;
+  // Added for the restaurant-bot ordering slice — optional since pre-existing
+  // manual-order rows don't have these populated.
+  source?: 'manual' | 'whatsapp_bot';
+  total_paise?: number | null;
+  order_ref?: string | null;
 }
 
 export interface OrderItem {
@@ -484,6 +522,18 @@ export interface OrderItem {
   quantity: number;
   price: number;
   sku?: string;
+}
+
+/** Normalized line item for restaurant-bot-sourced orders (order_items table). */
+export interface OrderItemRow {
+  id: string;
+  order_id: string;
+  menu_item_id: string | null;
+  name: string;
+  unit_price_paise: number;
+  quantity: number;
+  line_total_paise: number;
+  created_at: string;
 }
 
 export interface Payment {

@@ -41,6 +41,7 @@ const getTenantContext = cache(async () => {
     support_bot:   'Support Bot',
     sales_bot:     'Sales Bot',
     lifecycle_bot: 'Lifecycle Bot',
+    restaurant_bot: 'Restaurant Bot',
   };
   const activeBots = (activeProducts ?? [])
     .filter(p => BOT_NAME[p.product_type])
@@ -53,7 +54,8 @@ const getTenantContext = cache(async () => {
       return { slug, name };
     });
 
-  const hasLifecycleBot = activeBots.some(b => b.slug === 'lifecycle_bot');
+  const hasLifecycleBot  = activeBots.some(b => b.slug === 'lifecycle_bot');
+  const hasRestaurantBot = activeBots.some(b => b.slug === 'restaurant_bot');
 
   return {
     user,
@@ -62,6 +64,7 @@ const getTenantContext = cache(async () => {
     tenantId,
     copilotEnabled,
     hasLifecycleBot,
+    hasRestaurantBot,
     isAgency:        !!(tenantMeta as { is_agency?: boolean } | null)?.is_agency,
     activeBots,
     tourCompleted:   !!(tenantUser as { tour_completed_at?: string | null }).tour_completed_at,
@@ -123,6 +126,7 @@ export default async function DashboardLayout({
         tenantId={ctx.tenantId}
         userRole={ctx.userRole}
         hasLifecycleBot={ctx.hasLifecycleBot}
+        hasRestaurantBot={ctx.hasRestaurantBot}
         isAgency={ctx.isAgency}
         activeBots={ctx.activeBots}
         tourCompleted={ctx.tourCompleted}

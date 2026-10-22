@@ -33,6 +33,12 @@ const STAGE_MAPS: Record<string, StageDefinition[]> = {
     { id: 'booked',         label: 'Booked',         description: 'Table/reservation successfully booked', isTerminal: true },
     { id: 'closing',        label: 'Closing',        description: 'Closing the loop on this interaction', isTerminal: true },
   ],
+  restaurant_bot: [
+    { id: 'browsing',   label: 'Browsing',   description: 'Customer is viewing the menu or asking questions' },
+    { id: 'ordering',   label: 'Ordering',   description: 'Customer is adding items to their cart' },
+    { id: 'confirming', label: 'Confirming', description: 'Reviewing the full order and bill before payment' },
+    { id: 'placed',     label: 'Placed',     description: 'Order placed and payment link sent', isTerminal: true },
+  ],
   _default: [
     { id: 'greeting',     label: 'Greeting',     description: 'Opening the conversation' },
     { id: 'qualifying',   label: 'Qualifying',   description: 'Understanding customer needs' },

@@ -13,6 +13,7 @@ export const TOOL_IDS = {
   SCHEDULED_FOLLOWUP: 'scheduled_followup',
   VOICE_ESCALATION:   'voice_escalation',
   RETURN_REQUEST:     'return_request',
+  MENU_ORDERING:      'menu_ordering',
 } as const;
 
 export type ToolId = typeof TOOL_IDS[keyof typeof TOOL_IDS];
@@ -21,7 +22,7 @@ export interface ToolDefinition {
   id:          ToolId;
   label:       string;
   description: string;
-  botTypes:    ('support_bot' | 'sales_bot' | 'lifecycle_bot' | '*')[];
+  botTypes:    ('support_bot' | 'sales_bot' | 'lifecycle_bot' | 'restaurant_bot' | '*')[];
   default:     boolean;
 }
 
@@ -87,6 +88,13 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     label:       'Return / Replacement Flow',
     description: 'AI detects return and replacement requests and logs them for staff review.',
     botTypes:    ['lifecycle_bot'],
+    default:     true,
+  },
+  {
+    id:          TOOL_IDS.MENU_ORDERING,
+    label:       'Menu Browsing & Ordering',
+    description: 'AI can show the menu, manage a cart, and place orders with a payment link.',
+    botTypes:    ['restaurant_bot'],
     default:     true,
   },
 ];

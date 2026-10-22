@@ -9,12 +9,18 @@
 import { chatCompletion as anthropicCompletion, REPLY_MODEL } from './anthropic.js';
 import type { AnthropicMessage } from './anthropic.js';
 import { calcCostInr } from './llm-cost.js';
+import { logAiCall } from './ai-call-log.js';
 
 export interface LlmOverride {
   provider?: string;
   apiKey?:   string;
   model?:    string;
   baseUrl?:  string;
+}
+
+export interface LlmLogContext {
+  tenantId?:    string;
+  productSlug?: string;
 }
 
 export interface CompletionResult {
@@ -67,14 +73,18 @@ export async function routedChatCompletion(params: {
   system?:     string;
   max_tokens?: number;
   override?:   LlmOverride;
+  logContext?: LlmLogContext;
 }): Promise<CompletionResult> {
-  const { messages, system, max_tokens = 512, override } = params;
+  const { messages, system, max_tokens = 512, override, logContext } = params;
   const provider = override?.provider ?? defaultProvider();
   // REPLY_MODEL is an Anthropic model id — only use it as the default when we
   // actually resolved to Anthropic. Auto-fallback to OpenRouter needs its own
   // default model id (handled per-call in the openrouter branch below).
   const model  = override?.model ?? (provider === 'anthropic' ? REPLY_MODEL : undefined);
   const apiKey = override?.apiKey;
+  // Updated inside the openrouter fallback loop to the model that actually
+  // responded — so logging reflects reality, not just the nominal default.
+  let resolvedModel = model;
 
   // Inner call — provider dispatch with the given message list.
   // Extracted so the overflow retry can call it with a trimmed list.
@@ -165,6 +175,7 @@ export async function routedChatCompletion(params: {
                 continue;
               }
 
+              resolvedModel = candidateModel;
               return { json, lastErrText };
             } catch (fetchErr) {
               // Network-level failures (timeout, DNS, connection reset) throw
@@ -257,23 +268,52 @@ export async function routedChatCompletion(params: {
   // First attempt with full message list.
   // On context-length overflow: trim to the most recent half and retry once.
   // If the retry also overflows (system prompt alone is too large), rethrow clearly.
+  const startedAt = Date.now();
   try {
-    return withCost(await call(messages));
+    const result = withCost(await call(messages));
+    logAiCall({
+      tenantId: logContext?.tenantId, productSlug: logContext?.productSlug,
+      provider, model: resolvedModel ?? model ?? 'unknown', status: 'success',
+      latencyMs: Date.now() - startedAt, inputTokens: result.inputTokens, outputTokens: result.outputTokens,
+    });
+    return result;
   } catch (err) {
     if (isContextOverflow(err) && messages.length > 1) {
       const trimmed = messages.slice(Math.ceil(messages.length / 2));
       try {
-        return withCost(await call(trimmed));
+        const result = withCost(await call(trimmed));
+        logAiCall({
+          tenantId: logContext?.tenantId, productSlug: logContext?.productSlug,
+          provider, model: resolvedModel ?? model ?? 'unknown', status: 'success',
+          latencyMs: Date.now() - startedAt, inputTokens: result.inputTokens, outputTokens: result.outputTokens,
+        });
+        return result;
       } catch (retryErr) {
         if (isContextOverflow(retryErr)) {
-          throw new Error(
+          const overflowErr = new Error(
             `Context window exceeded even after trimming history to ${trimmed.length} messages. ` +
             `Consider reducing the system prompt or knowledge base size.`,
           );
+          logAiCall({
+            tenantId: logContext?.tenantId, productSlug: logContext?.productSlug,
+            provider, model: resolvedModel ?? model ?? 'unknown', status: 'error',
+            latencyMs: Date.now() - startedAt, errorMessage: overflowErr.message,
+          });
+          throw overflowErr;
         }
+        logAiCall({
+          tenantId: logContext?.tenantId, productSlug: logContext?.productSlug,
+          provider, model: resolvedModel ?? model ?? 'unknown', status: 'error',
+          latencyMs: Date.now() - startedAt, errorMessage: retryErr instanceof Error ? retryErr.message : String(retryErr),
+        });
         throw retryErr;
       }
     }
+    logAiCall({
+      tenantId: logContext?.tenantId, productSlug: logContext?.productSlug,
+      provider, model: resolvedModel ?? model ?? 'unknown', status: 'error',
+      latencyMs: Date.now() - startedAt, errorMessage: err instanceof Error ? err.message : String(err),
+    });
     throw err;
   }
 }

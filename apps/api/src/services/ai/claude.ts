@@ -1,5 +1,6 @@
 import type { Message, KnowledgeBase } from '@alphabot/shared';
 import { routedChatCompletion } from '../../lib/llm-router.js';
+import type { LlmLogContext } from '../../lib/llm-router.js';
 import { heuristicConfidence } from './confidence.js';
 
 const MAX_CONTEXT_MESSAGES = 50;
@@ -34,6 +35,7 @@ export async function getAIResponse(
   contactMemory?: string,
   llmOverride?:   { apiKey?: string; model?: string; provider?: string; baseUrl?: string },
   maxTokens?:     number,
+  logContext?:    LlmLogContext,
 ): Promise<AIResponseResult> {
   const contextWindow = history.slice(-MAX_CONTEXT_MESSAGES);
 
@@ -71,6 +73,7 @@ export async function getAIResponse(
       apiKey:   llmOverride?.apiKey,
       baseUrl:  llmOverride?.baseUrl,
     },
+    logContext,
   });
 
   // Extract and strip the CONFIDENCE marker from the response

@@ -25,6 +25,9 @@ import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
 import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
 import { classifyMessageKind, KIND_CLASSIFIER_VERSION } from '../../lib/message-kind.js';
 import { maybeUpdateChatSummary } from '../../lib/chat-summary.js';
+import { isNumberBlocked } from '../../lib/blocked-numbers.js';
+import { matchAutoReply } from '../../lib/auto-reply.js';
+import { dispatchWebhook } from '../../lib/dispatch-webhook.js';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 
 // ─── Meta webhook signature verification ────────────────────────────────────
@@ -447,6 +450,14 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
         fastify.log.info({ tenantId, phone: phoneValue }, '[Webhook] internal number — skipping');
         return;
       }
+
+      // ── Staff-side block list ────────────────────────────────────────────
+      // Independent of customer opt-out — lets staff block an abusive number
+      // from reaching the bot at all, scoped to this tenant only.
+      if (await isNumberBlocked(db, tenantId, phoneValue)) {
+        fastify.log.info({ tenantId, phone: phoneValue }, '[Webhook] blocked number — dropping');
+        return;
+      }
     }
 
     // For phone contacts: omit name when Meta doesn't send one, so we don't overwrite
@@ -622,6 +633,22 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
     if (msgError) {
       fastify.log.error({ msgError }, 'Failed to store incoming message');
       return;
+    }
+
+    // ── Zero-LLM keyword fast-path ──────────────────────────────────────────
+    // Checked before the AI pipeline (KB lookup, history assembly, model call)
+    // so a literal match skips the model entirely — saves latency and quota.
+    if (incoming.text) {
+      const canned = await matchAutoReply(db, tenantId, productType, incoming.text);
+      if (canned) {
+        await db.from('messages').insert({ conversation_id: conversation.id, role: 'assistant', content: canned });
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to:   incoming.from,
+          text: canned,
+        });
+        return;
+      }
     }
 
     // Classify message kind (non-blocking) — human_reply / auto_reply / opt_out / unrelated
@@ -1111,6 +1138,7 @@ Which branch works best for you?
         contactMemory,
         llmOverride,
         TIER_MAX_TOKENS[reasoningTier],
+        { tenantId, productSlug: productType },
       );
     } catch (aiErr) {
       const errMsg = aiErr instanceof Error ? aiErr.message : String(aiErr);
@@ -1127,6 +1155,7 @@ Which branch works best for you?
             contactMemory,
             llmOverride.model ? { model: llmOverride.model } : undefined,
             TIER_MAX_TOKENS[reasoningTier],
+            { tenantId, productSlug: productType },
           );
         } catch (fallbackErr) {
           fastify.log.error({ fallbackErr: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr), tenantId }, '[Webhook] Platform key fallback also failed');
@@ -1627,6 +1656,7 @@ Which branch works best for you?
       if (isConfirmOrder) {
         const result = await confirmOrderFromCart(db, tenantId, contactData.id, conversation.id);
         if (result.ok) {
+          dispatchWebhook(tenantId, 'order.created', { orderId: result.orderId, orderRef: result.orderRef, totalPaise: result.totalPaise, source: 'whatsapp_bot' });
           const msg = result.linkUrl
             ? `🧾 *Order Confirmed — ${result.orderRef}*\n\nTotal: ₹${(result.totalPaise / 100).toFixed(2)}\n\n💳 Pay securely:\n${result.linkUrl}`
             : `🧾 *Order Confirmed — ${result.orderRef}*\n\nTotal: ₹${(result.totalPaise / 100).toFixed(2)}\n\nOur team will reach out shortly to arrange payment.`;

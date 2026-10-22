@@ -26,6 +26,11 @@ import { getBotToolsAction } from '@/app/actions/bot-tools';
 import { BotsTabContent } from '@/components/dashboard/BotsTabContent';
 import { BranchManagerEditor } from '@/components/dashboard/BranchManagerEditor';
 import type { BranchInput } from '@/app/actions/whatsapp-numbers';
+import { BlockedNumbersManager } from '@/components/dashboard/BlockedNumbersManager';
+import { AutoRepliesManager } from '@/components/dashboard/AutoRepliesManager';
+import { OutboundWebhooksManager } from '@/components/dashboard/OutboundWebhooksManager';
+import type { BlockedNumber, AutoReply } from '@/app/actions/automation';
+import type { OutboundWebhook } from '@/app/actions/webhooks';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,6 +84,8 @@ const TABS = [
   { key: 'bots',         label: 'Bots'          },
   { key: 'team',         label: 'Team'          },
   { key: 'models',       label: 'AI Models'     },
+  { key: 'automation',   label: 'Automation'    },
+  { key: 'webhooks',     label: 'Webhooks'      },
   { key: 'notifications',label: 'Notifications' },
 ] as const;
 
@@ -540,6 +547,51 @@ export default async function SettingsPage({
               <PersonaEditor activeSlugs={activeSlugs} personas={personas} />
             </div>
           )}
+        </div>
+      </SettingsShell>
+    );
+  }
+
+  // ── Automation data ──────────────────────────────────────────────────────────
+  if (activeTab === 'automation') {
+    const [{ data: blockedRows }, { data: autoReplyRows }, { data: automationProducts }] = await Promise.all([
+      admin.from('blocked_numbers').select('id, phone, reason, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
+      admin.from('auto_replies').select('id, product_slug, keyword, match_type, reply_text, active, sort_order, created_at').eq('tenant_id', tenantId).order('sort_order', { ascending: true }),
+      admin.from('tenant_products').select('product_type').eq('tenant_id', tenantId).eq('active', true),
+    ]);
+
+    return (
+      <SettingsShell activeTab={activeTab}>
+        <div className="space-y-5">
+          <DashboardCollapsibleSection icon={<MessageSquare size={16} />} title="Auto-Replies" hint="Zero-AI keyword fast-path. A match replies instantly and skips the model call entirely.">
+            <AutoRepliesManager
+              initialRules={(autoReplyRows ?? []) as AutoReply[]}
+              activeSlugs={(automationProducts ?? []).map((p: { product_type: string }) => p.product_type)}
+            />
+          </DashboardCollapsibleSection>
+
+          <DashboardCollapsibleSection icon={<ShieldOff size={16} />} title="Blocked Numbers" hint="Staff-side block list — independent of customer opt-out. Drops messages from a specific number silently.">
+            <BlockedNumbersManager initialNumbers={(blockedRows ?? []) as BlockedNumber[]} />
+          </DashboardCollapsibleSection>
+        </div>
+      </SettingsShell>
+    );
+  }
+
+  // ── Webhooks data ────────────────────────────────────────────────────────────
+  if (activeTab === 'webhooks') {
+    const { data: webhookRows } = await admin
+      .from('outbound_webhooks')
+      .select('id, url, event_types, active, created_at')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: true });
+
+    return (
+      <SettingsShell activeTab={activeTab}>
+        <div className="space-y-5">
+          <DashboardCollapsibleSection icon={<Link2 size={16} />} title="Outbound Webhooks" hint="Notify your own systems in real time when orders are created, paid, or change status.">
+            <OutboundWebhooksManager initialWebhooks={(webhookRows ?? []) as OutboundWebhook[]} />
+          </DashboardCollapsibleSection>
         </div>
       </SettingsShell>
     );

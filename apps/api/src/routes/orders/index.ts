@@ -8,6 +8,7 @@ import { WhatsAppGateway } from '../../services/whatsapp/gateway.js';
 import { generateAndSendInvoice } from '../../services/invoice/generator.js';
 import type { WhatsAppProvider } from '@alphabot/shared';
 import { requireAuth } from '../../middleware/auth.js';
+import { dispatchWebhook } from '../../lib/dispatch-webhook.js';
 
 type Db = ReturnType<typeof getServerClient>;
 
@@ -190,6 +191,7 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
       .single();
 
     if (error) return reply.status(500).send({ error: error.message });
+    dispatchWebhook(request.tenantId, 'order.status_changed', { orderId: request.params.id, status: request.body.status });
     return reply.send({ order: data });
   });
 
@@ -316,6 +318,8 @@ export async function easebuzzCallbackRoute(fastify: FastifyInstance): Promise<v
         const orderRow   = order as unknown as { total: number; total_paise: number | null; order_ref: string | null; source?: string };
         const isRestaurantOrder = orderRow.source === 'whatsapp_bot';
         const amountDisplay = orderRow.total_paise != null ? (orderRow.total_paise / 100) : orderRow.total;
+
+        dispatchWebhook(tenantId, 'order.paid', { orderId: payment.order_id, orderRef: orderRow.order_ref, totalPaise: orderRow.total_paise ?? Math.round(orderRow.total * 100) });
 
         const wn = await resolveOrderWhatsAppNumber(db, tenantId, isRestaurantOrder ? 'restaurant_bot' : 'lifecycle_bot');
 

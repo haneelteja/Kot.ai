@@ -24,6 +24,27 @@ export interface CompletionResult {
   costInr:      number;
 }
 
+// Free models tried in order when routed to OpenRouter with no explicit model
+// override — different upstream providers, so one provider's 429 (shared free
+// pool exhausted) doesn't take the whole fallback chain down.
+const OPENROUTER_FALLBACK_MODELS = [
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-3.5-lightning:free',
+  'liquid/lfm-2.5-2.6b:free',
+] as const;
+
+/**
+ * Resolve the provider to use when no explicit override is given — defaults
+ * to Anthropic when ANTHROPIC_API_KEY is set (existing behaviour), otherwise
+ * falls back to OpenRouter if a key is available for it, rather than always
+ * defaulting to Anthropic and failing outright with no key configured.
+ */
+function defaultProvider(): string {
+  if (process.env['ANTHROPIC_API_KEY']) return 'anthropic';
+  if (process.env['OPENROUTER_API_KEY']) return 'openrouter';
+  return 'anthropic';
+}
+
 // Detect context-length overflow errors across all supported providers.
 function isContextOverflow(err: unknown): boolean {
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
@@ -44,9 +65,12 @@ export async function routedChatCompletion(params: {
   override?:   LlmOverride;
 }): Promise<CompletionResult> {
   const { messages, system, max_tokens = 512, override } = params;
-  const provider = override?.provider ?? 'anthropic';
-  const model    = override?.model    ?? REPLY_MODEL;
-  const apiKey   = override?.apiKey;
+  const provider = override?.provider ?? defaultProvider();
+  // REPLY_MODEL is an Anthropic model id — only use it as the default when we
+  // actually resolved to Anthropic. Auto-fallback to OpenRouter needs its own
+  // default model id (handled per-call in the openrouter branch below).
+  const model  = override?.model ?? (provider === 'anthropic' ? REPLY_MODEL : undefined);
+  const apiKey = override?.apiKey;
 
   // Inner call — provider dispatch with the given message list.
   // Extracted so the overflow retry can call it with a trimmed list.
@@ -54,7 +78,7 @@ export async function routedChatCompletion(params: {
     switch (provider) {
       // ── Anthropic native API ──────────────────────────────────────────────
       case 'anthropic':
-        return anthropicCompletion({ model, messages: msgs, system, max_tokens, apiKey });
+        return anthropicCompletion({ model: model ?? REPLY_MODEL, messages: msgs, system, max_tokens, apiKey });
 
       // ── OpenAI-compatible (OpenAI direct, OpenRouter, Custom endpoint) ────
       case 'openai':
@@ -85,12 +109,30 @@ export async function routedChatCompletion(params: {
           headers['X-Title']      = 'Alphabot';
         }
 
-        const res = await fetch(`${baseUrl}/chat/completions`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ model, messages: openaiMessages, max_tokens }),
-          signal: AbortSignal.timeout(25_000),
-        });
+        // No explicit model + OpenRouter → try the free fallback chain (one
+        // model per upstream provider, so a single 429'd provider doesn't
+        // block the whole chain). Otherwise there's exactly one model to try.
+        const modelsToTry = model
+          ? [model]
+          : provider === 'openrouter'
+            ? [...OPENROUTER_FALLBACK_MODELS]
+            : (() => { throw new Error(`No model specified for provider: ${provider}`); })();
+
+        let res: Response | null = null;
+        let lastErrText = '';
+        for (const candidateModel of modelsToTry) {
+          res = await fetch(`${baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ model: candidateModel, messages: openaiMessages, max_tokens }),
+            signal: AbortSignal.timeout(25_000),
+          });
+          if (res.ok) break;
+          if (res.status !== 429 || modelsToTry.length === 1) break;
+          lastErrText = await res.text();
+          res = null;
+        }
+        if (!res) throw new Error(`${provider} API error 429 (all fallback models exhausted): ${lastErrText}`);
 
         if (!res.ok) {
           const body = await res.text();
@@ -129,7 +171,7 @@ export async function routedChatCompletion(params: {
           });
         }
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model ?? REPLY_MODEL}:generateContent?key=${geminiKey}`;
         const res = await fetch(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -163,13 +205,13 @@ export async function routedChatCompletion(params: {
 
       default:
         // Unknown provider — fall back to Anthropic env key
-        return anthropicCompletion({ model, messages: msgs, system, max_tokens, apiKey });
+        return anthropicCompletion({ model: model ?? REPLY_MODEL, messages: msgs, system, max_tokens, apiKey });
     }
   }
 
   // Attach cost to a raw CompletionResult (which lacks costInr).
   function withCost(r: Omit<CompletionResult, 'costInr'>): CompletionResult {
-    return { ...r, costInr: calcCostInr(r.inputTokens, r.outputTokens, model) };
+    return { ...r, costInr: calcCostInr(r.inputTokens, r.outputTokens, model ?? REPLY_MODEL) };
   }
 
   // First attempt with full message list.

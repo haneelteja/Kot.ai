@@ -4,12 +4,14 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Copy, Check, ExternalLink, Info } from 'lucide-react';
 import { addTenantWhatsAppNumberAction } from '@/app/actions/tenant-products';
 
-type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot';
+type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot' | 'appointment_bot' | 'restaurant_bot';
 
 const BOT_OPTIONS: { value: ProductType; label: string }[] = [
-  { value: 'support_bot',   label: 'Support Bot' },
-  { value: 'sales_bot',     label: 'Sales Bot' },
-  { value: 'lifecycle_bot', label: 'Lifecycle Bot' },
+  { value: 'support_bot',     label: 'Support Bot' },
+  { value: 'sales_bot',       label: 'Sales Bot' },
+  { value: 'lifecycle_bot',   label: 'Lifecycle Bot' },
+  { value: 'appointment_bot', label: 'Appointment Bot' },
+  { value: 'restaurant_bot',  label: 'Restaurant Bot' },
 ];
 
 function CopyButton({ text }: { text: string }) {

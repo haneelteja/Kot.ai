@@ -5,7 +5,7 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { getSession }             from '@/lib/session';
 import { randomUUID }             from 'crypto';
 
-type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot';
+type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot' | 'appointment_bot' | 'restaurant_bot';
 type WaProvider  = 'meta_cloud' | 'twilio' | 'interakt' | 'wati' | 'gupshup';
 
 const DEFAULT_BOT_CONFIG = {

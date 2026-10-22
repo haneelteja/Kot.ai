@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { X, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import { updateWhatsAppNumberAction, updateRoutingConfigAction } from '@/app/actions/whatsapp-numbers';
 
-type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot' | 'appointment_bot';
+type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot' | 'appointment_bot' | 'restaurant_bot';
 
 const BOT_OPTIONS: { value: ProductType; label: string }[] = [
   { value: 'support_bot',     label: 'Support Bot' },
   { value: 'sales_bot',       label: 'Sales Bot' },
   { value: 'appointment_bot', label: 'Appointment Bot' },
   { value: 'lifecycle_bot',   label: 'Lifecycle Bot' },
+  { value: 'restaurant_bot',  label: 'Restaurant Bot' },
 ];
 
 const DEFAULT_MENU_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const DEFAULT_MENU_LABELS: Record<string, string> = {
   sales_bot:       'Products & Sales',
   appointment_bot: 'Book an Appointment',
   lifecycle_bot:   'My Orders & Account',
+  restaurant_bot:  'Order Food',
 };
 
 interface RoutingConfig {

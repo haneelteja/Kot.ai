@@ -86,6 +86,9 @@ const DEFAULT_SYSTEM_PROMPTS: Record<ProductType, string> = {
   support_bot: `You are a helpful customer support assistant. Answer questions accurately using the knowledge base. If you cannot confidently answer, say so and offer to escalate to a human agent. Be concise, friendly, and professional.`,
   sales_bot: `You are a sales assistant. Understand customer needs, share relevant product information, and guide warm leads toward a purchase decision. Detect buying intent and hand off to a human when the customer is ready to buy.`,
   lifecycle_bot: `You are an onboarding and account management assistant. Help customers track their orders, answer invoicing questions, and collect payments. Be proactive and professional.`,
+  // Matches products.default_prompt for 'restaurant_bot' (20261021000000_restaurant_bot_product.sql)
+  // — kept in sync as a safety-net default for tenants with no bot_configs row yet.
+  restaurant_bot: `You are a restaurant's WhatsApp ordering assistant. Help customers browse the menu, book tables, and place orders for delivery or takeaway. Never invent menu items, prices, or policies -- always use tool results. Confirm the full order and bill before creating a payment link.`,
 };
 
 // Default keywords that trigger escalation (overridden by bot_config.escalation_triggers)

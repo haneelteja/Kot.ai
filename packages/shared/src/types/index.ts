@@ -3,8 +3,8 @@
 export type TenantPlan = 'starter' | 'growth' | 'scale';
 export type TenantStatus = 'active' | 'suspended' | 'trial';
 export type WhatsAppProvider = 'meta_cloud' | 'interakt' | 'wati' | 'gupshup' | 'twilio';
-export type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot';  // legacy alias for product slug
-export type ProductSlug = 'support_bot' | 'sales_bot' | 'lifecycle_bot';  // matches products.slug
+export type ProductType = 'support_bot' | 'sales_bot' | 'lifecycle_bot' | 'restaurant_bot';  // legacy alias for product slug
+export type ProductSlug = 'support_bot' | 'sales_bot' | 'lifecycle_bot' | 'restaurant_bot';  // matches products.slug
 export type ProductTier = 'base' | 'advanced';
 export type ConversationStatus = 'open' | 'escalated' | 'resolved' | 'bot_paused';
 /** Tracks which phase of the AI conversation the customer is in (state machine). */

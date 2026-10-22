@@ -986,7 +986,7 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
           ? cart.items.map(i => `  ${i.quantity}× ${i.name} — ₹${(i.lineTotalPaise / 100).toFixed(2)}`).join('\n') +
             `\n  Total: ₹${(cart.totalPaise / 100).toFixed(2)}`
           : '  (empty)';
-        systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nSince a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself — do not rely on the tag alone. Never quote a price or item you did not see in the MENU list above.`;
+        systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nCRITICAL: if you tell the customer you added, removed, or changed something in their order, you MUST include the matching tag in that same reply — the tag is what actually performs the action; saying it in words does nothing by itself. Never say "I've added X" or similar without also appending [ADD_ITEM:...] in the same message. Since a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself in addition to the tag — never the tag alone, and never the words alone. Never quote a price or item you did not see in the MENU list above.`;
       }
     }
 
@@ -1593,6 +1593,29 @@ Which branch works best for you?
     // injection — this turn's reply text was already generated above, same
     // as every other marker in this file (e.g. [STAGE:x]).
     if (productType === 'restaurant_bot' && toolEnabled(allowedTools, TOOL_IDS.MENU_ORDERING)) {
+      // Recovery for the worse failure mode: the model claims in prose that
+      // it added an item ("I've added the Chicken Biryani to your order")
+      // without emitting ANY add-item marker, malformed or otherwise — so
+      // there's nothing to parse at all, yet the customer was just told the
+      // item was added. Verified live: this leaves no cart row whatsoever
+      // while the customer believes they have one. If the visible reply
+      // contains a confident "added" confirmation and exactly one menu item
+      // name is unambiguously mentioned, add it for real so reality matches
+      // what the customer was told — only when there's no ambiguity.
+      if (
+        addItemMatches.length === 0 &&
+        /\badded\b[\s\S]{0,60}\b(order|cart)\b/i.test(cleanContent)
+      ) {
+        const menuForRecovery = await getMenu(tenantId);
+        const mentioned = menuForRecovery.filter(m => cleanContent.toLowerCase().includes(m.name.toLowerCase()));
+        if (mentioned.length === 1) {
+          fastify.log.warn({ itemId: mentioned[0]!.id, itemName: mentioned[0]!.name }, '[Webhook] model claimed an item was added with no marker at all — recovering by name match');
+          void addItemToCart(db, tenantId, contactData.id, mentioned[0]!.id, 1);
+        } else {
+          fastify.log.warn({ candidateCount: mentioned.length, rawSnippet: cleanContent.slice(0, 200) }, '[Webhook] model claimed an item was added with no marker and no unambiguous name match — cart NOT updated, customer may have been told something false');
+        }
+      }
+
       for (const m of addItemMatches) {
         void addItemToCart(db, tenantId, contactData.id, m[1]!, Number(m[2]));
       }

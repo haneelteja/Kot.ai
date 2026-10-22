@@ -138,7 +138,12 @@ export async function routedChatCompletion(params: {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({ model: candidateModel, messages: openaiMessages, max_tokens }),
-                signal: AbortSignal.timeout(25_000),
+                // Shorter than before (was 25s) — with up to 3 models x 2 passes,
+                // a 25s timeout per attempt meant a 150s worst case. Free models
+                // that are actually going to respond usually do so well under
+                // 15s; a model stuck longer than that is better abandoned in
+                // favor of trying the next one than waited out.
+                signal: AbortSignal.timeout(15_000),
               });
 
               if (!res.ok) {

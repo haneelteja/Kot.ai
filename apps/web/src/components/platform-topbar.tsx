@@ -1,7 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronRight, ArrowLeftRight } from 'lucide-react';
 
 const PAGE_TITLES: Record<string, string> = {
   '/platform/clients':       'Clients',
@@ -20,11 +20,14 @@ function getTitle(pathname: string): { section: string; page: string | null } {
 export function PlatformTopbar({
   email,
   name,
+  hasClientAccess = false,
 }: {
   email: string;
   name: string;
+  hasClientAccess?: boolean;
 }) {
   const pathname = usePathname();
+  const router   = useRouter();
   const { section, page } = getTitle(pathname);
   const initial = (name || email)[0]?.toUpperCase() ?? 'P';
 
@@ -43,6 +46,18 @@ export function PlatformTopbar({
       </div>
 
       <div className="flex items-center gap-2.5">
+        {hasClientAccess && (
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard')}
+            className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-brand-strong hover:bg-brand-wash px-2.5 py-1.5 rounded-lg transition-colors"
+            title="Switch to Client Console"
+          >
+            <ArrowLeftRight size={13} />
+            Client Console
+          </button>
+        )}
+
         <div className="w-8 h-8 rounded-full bg-brand-strong flex items-center justify-center text-white text-xs font-bold shadow-sm">
           {initial}
         </div>

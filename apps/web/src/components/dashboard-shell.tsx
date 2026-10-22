@@ -16,6 +16,7 @@ export function DashboardShell({
   isAgency = false,
   activeBots = [],
   tourCompleted = true,
+  hasPlatformAccess = false,
 }: {
   children: React.ReactNode;
   tenantName: string;
@@ -26,6 +27,7 @@ export function DashboardShell({
   isAgency?: boolean;
   activeBots?: ActiveBot[];
   tourCompleted?: boolean;
+  hasPlatformAccess?: boolean;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +52,7 @@ export function DashboardShell({
   return (
     <>
     <GuidedTour initialCompleted={tourCompleted} />
-    <div className="flex h-screen bg-[#f3fdf5] overflow-hidden">
+    <div className="flex h-screen bg-sunken overflow-hidden">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
@@ -90,6 +92,7 @@ export function DashboardShell({
           tenantId={tenantId}
           onMenuClick={() => setSidebarOpen(true)}
           activeBots={activeBots}
+          hasPlatformAccess={hasPlatformAccess}
         />
         <main className="flex-1 overflow-auto">
           {children}

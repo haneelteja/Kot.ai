@@ -16,11 +16,10 @@ export default async function PlatformLayout({
 
   // Use admin client to bypass RLS on platform_users
   const admin = getSupabaseAdminClient();
-  const { data: platformUser } = await admin
-    .from('platform_users')
-    .select('role, name')
-    .eq('user_id', user.id)
-    .maybeSingle();
+  const [{ data: platformUser }, { data: tenantUser }] = await Promise.all([
+    admin.from('platform_users').select('role, name').eq('user_id', user.id).maybeSingle(),
+    admin.from('tenant_users').select('id').eq('user_id', user.id).maybeSingle(),
+  ]);
 
   if (!platformUser) redirect('/login');
 
@@ -31,6 +30,7 @@ export default async function PlatformLayout({
         <PlatformTopbar
           email={user.email ?? ''}
           name={platformUser.name ?? user.email?.split('@')[0] ?? ''}
+          hasClientAccess={!!tenantUser}
         />
         <main className="flex-1 overflow-auto">{children}</main>
       </div>

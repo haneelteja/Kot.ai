@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback, useTransition } from 'react';
-import { Bell, ChevronRight, Menu, Check, CheckCheck, MessageSquare } from 'lucide-react';
+import { Bell, ChevronRight, Menu, Check, CheckCheck, MessageSquare, ArrowLeftRight } from 'lucide-react';
 import { BotSelector } from '@/components/dashboard/BotSelector';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import {
@@ -62,12 +62,14 @@ export function Topbar({
   tenantId,
   onMenuClick,
   activeBots = [],
+  hasPlatformAccess = false,
 }: {
   email:        string;
   tenantName:   string;
   tenantId:     string;
   onMenuClick?: () => void;
   activeBots?:  ActiveBot[];
+  hasPlatformAccess?: boolean;
 }) {
   const pathname = usePathname();
   const router   = useRouter();
@@ -197,6 +199,18 @@ export function Topbar({
       {/* Right actions */}
       <div className="flex items-center gap-2">
         {activeBots.length > 0 && <BotSelector bots={activeBots} />}
+
+        {hasPlatformAccess && (
+          <button
+            type="button"
+            onClick={() => router.push('/platform/clients')}
+            className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-brand-strong hover:bg-brand-wash px-2.5 py-1.5 rounded-lg transition-colors"
+            title="Switch to Platform Console"
+          >
+            <ArrowLeftRight size={13} />
+            Platform Console
+          </button>
+        )}
 
         {/* Bell + dropdown */}
         <div className="relative" ref={dropdownRef}>

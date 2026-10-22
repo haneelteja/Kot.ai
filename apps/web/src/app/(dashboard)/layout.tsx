@@ -31,9 +31,10 @@ const getTenantContext = cache(async () => {
   const rawCfg      = tenantObj?.copilot_config ?? {};
   const copilotEnabled = typeof rawCfg['enabled'] === 'boolean' ? rawCfg['enabled'] : true;
 
-  const [{ data: activeProducts }, { data: tenantMeta }] = await Promise.all([
+  const [{ data: activeProducts }, { data: tenantMeta }, { data: platformUser }] = await Promise.all([
     admin.from('tenant_products').select('product_type, product_slug, instance_name').eq('tenant_id', tenantId).eq('active', true),
     admin.from('tenants').select('is_agency').eq('id', tenantId).single(),
+    admin.from('platform_users').select('id').eq('user_id', user.id).maybeSingle(),
   ]);
 
   const BOT_NAME: Record<string, string> = {
@@ -64,6 +65,7 @@ const getTenantContext = cache(async () => {
     isAgency:        !!(tenantMeta as { is_agency?: boolean } | null)?.is_agency,
     activeBots,
     tourCompleted:   !!(tenantUser as { tour_completed_at?: string | null }).tour_completed_at,
+    hasPlatformAccess: !!platformUser,
   };
 });
 
@@ -124,6 +126,7 @@ export default async function DashboardLayout({
         isAgency={ctx.isAgency}
         activeBots={ctx.activeBots}
         tourCompleted={ctx.tourCompleted}
+        hasPlatformAccess={ctx.hasPlatformAccess}
       >
         {children}
       </DashboardShell>

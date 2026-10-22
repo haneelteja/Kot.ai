@@ -972,8 +972,13 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
         getCartSummary(db, tenantId, contactData.id),
       ]);
       if (menu.length > 0) {
+        // Note: item ids are shown as "id: <uuid>" (NOT "[uuid]") deliberately —
+        // wrapping the id in brackets was observed to make some models copy the
+        // brackets into the literal item_id value and/or confuse them into
+        // emitting their own trained function-call syntax instead of our tag
+        // format (e.g. ADD_ITEM(item_id='[...]') wrapped in tool-call tokens).
         const menuText = menu.map(m =>
-          `• [${m.id}] ${m.name}${m.is_veg ? ' 🟢' : ' 🔴'} — ₹${(m.price_paise / 100).toFixed(2)}` +
+          `• ${m.name} (id: ${m.id})${m.is_veg ? ' 🟢' : ' 🔴'} — ₹${(m.price_paise / 100).toFixed(2)}` +
           `${m.category_name ? ` (${m.category_name})` : ''}${!m.in_stock ? ' [OUT OF STOCK]' : ''}` +
           (m.description ? `\n  ${m.description}` : '')
         ).join('\n');
@@ -981,7 +986,7 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
           ? cart.items.map(i => `  ${i.quantity}× ${i.name} — ₹${(i.lineTotalPaise / 100).toFixed(2)}`).join('\n') +
             `\n  Total: ₹${(cart.totalPaise / 100).toFixed(2)}`
           : '  (empty)';
-        systemPrompt += `\n\n---\nMENU (use the exact [id] in brackets when calling ADD_ITEM/REMOVE_ITEM — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text (these tags are stripped before the customer sees them). Since a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself — do not rely on the tag alone:\n[ADD_ITEM:<item_id>:<qty>] — add qty of a menu item to the cart (adds to existing quantity if already in the cart)\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nNever quote a price or item you did not see in the MENU list above.`;
+        systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nSince a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself — do not rely on the tag alone. Never quote a price or item you did not see in the MENU list above.`;
       }
     }
 
@@ -1171,17 +1176,38 @@ Which branch works best for you?
       : null;
 
     // Restaurant ordering actions — [ADD_ITEM:<uuid>:<qty>], [REMOVE_ITEM:<uuid>], [CLEAR_CART], [CONFIRM_ORDER]
-    const addItemMatches    = [...rawContent.matchAll(/\[ADD_ITEM:([a-f0-9-]{36}):(\d+)\]/g)];
-    const removeItemMatches = [...rawContent.matchAll(/\[REMOVE_ITEM:([a-f0-9-]{36})\]/g)];
-    const isClearCart       = rawContent.includes('[CLEAR_CART]');
-    const isConfirmOrder    = rawContent.includes('[CONFIRM_ORDER]');
-    if (rawContent.includes('ADD_ITEM') && addItemMatches.length === 0) {
-      fastify.log.warn({ rawSnippet: rawContent.slice(-200) }, '[Webhook] model emitted ADD_ITEM but regex found no valid match — malformed marker');
+    // Free-tier models occasionally fall back to their own trained tool-call
+    // syntax instead of our tag format (observed: a model wrapped the call in
+    // <|tool_call_start|> tokens and used ADD_ITEM(item_id='[uuid]', qty=N)
+    // function-call style). Try the strict tag format first; if the keyword
+    // is present but didn't match, fall back to a lenient extraction that
+    // tolerates quotes/parens/extra brackets around the id and qty.
+    const UUID_RE = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+    let addItemMatches    = [...rawContent.matchAll(new RegExp(`\\[ADD_ITEM:(${UUID_RE}):(\\d+)\\]`, 'gi'))];
+    let removeItemMatches = [...rawContent.matchAll(new RegExp(`\\[REMOVE_ITEM:(${UUID_RE})\\]`, 'gi'))];
+
+    if (addItemMatches.length === 0 && /ADD_ITEM/i.test(rawContent)) {
+      const lenient = [...rawContent.matchAll(new RegExp(`ADD_ITEM[\\s\\S]{0,60}?(${UUID_RE})[\\s\\S]{0,30}?(\\d+)`, 'gi'))];
+      if (lenient.length > 0) {
+        addItemMatches = lenient;
+        fastify.log.warn({ rawSnippet: rawContent.slice(-200) }, '[Webhook] ADD_ITEM used non-standard syntax — recovered via lenient fallback parser');
+      } else {
+        fastify.log.warn({ rawSnippet: rawContent.slice(-200) }, '[Webhook] model emitted ADD_ITEM but no id/qty could be recovered — malformed marker');
+      }
     }
+    if (removeItemMatches.length === 0 && /REMOVE_ITEM/i.test(rawContent)) {
+      const lenient = [...rawContent.matchAll(new RegExp(`REMOVE_ITEM[\\s\\S]{0,60}?(${UUID_RE})`, 'gi'))];
+      if (lenient.length > 0) removeItemMatches = lenient;
+    }
+    const isClearCart    = /CLEAR_CART/i.test(rawContent);
+    const isConfirmOrder = /CONFIRM_ORDER/i.test(rawContent);
 
     fastify.log.info({ buttonTemplateName, inlineOptions, signals: newSignals, rawSnippet: rawContent.slice(-120) }, '[Webhook] AI response markers');
 
-    // Strip all control markers before sending to customer
+    // Strip all control markers before sending to customer. Ordering actions
+    // get an extra safety-net pass: even a non-standard/malformed form (tool-
+    // call tokens, function-call syntax) must never reach the customer as
+    // visible garbage, whether or not we managed to parse an action out of it.
     const cleanContent = rawContent
       .replace(/\[SALES_LEAD\]/g, '')
       .replace(/\[SIGNAL:[\w_]+\]/g, '')
@@ -1191,10 +1217,12 @@ Which branch works best for you?
       .replace(/\[ENTITY:[^\]]+\]/g, '')
       .replace(/\[BUTTONS:[^\]]+\]/g, '')
       .replace(/\[OPTIONS:[^\]]+\]/g, '')
-      .replace(/\[ADD_ITEM:[a-f0-9-]{36}:\d+\]/g, '')
-      .replace(/\[REMOVE_ITEM:[a-f0-9-]{36}\]/g, '')
-      .replace(/\[CLEAR_CART\]/g, '')
-      .replace(/\[CONFIRM_ORDER\]/g, '')
+      .replace(/<\|tool_call_start\|>[\s\S]*?<\|tool_call_end\|>/gi, '')
+      .replace(/\[?\b(?:ADD_ITEM|REMOVE_ITEM|CLEAR_CART|CONFIRM_ORDER)\b\([^)]*\)\]?/gi, '')
+      .replace(/\[ADD_ITEM:[^\]]*\]/gi, '')
+      .replace(/\[REMOVE_ITEM:[^\]]*\]/gi, '')
+      .replace(/\[CLEAR_CART\]/gi, '')
+      .replace(/\[CONFIRM_ORDER\]/gi, '')
       .trimEnd();
 
     // Persist stage/entity updates non-blocking (after lock, before reply send)

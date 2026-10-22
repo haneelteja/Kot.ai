@@ -200,6 +200,7 @@ const OPENROUTER_MODELS = [
   'google/gemma-4-31b-it:free',
   'liquid/lfm-2.5-2.6b:free',
   'poolside/laguna-s-2.1:free',
+  'recursive/flint-v1.0:free',
 ] as const;
 
 type OpenAiMessage =

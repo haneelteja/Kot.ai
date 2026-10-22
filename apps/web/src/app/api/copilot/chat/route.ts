@@ -190,7 +190,14 @@ async function callAnthropic(
 // message history to/from OpenAI's chat-completions + function-calling format so
 // the rest of this route (tool execution, history persistence) stays unchanged.
 
-const OPENROUTER_MODEL = 'google/gemma-4-31b-it:free';
+// Tried in order — OpenRouter's free tier is a shared pool per upstream provider,
+// so one model (e.g. Google AI Studio's gemma) getting 429'd doesn't take the
+// whole fallback down; the next entry is served by a different upstream.
+const OPENROUTER_MODELS = [
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-3.5-lightning:free',
+  'liquid/lfm-2.5-2.6b:free',
+] as const;
 
 type OpenAiMessage =
   | { role: 'system'; content: string }
@@ -240,20 +247,30 @@ async function callOpenRouter(
   tools: AnthropicTool[],
 ): Promise<{ content: ContentBlock[] }> {
   const body: Record<string, unknown> = {
-    model: OPENROUTER_MODEL,
     messages: toOpenAiMessages(systemPrompt, messages),
   };
   if (tools.length > 0) body['tools'] = toOpenAiTools(tools);
 
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey.trim()}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
+  let res: Response | null = null;
+  let lastError = '';
+  for (const model of OPENROUTER_MODELS) {
+    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey.trim()}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ ...body, model }),
+    });
+    if (res.ok) break;
+    // 429 = upstream-provider-shared-pool exhausted — try the next model/provider.
+    // Any other failure is model/account-specific and won't improve by retrying.
+    if (res.status !== 429) break;
+    lastError = `OpenRouter 429 on ${model}: ${await res.text()}`;
+    res = null;
+  }
 
+  if (!res) throw new Error(lastError || 'OpenRouter: all fallback models exhausted');
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`OpenRouter ${res.status}: ${text}`);

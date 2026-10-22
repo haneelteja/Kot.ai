@@ -141,6 +141,9 @@ export function OutboundWebhooksManager({
                         <XCircle size={12} className="text-amber-600 shrink-0" />
                       )}
                       <span className="font-mono text-muted-foreground">{d.event_type}</span>
+                      {d.attempt > 1 && (
+                        <span className="text-[10px] px-1 py-0.5 rounded bg-sunken text-muted-foreground">retry {d.attempt - 1}</span>
+                      )}
                       <span className="text-muted-foreground">
                         {d.status_code ?? '—'}{d.response_time_ms != null ? ` · ${d.response_time_ms}ms` : ''}
                       </span>

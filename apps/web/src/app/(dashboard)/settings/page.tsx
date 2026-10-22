@@ -29,8 +29,10 @@ import type { BranchInput } from '@/app/actions/whatsapp-numbers';
 import { BlockedNumbersManager } from '@/components/dashboard/BlockedNumbersManager';
 import { AutoRepliesManager } from '@/components/dashboard/AutoRepliesManager';
 import { OutboundWebhooksManager } from '@/components/dashboard/OutboundWebhooksManager';
+import { ApiKeysManager } from '@/components/dashboard/ApiKeysManager';
 import type { BlockedNumber, AutoReply } from '@/app/actions/automation';
 import type { OutboundWebhook } from '@/app/actions/webhooks';
+import type { ApiKey } from '@/app/actions/api-keys';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,7 +87,7 @@ const TABS = [
   { key: 'team',         label: 'Team'          },
   { key: 'models',       label: 'AI Models'     },
   { key: 'automation',   label: 'Automation'    },
-  { key: 'webhooks',     label: 'Webhooks'      },
+  { key: 'webhooks',     label: 'Integrations'  },
   { key: 'notifications',label: 'Notifications' },
 ] as const;
 
@@ -578,19 +580,22 @@ export default async function SettingsPage({
     );
   }
 
-  // ── Webhooks data ────────────────────────────────────────────────────────────
+  // ── Integrations data (outbound webhooks + inbound API keys) ─────────────────
   if (activeTab === 'webhooks') {
-    const { data: webhookRows } = await admin
-      .from('outbound_webhooks')
-      .select('id, url, event_types, active, created_at')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: true });
+    const [{ data: webhookRows }, { data: apiKeyRows }] = await Promise.all([
+      admin.from('outbound_webhooks').select('id, url, event_types, active, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
+      admin.from('api_keys').select('id, name, key_prefix, scopes, last_used_at, created_at').eq('tenant_id', tenantId).is('revoked_at', null).order('created_at', { ascending: true }),
+    ]);
 
     return (
       <SettingsShell activeTab={activeTab}>
         <div className="space-y-5">
           <DashboardCollapsibleSection icon={<Link2 size={16} />} title="Outbound Webhooks" hint="Notify your own systems in real time when orders are created, paid, or change status.">
             <OutboundWebhooksManager initialWebhooks={(webhookRows ?? []) as OutboundWebhook[]} />
+          </DashboardCollapsibleSection>
+
+          <DashboardCollapsibleSection icon={<Wrench size={16} />} title="API Keys" hint="Let your own systems call the KOT.ai API directly, instead of using the dashboard.">
+            <ApiKeysManager initialKeys={(apiKeyRows ?? []) as ApiKey[]} />
           </DashboardCollapsibleSection>
         </div>
       </SettingsShell>

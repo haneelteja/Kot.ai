@@ -1,6 +1,6 @@
 'use server';
 
-import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled';
@@ -12,114 +12,16 @@ export interface OrderItem {
   sku?: string;
 }
 
-// ── WhatsApp order status notification ───────────────────────────────────────
-// Fired after a status update succeeds. Fire-and-forget — never blocks the
-// response; errors are logged but do not propagate to the caller.
-
-const STATUS_MESSAGES: Partial<Record<OrderStatus, (name: string, shortId: string, itemsSummary: string, total: number) => string>> = {
-  confirmed: (name, shortId, summary, total) =>
-    `✅ *Order Confirmed!*\n\nHi ${name}! Your order #${shortId} has been confirmed and is being prepared.\n\n📦 ${summary}\n💰 Total: ₹${total.toFixed(2)}\n\nWe'll notify you when it's dispatched. 🙏`,
-  dispatched: (name, shortId, summary) =>
-    `🚚 *Your Order Is On Its Way!*\n\nHi ${name}! Your order #${shortId} has been dispatched.\n\n📦 ${summary}\n\nExpected delivery in 2–3 business days. We'll notify you once it arrives! 📬`,
-  delivered: (name, shortId) =>
-    `📦 *Order Delivered!*\n\nHi ${name}! Your order #${shortId} has been delivered. 🎉\n\nThank you for choosing us! If you have any questions, just reply to this message.`,
-  cancelled: (name, shortId) =>
-    `❌ *Order Cancelled*\n\nHi ${name}. Your order #${shortId} has been cancelled. If this was unexpected or you need help, please reply to this message.`,
-};
-
-async function sendOrderStatusNotification(
-  orderId: string,
-  status: OrderStatus,
-): Promise<void> {
-  const buildFn = STATUS_MESSAGES[status];
-  if (!buildFn) return;
-
-  const admin = getSupabaseAdminClient();
-
-  const { data: order } = await admin
-    .from('orders')
-    .select('tenant_id, total, items_json, source, contacts(phone, name)')
-    .eq('id', orderId)
-    .single();
-
-  if (!order) return;
-
-  const contact = order.contacts as unknown as { phone: string | null; name: string | null } | null;
-  if (!contact?.phone) return;
-
-  // Prefer the number for the bot that actually created this order, falling
-  // back to any active number for the tenant — a tenant may only have a
-  // restaurant_bot or lifecycle_bot number configured, and nothing stops a
-  // tenant running both bot types at once.
-  const preferredSlug = (order as unknown as { source?: string }).source === 'whatsapp_bot' ? 'restaurant_bot' : 'lifecycle_bot';
-  const { data: preferredWn } = await admin
-    .from('whatsapp_numbers')
-    .select('config_json, provider')
-    .eq('tenant_id', order.tenant_id)
-    .eq('product_slug', preferredSlug)
-    .eq('active', true)
-    .maybeSingle();
-
-  const wn = preferredWn ?? (await admin
-    .from('whatsapp_numbers')
-    .select('config_json, provider')
-    .eq('tenant_id', order.tenant_id)
-    .eq('active', true)
-    .limit(1)
-    .maybeSingle()).data;
-
-  if (!wn) return;
-
-  const shortId = orderId.slice(0, 8).toUpperCase();
-  const items = (order.items_json as Array<{ name: string; quantity: number }>) ?? [];
-  const itemsSummary = items.slice(0, 3).map(i => `${i.name} ×${i.quantity}`).join(', ')
-    + (items.length > 3 ? ` +${items.length - 3} more` : '');
-  const contactName = contact.name?.split(' ')[0] ?? 'there';
-  const total = Number(order.total);
-
-  const text = buildFn(contactName, shortId, itemsSummary, total);
-
-  if (wn.provider === 'meta_cloud') {
-    const cfg = wn.config_json as { phone_number_id: string; access_token: string };
-    await fetch(`https://graph.facebook.com/v22.0/${cfg.phone_number_id}/messages`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${cfg.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: contact.phone.replace(/\s+/g, ''),
-        type: 'text',
-        text: { body: text },
-      }),
-    });
-  } else if (wn.provider === 'twilio') {
-    const cfg = wn.config_json as { phone_number: string; credentials: string };
-    const [credsPart] = cfg.credentials.split('|');
-    const colonIdx   = credsPart!.indexOf(':');
-    const accountSid = credsPart!.slice(0, colonIdx);
-    const authToken  = credsPart!.slice(colonIdx + 1);
-
-    await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
-        },
-        body: new URLSearchParams({
-          From: `whatsapp:${cfg.phone_number}`,
-          To:   `whatsapp:${contact.phone}`,
-          Body: text,
-        }).toString(),
-      },
-    );
-  }
+// Both actions below call apps/api rather than writing to Supabase directly —
+// that's where the WhatsApp status-notification copy and the order.* outbound
+// webhook dispatch live (apps/api/src/routes/orders/index.ts), so routing
+// through it keeps notification + webhook logic in one place instead of
+// duplicating it here.
+async function getAccessToken(): Promise<string | null> {
+  const supabase = await getSupabaseServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
 }
-
-// ── Actions ───────────────────────────────────────────────────────────────────
 
 export async function createOrderAction(
   tenantId: string,
@@ -133,10 +35,13 @@ export async function createOrderAction(
   const apiBase = process.env['NEXT_PUBLIC_API_URL'] ?? '';
   if (!apiBase) return { error: 'API URL not configured' };
 
+  const token = await getAccessToken();
+  if (!token) return { error: 'Not authenticated' };
+
   try {
     const res = await fetch(`${apiBase}/api/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ tenantId, contactId, conversationId, items, total, sendLink, provider }),
     });
 
@@ -154,19 +59,25 @@ export async function updateOrderStatusAction(
   orderId: string,
   status: OrderStatus,
 ): Promise<{ ok: true } | { error: string }> {
-  const admin = getSupabaseAdminClient();
-  const { error } = await admin
-    .from('orders')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', orderId);
+  const apiBase = process.env['NEXT_PUBLIC_API_URL'] ?? '';
+  if (!apiBase) return { error: 'API URL not configured' };
 
-  if (error) return { error: error.message };
+  const token = await getAccessToken();
+  if (!token) return { error: 'Not authenticated' };
+
+  try {
+    const res = await fetch(`${apiBase}/api/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await res.json() as { error?: string };
+    if (!res.ok || data.error) return { error: data.error ?? 'Failed to update status' };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Network error' };
+  }
+
   revalidatePath('/orders');
-
-  // Notify customer via WhatsApp — fire and forget
-  void sendOrderStatusNotification(orderId, status).catch(err =>
-    console.error('[OrderNotify] WhatsApp notification failed:', err),
-  );
-
   return { ok: true };
 }

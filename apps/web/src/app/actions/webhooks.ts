@@ -17,6 +17,7 @@ export type WebhookDelivery = {
   id:               string;
   webhook_id:       string;
   event_type:       string;
+  attempt:          number;
   status_code:      number | null;
   response_time_ms: number | null;
   error_message:    string | null;
@@ -121,7 +122,7 @@ export async function listWebhookDeliveries(webhookId: string): Promise<{ delive
 
   const { data, error } = await admin
     .from('outbound_webhook_deliveries')
-    .select('id, webhook_id, event_type, status_code, response_time_ms, error_message, created_at')
+    .select('id, webhook_id, event_type, attempt, status_code, response_time_ms, error_message, created_at')
     .eq('webhook_id', webhookId)
     .order('created_at', { ascending: false })
     .limit(20);

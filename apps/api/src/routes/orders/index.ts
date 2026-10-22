@@ -7,7 +7,7 @@ import {
 import { WhatsAppGateway } from '../../services/whatsapp/gateway.js';
 import { generateAndSendInvoice } from '../../services/invoice/generator.js';
 import type { WhatsAppProvider } from '@alphabot/shared';
-import { requireAuth } from '../../middleware/auth.js';
+import { requireAuth, requireScope } from '../../middleware/auth.js';
 import { dispatchWebhook } from '../../lib/dispatch-webhook.js';
 
 type Db = ReturnType<typeof getServerClient>;
@@ -42,6 +42,56 @@ async function resolveOrderWhatsAppNumber(
   return fallback as { config_json: Record<string, unknown>; provider: string } | null;
 }
 
+type OrderStatus = 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled';
+
+// Moved here from apps/web/src/app/actions/orders.ts — that copy wrote
+// straight to Supabase and duplicated resolveOrderWhatsAppNumber's fallback
+// logic with its own hardcoded variant. Consolidating here means the
+// dashboard's status-update button (now calling PATCH /:id/status instead of
+// writing the DB directly) gets this notification AND the order.status_changed
+// webhook dispatch from one place, instead of two code paths drifting apart.
+const STATUS_MESSAGES: Partial<Record<OrderStatus, (name: string, shortId: string, itemsSummary: string, total: number) => string>> = {
+  confirmed: (name, shortId, summary, total) =>
+    `✅ *Order Confirmed!*\n\nHi ${name}! Your order #${shortId} has been confirmed and is being prepared.\n\n📦 ${summary}\n💰 Total: ₹${total.toFixed(2)}\n\nWe'll notify you when it's dispatched. 🙏`,
+  dispatched: (name, shortId, summary) =>
+    `🚚 *Your Order Is On Its Way!*\n\nHi ${name}! Your order #${shortId} has been dispatched.\n\n📦 ${summary}\n\nExpected delivery in 2–3 business days. We'll notify you once it arrives! 📬`,
+  delivered: (name, shortId) =>
+    `📦 *Order Delivered!*\n\nHi ${name}! Your order #${shortId} has been delivered. 🎉\n\nThank you for choosing us! If you have any questions, just reply to this message.`,
+  cancelled: (name, shortId) =>
+    `❌ *Order Cancelled*\n\nHi ${name}. Your order #${shortId} has been cancelled. If this was unexpected or you need help, please reply to this message.`,
+};
+
+async function sendOrderStatusWhatsApp(db: Db, orderId: string, status: OrderStatus): Promise<void> {
+  const buildFn = STATUS_MESSAGES[status];
+  if (!buildFn) return;
+
+  const { data: order } = await db
+    .from('orders')
+    .select('tenant_id, total, items_json, source, contact:contacts(phone, name)')
+    .eq('id', orderId)
+    .single();
+  if (!order) return;
+
+  const contact = (order as unknown as { contact: { phone: string | null; name: string | null } | null }).contact;
+  if (!contact?.phone) return;
+
+  const preferredSlug = (order as unknown as { source?: string }).source === 'whatsapp_bot' ? 'restaurant_bot' : 'lifecycle_bot';
+  const wn = await resolveOrderWhatsAppNumber(db, (order as { tenant_id: string }).tenant_id, preferredSlug);
+  if (!wn) return;
+
+  const shortId      = orderId.slice(0, 8).toUpperCase();
+  const items         = ((order as { items_json: Array<{ name: string; quantity: number }> }).items_json) ?? [];
+  const itemsSummary  = items.slice(0, 3).map(i => `${i.name} ×${i.quantity}`).join(', ')
+    + (items.length > 3 ? ` +${items.length - 3} more` : '');
+  const contactName  = contact.name?.split(' ')[0] ?? 'there';
+  const total         = Number((order as { total: number }).total);
+
+  const text    = buildFn(contactName, shortId, itemsSummary, total);
+  const config  = wn.config_json as { phone_number_id: string; access_token: string };
+  const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+  await gateway.sendMessage(config.phone_number_id, config.access_token, { type: 'text', to: contact.phone, text });
+}
+
 export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
   const db = getServerClient();
 
@@ -55,7 +105,7 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
     total:          number;
     sendLink?:      boolean;
     provider?:      'easebuzz';
-  } }>('/', async (request, reply) => {
+  } }>('/', { preHandler: requireScope('orders:write') }, async (request, reply) => {
     const tenantId = request.tenantId;
     const { contactId, conversationId, items, total, sendLink = true, provider = 'easebuzz' } = request.body;
 
@@ -178,7 +228,7 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
   });
 
   // ─── PATCH /api/orders/:id/status ────────────────────────────────────────
-  fastify.patch<{ Params: { id: string }; Body: { status: string } }>('/:id/status', async (request, reply) => {
+  fastify.patch<{ Params: { id: string }; Body: { status: string } }>('/:id/status', { preHandler: requireScope('orders:write') }, async (request, reply) => {
     const valid = ['pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
     if (!valid.includes(request.body.status)) return reply.status(400).send({ error: 'Invalid status' });
 
@@ -191,7 +241,12 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
       .single();
 
     if (error) return reply.status(500).send({ error: error.message });
+
     dispatchWebhook(request.tenantId, 'order.status_changed', { orderId: request.params.id, status: request.body.status });
+    void sendOrderStatusWhatsApp(db, request.params.id, request.body.status as OrderStatus).catch(err =>
+      fastify.log.error({ err }, '[Orders] status WhatsApp notification failed'),
+    );
+
     return reply.send({ order: data });
   });
 

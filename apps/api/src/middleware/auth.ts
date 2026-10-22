@@ -9,6 +9,7 @@ declare module 'fastify' {
     tenantId: string;
     userId: string;
     userRole: 'admin' | 'supervisor' | 'agent';
+    apiKeyScopes?: string[];
   }
 }
 
@@ -93,15 +94,69 @@ async function resolveAuthContext(token: string): Promise<AuthContext | null> {
   return null;
 }
 
+interface ApiKeyContext {
+  tenantId: string;
+  keyId:    string;
+  scopes:   string[];
+}
+
+const API_KEY_CACHE_TTL = 30;
+
+async function resolveApiKeyContext(rawKey: string): Promise<ApiKeyContext | null> {
+  const keyHash = createHash('sha256').update(rawKey).digest('hex');
+  const cacheKey = `apikey:${keyHash.slice(0, 32)}`;
+
+  const cached = await cacheGet<ApiKeyContext>(cacheKey);
+  if (cached) return cached;
+
+  const db = getServerClient();
+  const { data: row } = await db
+    .from('api_keys')
+    .select('id, tenant_id, scopes, revoked_at')
+    .eq('key_hash', keyHash)
+    .is('revoked_at', null)
+    .maybeSingle();
+
+  if (!row) return null;
+
+  const ctx: ApiKeyContext = {
+    tenantId: row.tenant_id as string,
+    keyId:    row.id as string,
+    scopes:   (row.scopes as string[]) ?? [],
+  };
+  await cacheSet(cacheKey, ctx, API_KEY_CACHE_TTL);
+
+  // Best-effort, non-blocking — a stale last_used_at by a few requests doesn't matter.
+  void db.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', ctx.keyId).then(() => {}, () => {});
+
+  return ctx;
+}
+
 /**
- * Fastify preHandler: validates the Supabase JWT from the Authorization header
- * and attaches tenantId + role to the request for downstream use.
+ * Fastify preHandler: accepts either a tenant-scoped API key (X-API-Key header
+ * — programmatic access for a tenant's own systems, scoped via apiKeyScopes)
+ * or a Supabase JWT (Authorization: Bearer — the dashboard's own session).
+ * Both paths attach tenantId to the request for downstream tenant scoping.
  * Auth context is cached in Redis for 30s to eliminate repeat DB lookups.
  */
 export async function requireAuth(
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
+  const apiKeyHeader = request.headers['x-api-key'];
+  if (typeof apiKeyHeader === 'string' && apiKeyHeader) {
+    const apiKeyCtx = await resolveApiKeyContext(apiKeyHeader);
+    if (!apiKeyCtx) {
+      await reply.status(401).send({ success: false, error: 'Invalid or revoked API key' });
+      return;
+    }
+    request.tenantId     = apiKeyCtx.tenantId;
+    request.userId       = `api_key:${apiKeyCtx.keyId}`;
+    request.userRole     = 'agent';
+    request.apiKeyScopes = apiKeyCtx.scopes;
+    return;
+  }
+
   const authHeader = request.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     await reply.status(401).send({ success: false, error: 'Missing auth token' });
@@ -119,6 +174,20 @@ export async function requireAuth(
   request.tenantId  = ctx.tenantId;
   request.userId    = ctx.userId;
   request.userRole  = ctx.userRole;
+}
+
+/**
+ * Fastify preHandler: restricts a route to a required scope when the caller
+ * authenticated via API key. A dashboard session (JWT) always passes — scopes
+ * only constrain programmatic API-key access, not the dashboard itself.
+ */
+export function requireScope(scope: string) {
+  return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    if (!request.apiKeyScopes) return; // JWT session — role-based access already applied
+    if (!request.apiKeyScopes.includes(scope)) {
+      await reply.status(403).send({ success: false, error: `API key missing required scope: ${scope}` });
+    }
+  };
 }
 
 export function requireRole(...roles: Array<'admin' | 'supervisor' | 'agent'>) {

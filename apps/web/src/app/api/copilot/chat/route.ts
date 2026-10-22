@@ -199,7 +199,7 @@ async function callAnthropic(
 const OPENROUTER_MODELS = [
   'google/gemma-4-31b-it:free',
   'liquid/lfm-2.5-2.6b:free',
-  'minimax/minimax-m3.1-flash:free',
+  'poolside/laguna-s-2.1:free',
 ] as const;
 
 type OpenAiMessage =

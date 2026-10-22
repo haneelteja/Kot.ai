@@ -33,7 +33,7 @@ export interface CompletionResult {
 const OPENROUTER_FALLBACK_MODELS = [
   'google/gemma-4-31b-it:free',
   'liquid/lfm-2.5-2.6b:free',
-  'minimax/minimax-m3.1-flash:free',
+  'poolside/laguna-s-2.1:free',
 ] as const;
 
 /**

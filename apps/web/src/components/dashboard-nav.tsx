@@ -137,7 +137,7 @@ export function DashboardNav({
               data-tour-id={tourId}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 group ${
                 active
-                  ? 'bg-[#3A2216] text-brand'
+                  ? 'bg-[#3F2A1C] text-brand'
                   : 'text-white/60 hover:bg-white/5 hover:text-white/90'
               }`}
             >

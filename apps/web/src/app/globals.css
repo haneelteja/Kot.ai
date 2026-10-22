@@ -16,28 +16,28 @@
 @layer base {
   :root {
     /* ── KOT.ai named tokens (docs/DESIGN.md §3.3) ───────────────────────── */
-    --bg: #F5F5F3;              /* Paper */
+    --bg: #FAF6F1;              /* Paper — warm cream, paired with Brand */
     --surface: #FFFFFF;
-    --surface-sunken: #EEEEEB;
-    --text: #16181D;            /* Ink */
-    --text-muted: #565A62;      /* Graphite */
-    --line: #E3E3DF;            /* Steel */
-    --line-strong: #CFCFC9;
-    --brand: #E8590C;           /* Saffron — large text/graphics only */
-    --brand-strong: #C2410C;    /* Saffron Deep — buttons, small text */
-    --brand-wash: #FDEBDD;
+    --surface-sunken: #F1EBE3;
+    --text: #3D3833;            /* Cement — warm dark neutral, not near-black */
+    --text-muted: #79716A;      /* Cement Muted */
+    --line: #E6E0D8;            /* Cement Light */
+    --line-strong: #D4CBC0;
+    --brand: #EF5B2E;           /* large text/graphics only */
+    --brand-strong: #C8431D;    /* buttons, small text */
+    --brand-wash: #FCE6DC;
     --on-brand: #FFFFFF;
-    --focus: #E8590C;
+    --focus: #EF5B2E;
 
     --waiting: #B45309;   --waiting-bg: #FEF3C7;
     --progress: #1D4ED8;  --progress-bg: #DBEAFE;
     --ready: #0F766E;     --ready-bg: #CCFBF1;
     --done: #15803D;      --done-bg: #DCFCE7;
     --problem: #B91C1C;   --problem-bg: #FEE2E2;
-    --neutral: #565A62;   --neutral-bg: #EEEEEB;
+    --neutral: #79716A;   --neutral-bg: #F1EBE3;
 
     --ticket: #FFFFFF;    /* order ticket paper — stays light even in dark mode */
-    --rail: #16181D;      /* live-orders rail */
+    --rail: #3A3530;      /* live-orders rail — warm cement, not black */
 
     /* ── shadcn-style aliases, mapped onto the palette above ─────────────── */
     --background: var(--bg);
@@ -62,18 +62,22 @@
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
-      --bg: #16181D; --surface: #1F2228; --surface-sunken: #1A1C21;
-      --text: #F5F5F3; --text-muted: #A9ADB5;
-      --line: #2E3239; --line-strong: #3A3F47;
-      --brand: #F07A33; --brand-strong: #F07A33; --brand-wash: #3A2216; --on-brand: #16181D;
-      --focus: #F07A33;
+      /* Elegant reuse, matching the light palette's own pattern: dark --bg
+         reuses light --text's exact Cement value; dark --text reuses light
+         --bg's exact Paper value. --rail goes darker still than --bg for a
+         strong sidebar/content separation. */
+      --bg: #3D3833; --surface: #46403A; --surface-sunken: #403A34;
+      --text: #FAF6F1; --text-muted: #B5ABA0;
+      --line: #4A433C; --line-strong: #5C5249;
+      --brand: #FF7A4D; --brand-strong: #FF7A4D; --brand-wash: #3F2A1C; --on-brand: #3D3833;
+      --focus: #FF7A4D;
       --waiting: #FBBF24;  --waiting-bg: #3A2E12;
       --progress: #93C5FD; --progress-bg: #18243F;
       --ready: #5EEAD4;    --ready-bg: #12302D;
       --done: #4ADE80;     --done-bg: #14301E;
       --problem: #F87171;  --problem-bg: #3B1717;
-      --neutral: #A9ADB5;  --neutral-bg: #26292F;
-      --ticket: #F5F5F3; --rail: #0E0F12;
+      --neutral: #B5ABA0;  --neutral-bg: #46403A;
+      --ticket: #FAF6F1; --rail: #2A2622;
 
       --background: var(--bg);
       --foreground: var(--text);
@@ -97,18 +101,18 @@
 
   /* Manual toggle override — the viewer's theme switch stamps data-theme on <html> */
   :root[data-theme='dark'] {
-    --bg: #16181D; --surface: #1F2228; --surface-sunken: #1A1C21;
-    --text: #F5F5F3; --text-muted: #A9ADB5;
-    --line: #2E3239; --line-strong: #3A3F47;
-    --brand: #F07A33; --brand-strong: #F07A33; --brand-wash: #3A2216; --on-brand: #16181D;
-    --focus: #F07A33;
+    --bg: #3D3833; --surface: #46403A; --surface-sunken: #403A34;
+    --text: #FAF6F1; --text-muted: #B5ABA0;
+    --line: #4A433C; --line-strong: #5C5249;
+    --brand: #FF7A4D; --brand-strong: #FF7A4D; --brand-wash: #3F2A1C; --on-brand: #3D3833;
+    --focus: #FF7A4D;
     --waiting: #FBBF24;  --waiting-bg: #3A2E12;
     --progress: #93C5FD; --progress-bg: #18243F;
     --ready: #5EEAD4;    --ready-bg: #12302D;
     --done: #4ADE80;     --done-bg: #14301E;
     --problem: #F87171;  --problem-bg: #3B1717;
-    --neutral: #A9ADB5;  --neutral-bg: #26292F;
-    --ticket: #F5F5F3; --rail: #0E0F12;
+    --neutral: #B5ABA0;  --neutral-bg: #46403A;
+    --ticket: #FAF6F1; --rail: #2A2622;
 
     --background: var(--bg); --foreground: var(--text);
     --card: var(--surface); --card-foreground: var(--text);

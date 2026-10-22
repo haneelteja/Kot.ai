@@ -5,7 +5,7 @@ import {
   Legend, ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 
-const PRODUCT_COLORS = ['#C2410C', '#6366f1', '#f59e0b'];
+const PRODUCT_COLORS = ['#C8431D', '#6366f1', '#f59e0b'];
 
 type DailyData   = { date: string; conversations: number; messages: number };
 type ProductData = { name: string; value: number };
@@ -34,7 +34,7 @@ export function AnalyticsCharts({
               <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
               <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }} />
               <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Bar dataKey="conversations" name="Conversations" fill="#C2410C" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="conversations" name="Conversations" fill="#C8431D" radius={[4, 4, 0, 0]} />
               <Bar dataKey="messages"      name="Messages"      fill="#6366f1" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

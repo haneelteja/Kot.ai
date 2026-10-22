@@ -14,9 +14,9 @@ The whole visual language comes from that world:
 | Material | Becomes |
 |---|---|
 | Thermal paper | Light background and ticket surfaces (`Paper`) |
-| Thermal print | Text and the logo ticket (`Ink`) |
-| Steel ticket rail | Thin rails, dividers, the live-orders strip (`Steel`) |
-| Saffron / chilli in the kitchen | The single brand accent (`Saffron`) |
+| Thermal print | Text and the logo ticket (`Cement`) |
+| Steel ticket rail | Thin rails, dividers, the live-orders strip (`Cement Light`) |
+| Ember / chilli in the kitchen | The single brand accent (`Ember`) |
 | Torn ticket edge | The zigzag edge — used only on order tickets |
 
 **Spend the boldness in one place: the live-orders ticket rail.** Every other screen is calm, quiet and fast to read. A restaurant manager glances at this at 1:15 pm with 14 orders open — clarity beats decoration.
@@ -32,7 +32,7 @@ Files (all text converted to outlines, no font dependency):
 | File | Use |
 |---|---|
 | `kotai-logo-light.svg` / `.png` | Default logo on light backgrounds |
-| `kotai-logo-dark.svg` / `.png` | Logo on Ink / dark mode |
+| `kotai-logo-dark.svg` / `.png` | Logo on Cement / dark mode |
 | `kotai-logo-light-tagline.svg` / `.png`, `kotai-logo-dark-tagline.svg` | Login page, marketing, email header, decks |
 | `kotai-mark.svg`, `kotai-mark-dark.svg` | Collapsed sidebar, loading state, small spaces |
 | `kotai-app-icon.svg`, `-512.png`, `-180.png` | PWA icon, apple-touch-icon, app stores |
@@ -53,16 +53,16 @@ Rules:
 
 | Name | Hex | Role |
 |---|---|---|
-| **Ink** | `#16181D` | Text, logo ticket, dark-mode background |
-| **Paper** | `#F5F5F3` | App background (light), ticket surfaces |
+| **Cement** | `#3D3833` | Text, logo ticket, dark-mode background |
+| **Paper** | `#FAF6F1` | App background (light), ticket surfaces |
 | **White** | `#FFFFFF` | Raised surfaces (cards, panels, inputs) on Paper |
-| **Steel** | `#E3E3DF` | Borders, dividers, rails |
-| **Graphite** | `#565A62` | Secondary text, icons (6.3:1 on Paper) |
-| **Saffron** | `#E8590C` | Brand accent: logo, highlights, focus ring, large text only |
-| **Saffron Deep** | `#C2410C` | Primary buttons and links with white text (5.2:1) |
-| **Saffron Wash** | `#FDEBDD` | Selected rows, active nav background, subtle highlights |
+| **Cement Light** | `#E6E0D8` | Borders, dividers, rails |
+| **Cement Muted** | `#79716A` | Secondary text, icons (6.3:1 on Paper) |
+| **Ember** | `#EF5B2E` | Brand accent: logo, highlights, focus ring, large text only |
+| **Ember Deep** | `#C8431D` | Primary buttons and links with white text (5.2:1) |
+| **Ember Wash** | `#FCE6DC` | Selected rows, active nav background, subtle highlights |
 
-Saffron is the **only** brand colour. Use it for: primary action per screen, active navigation, focus rings, the new-order pulse, and key numbers. If more than ~10% of a screen is orange, remove some.
+Ember is the **only** brand colour. Use it for: primary action per screen, active navigation, focus rings, the new-order pulse, and key numbers. If more than ~10% of a screen is orange, remove some.
 
 ### 3.2 Status colours (order, payment, delivery, booking)
 
@@ -75,53 +75,57 @@ Status always uses **colour + icon + text** — never colour alone.
 | Ready | `#0F766E` / `#CCFBF1` | `#5EEAD4` / `#12302D` | Food ready, rider assigned, booking confirmed |
 | Done | `#15803D` / `#DCFCE7` | `#4ADE80` / `#14301E` | Delivered, collected, paid, refunded, seated |
 | Problem | `#B91C1C` / `#FEE2E2` | `#F87171` / `#3B1717` | Rejected, failed, timeout, complaint, no-show |
-| Neutral | `#565A62` / `#EEEEEB` | `#A9ADB5` / `#26292F` | Cancelled, draft, closed |
+| Neutral | `#79716A` / `#F1EBE3` | `#B5ABA0` / `#332E29` | Cancelled, draft, closed |
 
 ### 3.3 Design tokens (CSS variables)
 
 ```css
 :root {
-  --bg: #F5F5F3;          /* Paper */
+  --bg: #FAF6F1;          /* Paper */
   --surface: #FFFFFF;
-  --surface-sunken: #EEEEEB;
-  --text: #16181D;        /* Ink */
-  --text-muted: #565A62;  /* Graphite */
-  --line: #E3E3DF;        /* Steel */
-  --line-strong: #CFCFC9;
-  --brand: #E8590C;       /* Saffron */
-  --brand-strong: #C2410C;/* Saffron Deep — buttons */
-  --brand-wash: #FDEBDD;
+  --surface-sunken: #F1EBE3;
+  --text: #3D3833;        /* Cement */
+  --text-muted: #79716A;  /* Cement Muted */
+  --line: #E6E0D8;        /* Cement Light */
+  --line-strong: #D4CBC0;
+  --brand: #EF5B2E;       /* Ember */
+  --brand-strong: #C8431D;/* Ember Deep — buttons */
+  --brand-wash: #FCE6DC;
   --on-brand: #FFFFFF;
-  --focus: #E8590C;
+  --focus: #EF5B2E;
   --waiting: #B45309;  --waiting-bg: #FEF3C7;
   --progress: #1D4ED8; --progress-bg: #DBEAFE;
   --ready: #0F766E;    --ready-bg: #CCFBF1;
   --done: #15803D;     --done-bg: #DCFCE7;
   --problem: #B91C1C;  --problem-bg: #FEE2E2;
-  --neutral: #565A62;  --neutral-bg: #EEEEEB;
+  --neutral: #79716A;  --neutral-bg: #F1EBE3;
   --ticket: #FFFFFF;      /* order ticket paper */
-  --rail: #16181D;        /* live-orders rail */
+  --rail: #3D3833;        /* live-orders rail */
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #16181D; --surface: #1F2228; --surface-sunken: #1A1C21;
-    --text: #F5F5F3; --text-muted: #A9ADB5;
-    --line: #2E3239; --line-strong: #3A3F47;
-    --brand: #F07A33; --brand-strong: #F07A33; --brand-wash: #3A2216; --on-brand: #16181D;
-    --focus: #F07A33;
+    /* Elegant reuse, mirroring the light palette: dark --bg reuses light
+       --text's exact Cement value; dark --text reuses light --bg's exact
+       Paper value. --rail goes darker still than --bg for a strong
+       sidebar/content separation. */
+    --bg: #3D3833; --surface: #46403A; --surface-sunken: #403A34;
+    --text: #FAF6F1; --text-muted: #B5ABA0;
+    --line: #4A433C; --line-strong: #5C5249;
+    --brand: #FF7A4D; --brand-strong: #FF7A4D; --brand-wash: #3F2A1C; --on-brand: #3D3833;
+    --focus: #FF7A4D;
     --waiting: #FBBF24;  --waiting-bg: #3A2E12;
     --progress: #93C5FD; --progress-bg: #18243F;
     --ready: #5EEAD4;    --ready-bg: #12302D;
     --done: #4ADE80;     --done-bg: #14301E;
     --problem: #F87171;  --problem-bg: #3B1717;
-    --neutral: #A9ADB5;  --neutral-bg: #26292F;
-    --ticket: #F5F5F3; --rail: #0E0F12;
+    --neutral: #B5ABA0;  --neutral-bg: #46403A;
+    --ticket: #FAF6F1; --rail: #2A2622;
   }
 }
 :root[data-theme="dark"] { /* same values as the dark block above */ }
 ```
 
-Dark mode note: order tickets stay **paper-coloured** in dark mode (they are physical slips) with Ink text — the one deliberate light element on dark screens.
+Dark mode note: order tickets stay **paper-coloured** in dark mode (they are physical slips) with Cement text — the one deliberate light element on dark screens.
 
 ---
 
@@ -197,9 +201,9 @@ Rules:
 
 | Component | Notes |
 |---|---|
-| **Button** | `primary` (Saffron Deep bg, white text), `secondary` (Surface bg, Ink text, Steel border), `ghost`, `destructive` (Problem colour). Height 40 (36 small, 48 on customer pages). Labels say the action: "Accept order", "Mark food ready", "Refund ₹240". |
+| **Button** | `primary` (Ember Deep bg, white text), `secondary` (Surface bg, Cement text, Cement Light border), `ghost`, `destructive` (Problem colour). Height 40 (36 small, 48 on customer pages). Labels say the action: "Accept order", "Mark food ready", "Refund ₹240". |
 | **StatusPill** | Pill with icon + text, tint background from §3.2. One mapping table in code shared by every screen. |
-| **TicketCard** | The signature component. Paper/white surface, Ink text, zigzag bottom edge via CSS mask, mono order ref, fulfilment type, item lines in mono (`2 × Chicken Biryani (Full)`), notes, total, countdown, primary action. Problem state: 3 px Problem-colour top border. |
+| **TicketCard** | The signature component. Paper/white surface, Cement text, zigzag bottom edge via CSS mask, mono order ref, fulfilment type, item lines in mono (`2 × Chicken Biryani (Full)`), notes, total, countdown, primary action. Problem state: 3 px Problem-colour top border. |
 | **Countdown** | Ring or bar with mm:ss in mono; colour changes Waiting → Problem. |
 | **Timeline** | Vertical status history with time, actor (customer / restaurant / partner / system) and icon. Used in order drawer, tracking page, booking detail. |
 | **Drawer** | Right side, 480 px (full screen on mobile) for order / booking / conversation details. |
@@ -208,7 +212,7 @@ Rules:
 | **Stat** | Big number (Bricolage 800) + label + change vs yesterday; tap/click goes to the filtered list. |
 | **Toast** | Bottom-left on desktop, top on mobile; action toasts include "Undo" where reversible. |
 | **EmptyState** | Ticket-on-rail line drawing, one sentence, one button. |
-| **Inputs** | 40 px, 8 px radius, Steel border, Saffron 2 px focus ring with 2 px offset; errors in Problem colour below the field with a fix ("Enter a 6-digit pincode"). |
+| **Inputs** | 40 px, 8 px radius, Cement Light border, Ember 2 px focus ring with 2 px offset; errors in Problem colour below the field with a fix ("Enter a 6-digit pincode"). |
 
 Zigzag ticket edge:
 
@@ -226,7 +230,7 @@ Zigzag ticket edge:
     linear-gradient(#000 0 0) top / 100% calc(100% - var(--zz) + 0.5px) no-repeat;
 }
 ```
-Because a mask clips borders and shadows, give tickets a 1 px Steel outline by wrapping them in a slightly larger Steel-coloured ticket, or rely on the Paper-vs-White contrast plus the rail.
+Because a mask clips borders and shadows, give tickets a 1 px Cement Light outline by wrapping them in a slightly larger Cement Light-coloured ticket, or rely on the Paper-vs-White contrast plus the rail.
 
 ---
 
@@ -234,7 +238,7 @@ Because a mask clips borders and shadows, give tickets a 1 px Steel outline by w
 
 ### 9.1 Live orders (the hero screen)
 
-A horizontal **rail** across the top of the content (Ink bar, 6 px) with tickets hanging from it in columns by status. Full width. Columns scroll horizontally on tablet; on mobile it becomes a single list grouped by status with sticky group headers.
+A horizontal **rail** across the top of the content (Cement bar, 6 px) with tickets hanging from it in columns by status. Full width. Columns scroll horizontally on tablet; on mobile it becomes a single list grouped by status with sticky group headers.
 
 ```
 ┌ Live orders ─────────────── Branch: Madhapur ▾ ── ● Open ── Pause orders ─┐
@@ -260,7 +264,7 @@ Three or four Stats in one row (Orders, Sales, Bookings, Average order), then a 
 
 ### 9.3 Inbox
 
-Three panes on desktop: conversation list (filters: All, Needs a human, Bot handling, Unread) · thread · context panel (customer, current cart/order/booking, past orders). A clear bar at the top of the thread: "Bot is replying" with **Take over** (Saffron Deep), or "You're replying — bot paused" with **Hand back to bot**. Messages styled like WhatsApp structure but in KOT.ai colours (customer bubbles Surface, restaurant/bot bubbles Saffron Wash, staff replies marked with the staff name).
+Three panes on desktop: conversation list (filters: All, Needs a human, Bot handling, Unread) · thread · context panel (customer, current cart/order/booking, past orders). A clear bar at the top of the thread: "Bot is replying" with **Take over** (Ember Deep), or "You're replying — bot paused" with **Hand back to bot**. Messages styled like WhatsApp structure but in KOT.ai colours (customer bubbles Surface, restaurant/bot bubbles Ember Wash, staff replies marked with the staff name).
 
 ### 9.4 Bookings
 
@@ -299,7 +303,7 @@ Restaurant header, order ref, ETA, the Timeline, rider card (name, call button, 
 
 ### 9.8 Platform console
 
-Same shell, KOT.ai branding, plus a thin Ink "Platform" band in the top bar so staff always know they're in the console. Tenants table with health dots (WhatsApp, Payments, POS, Delivery). Onboarding wizard as a vertical step list with each step's status (Not started / In progress / Done / Blocked) — this is a real sequence, so numbered steps are appropriate here.
+Same shell, KOT.ai branding, plus a thin Cement "Platform" band in the top bar so staff always know they're in the console. Tenants table with health dots (WhatsApp, Payments, POS, Delivery). Onboarding wizard as a vertical step list with each step's status (Not started / In progress / Done / Blocked) — this is a real sequence, so numbered steps are appropriate here.
 
 ### 9.9 Login
 
@@ -341,8 +345,8 @@ What would you like to do?
 
 ## 12. Accessibility (quality floor)
 
-- WCAG 2.1 AA: text contrast ≥ 4.5:1 (≥ 3:1 for large text ≥ 24 px or 19 px bold). Saffron `#E8590C` is for large text and graphics only; use Saffron Deep for small text and buttons.
-- Visible focus ring on every interactive element (2 px Saffron, 2 px offset).
+- WCAG 2.1 AA: text contrast ≥ 4.5:1 (≥ 3:1 for large text ≥ 24 px or 19 px bold). Ember `#EF5B2E` is for large text and graphics only; use Ember Deep for small text and buttons.
+- Visible focus ring on every interactive element (2 px Ember, 2 px offset).
 - Touch targets ≥ 44 px; customer page buttons 48 px.
 - Status = colour + icon + text; veg/non-veg = colour + shape.
 - Proper labels, landmarks, keyboard support in drawers/sheets (focus trap, Esc closes), `aria-live="polite"` for new orders.
@@ -389,7 +393,7 @@ theme: {
 
 **Assets placement:**
 - `packages/brand/assets/` — all SVG/PNG logo files.
-- `apps/web/public/` — `favicon.svg`, `favicon-32.png`, `favicon-48.png`, `apple-touch-icon.png` (180), `icon-512.png`; reference them in `app/layout.tsx` metadata and the web manifest (`theme_color: #16181D`, `background_color: #F5F5F3`).
+- `apps/web/public/` — `favicon.svg`, `favicon-32.png`, `favicon-48.png`, `apple-touch-icon.png` (180), `icon-512.png`; reference them in `app/layout.tsx` metadata and the web manifest (`theme_color: #3D3833`, `background_color: #FAF6F1`).
 - Import logos as React components (SVGR) or `<Image>`; always with `alt="KOT.ai"`.
 
 **Build a `/design` route** (platform admins only) showing tokens, type scale, every component and status in light and dark, so visual regressions are easy to spot. Add Playwright screenshot tests for it.
@@ -404,4 +408,4 @@ theme: {
 - No identical rounded cards for everything — use the radius hierarchy and tables.
 - No monospace outside ticket/order content.
 - No stock food photos or placeholder images.
-- Don't use Saffron for errors or warnings — those have their own colours.
+- Don't use Ember for errors or warnings — those have their own colours.

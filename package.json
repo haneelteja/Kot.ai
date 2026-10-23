@@ -13,6 +13,8 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "db:migrate": "npm run migrate --workspace=packages/database",
+    "db:migrate:check": "node scripts/apply-migrations.mjs --check",
+    "db:migrate:apply": "node scripts/apply-migrations.mjs",
     "test": "turbo run test"
   },
   "devDependencies": {

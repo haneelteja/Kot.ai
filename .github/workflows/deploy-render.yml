@@ -8,11 +8,30 @@ on:
 
 jobs:
   deploy:
-    name: Trigger Render deploy
+    name: Apply migrations and trigger Render deploy
     runs-on: ubuntu-latest
     # Only deploy when CI passed — never on a failed or cancelled run
     if: github.event.workflow_run.conclusion == 'success'
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      # Gate: migrations must apply cleanly before the app deploys, so the
+      # API never starts against a schema it expects but doesn't have yet.
+      # No DB password is available for this project (see docs/SETUP.md),
+      # so this goes through the Supabase Management API, same as every
+      # migration applied by hand this session — now automated instead.
+      - name: Apply pending Supabase migrations
+        env:
+          SUPABASE_URL:           ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ACCESS_TOKEN:  ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/apply-migrations.mjs
+
       - name: Trigger Render deploy hook
         run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"

@@ -39,6 +39,8 @@ supabase db push       # applies every file in supabase/migrations/ in order
 
 > **Known gap**: `packages/database`'s own `npm run db:migrate` script (`node dist/migrate.js`) has no corresponding `src/migrate.ts` in this repo — it will fail if invoked. Use `supabase db push` (above) as the real migration path until that script is either implemented or removed. Tracked as a Phase 2 cleanup item.
 
+**Production/staging path (no DB password available for this project)**: `supabase db push` needs a direct Postgres connection, which isn't available here — see `docs/AUDIT.md`. Instead, `scripts/apply-migrations.mjs` applies any `supabase/migrations/*.sql` file not yet recorded in `supabase_migrations.schema_migrations` via the Supabase Management API (a personal access token, not the service-role key). Run it locally with `npm run db:migrate:check` (lists pending migrations without applying) or `npm run db:migrate:apply` (applies them), given `SUPABASE_URL` and `SUPABASE_ACCESS_TOKEN` env vars. `.github/workflows/deploy-render.yml` runs this automatically after CI passes and before the Render deploy hook fires, so the app never deploys against a schema it expects but doesn't have yet — that's the DEP-02 "gated migrations" story, closed this way instead of `supabase db push`.
+
 ## 3. Local Redis
 
 ```bash
@@ -69,11 +71,11 @@ The seed script currently creates a demo tenant, an owner user, and a WhatsApp n
 These require you to create accounts/projects; I can't provision them for you. Once created, tell me the project refs/URLs and I'll wire the CI/CD secrets and `render.yaml`/Vercel config to point at them.
 
 1. **Supabase staging project** — a separate project from your local one (Settings → API for the URL/keys). `supabase link --project-ref <ref>` from this repo, then `supabase db push` to apply migrations.
-2. **Render** — a new Web Service from `render.yaml` (API + worker), pointed at this repo's `master` branch. Set the env vars from `.env.example` as Render secrets (`sync: false` ones are NOT read from `render.yaml` — add them in the Render dashboard).
+2. **Render** — a new Web Service from `render.yaml` (API + worker), pointed at this repo's `main` branch. Set the env vars from `.env.example` as Render secrets (`sync: false` ones are NOT read from `render.yaml` — add them in the Render dashboard).
 3. **Vercel** — import this repo, set the root directory to `apps/web`, add the same Supabase/API env vars as Vercel project env vars (Preview + Production).
 4. **Meta test WhatsApp number** — a test WABA + test number in [Meta's App Dashboard](https://developers.facebook.com) (WhatsApp → API Setup). Register the staging API's webhook URL (`https://<render-staging-url>/api/webhook/:tenantId/:productType`) and a verify token (`META_VERIFY_TOKEN`).
 5. **Easebuzz test credentials** — request a test merchant account; not needed until Phase 6, but worth requesting early (external turnaround time).
-6. **GitHub Actions secrets** — add `RENDER_DEPLOY_HOOK` (used by `.github/workflows/deploy-render.yml`) once the Render service exists.
+6. **GitHub Actions secrets** — add `RENDER_DEPLOY_HOOK` (used by `.github/workflows/deploy-render.yml`) once the Render service exists, plus `SUPABASE_URL` and `SUPABASE_ACCESS_TOKEN` (a Supabase personal access token, Account → Access Tokens — not the service-role key) so that same workflow's migration-gate step can apply pending migrations before deploying.
 
 **Phase 1 gate check**: once steps 1–4 are done, send a WhatsApp message to the test number and confirm a row appears in staging's `messages` table (via Supabase Studio) — that closes SET-02.
 

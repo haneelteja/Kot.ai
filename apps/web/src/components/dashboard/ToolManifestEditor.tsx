@@ -62,12 +62,27 @@ const ALL_TOOLS = [
     botTypes:    ['sales_bot'],
     default:     false,
   },
+  {
+    id:          'menu_ordering',
+    label:       'Menu Browsing & Ordering',
+    description: 'AI can show the menu, manage a cart, and place orders with a payment link.',
+    botTypes:    ['restaurant_bot'],
+    default:     true,
+  },
+  {
+    id:          'table_reservation',
+    label:       'Table Reservation',
+    description: 'AI captures party size, date, and time for a table booking and notifies staff. No availability/capacity checking.',
+    botTypes:    ['restaurant_bot'],
+    default:     true,
+  },
 ];
 
 const BOT_META: Record<string, { label: string; color: string; bg: string }> = {
-  support_bot:   { label: 'Support Bot',   color: 'text-sky-700',    bg: 'bg-sky-50'    },
-  sales_bot:     { label: 'Sales Bot',     color: 'text-violet-700', bg: 'bg-violet-50' },
-  lifecycle_bot: { label: 'Lifecycle Bot', color: 'text-orange-700', bg: 'bg-orange-50' },
+  support_bot:    { label: 'Support Bot',    color: 'text-sky-700',    bg: 'bg-sky-50'    },
+  sales_bot:      { label: 'Sales Bot',      color: 'text-violet-700', bg: 'bg-violet-50' },
+  lifecycle_bot:  { label: 'Lifecycle Bot',  color: 'text-orange-700', bg: 'bg-orange-50' },
+  restaurant_bot: { label: 'Restaurant Bot', color: 'text-emerald-700', bg: 'bg-emerald-50' },
 };
 
 function defaultTools(productSlug: string): string[] {

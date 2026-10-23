@@ -2,7 +2,7 @@ import { createHmac } from 'crypto';
 import { getServerClient } from '@alphabot/database';
 import { isUrlSafeForOutbound } from './webhook-security.js';
 
-export type OutboundWebhookEvent = 'order.created' | 'order.paid' | 'order.status_changed';
+export type OutboundWebhookEvent = 'order.created' | 'order.paid' | 'order.status_changed' | 'booking.created';
 
 const DELIVERY_TIMEOUT_MS = 8000;
 const MAX_ATTEMPTS = 3;

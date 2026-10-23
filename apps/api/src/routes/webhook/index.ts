@@ -20,6 +20,7 @@ import { getProductCatalogue } from '../../lib/product-cache.js';
 import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
 import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
+import { handleRestaurantButtonTap, handleConfirmBooking, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
 import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
@@ -751,6 +752,24 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
     // Resolve tool manifest — falls back to defaults for bots without a row yet
     const allowedTools = ((botConfig as unknown as { allowed_tools?: string[] } | null)?.allowed_tools) ?? [];
 
+    // ── Restaurant bot: deterministic main-menu button-tap routing ─────────
+    // view_menu / reserve_table / order_food all skip the AI entirely — same
+    // fast-path philosophy as matchAutoReply. Checked after the escalation
+    // tap check above (mutually exclusive — escalate:true buttons never
+    // carry these ids) and before any guardrails/system-prompt building.
+    // See services/restaurant-bot/button-flow.ts for the handler itself.
+    if (
+      incoming.type === 'interactive' &&
+      incoming.interactiveReplyId &&
+      productType === 'restaurant_bot' &&
+      toolEnabled(allowedTools, TOOL_IDS.MENU_ORDERING)
+    ) {
+      const handled = await handleRestaurantButtonTap({
+        db, gateway, config, incoming, conversation, tenantId, botConfig, log: fastify.log,
+      });
+      if (handled) return;
+    }
+
     const escalationTriggers: string[] =
       botConfig?.escalation_triggers?.length
         ? botConfig.escalation_triggers
@@ -1012,6 +1031,15 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
       }
     }
 
+    // ── Table reservation slot-filling (restaurant_bot only, when tool enabled) ──
+    // Capture + notify staff only — no availability/capacity checking. Reuses
+    // the generic [ENTITY:key=value] capture system wholesale (zero new code
+    // there): the AI asks one question at a time, and the "Captured info"
+    // block below (injected a few lines down) tells it what's already known.
+    if (productType === 'restaurant_bot' && toolEnabled(allowedTools, TOOL_IDS.TABLE_RESERVATION)) {
+      systemPrompt += RESERVATION_PROMPT_BLOCK;
+    }
+
     // ── Feature: AI Conversation State Machine ────────────────────────────
     // Inject the current conversation stage and AI-extracted entities into the
     // system prompt. The AI can advance the stage or capture new info by appending
@@ -1039,6 +1067,10 @@ You can send a WhatsApp interactive button message by appending [BUTTONS:name] o
 Available templates:\n${templateList}
 
 General rule: append [BUTTONS:name] when the customer faces a clear multiple-choice decision. Use at most ONE tag per reply.`;
+
+      if (productType === 'restaurant_bot' && buttonTemplates.some(t => t.name === 'main_menu')) {
+        systemPrompt += `\n\nIf the customer's message is a generic greeting, or you're not confident what they want, warmly greet them and append [BUTTONS:main_menu] so they can pick: view the menu, reserve a table, or order food.`;
+      }
 
       // Rule-based: if user's message contains a template's trigger keywords, force it
       const lowerMsg = incoming.text?.toLowerCase() ?? '';
@@ -1225,6 +1257,7 @@ Which branch works best for you?
     }
     const isClearCart    = /CLEAR_CART/i.test(rawContent);
     const isConfirmOrder = /CONFIRM_ORDER/i.test(rawContent);
+    const isConfirmBooking = /CONFIRM_BOOKING/i.test(rawContent);
 
     fastify.log.info({ buttonTemplateName, inlineOptions, signals: newSignals, rawSnippet: rawContent.slice(-120) }, '[Webhook] AI response markers');
 
@@ -1242,11 +1275,12 @@ Which branch works best for you?
       .replace(/\[BUTTONS:[^\]]+\]/g, '')
       .replace(/\[OPTIONS:[^\]]+\]/g, '')
       .replace(/<\|tool_call_start\|>[\s\S]*?<\|tool_call_end\|>/gi, '')
-      .replace(/\[?\b(?:ADD_ITEM|REMOVE_ITEM|CLEAR_CART|CONFIRM_ORDER)\b\([^)]*\)\]?/gi, '')
+      .replace(/\[?\b(?:ADD_ITEM|REMOVE_ITEM|CLEAR_CART|CONFIRM_ORDER|CONFIRM_BOOKING)\b\([^)]*\)\]?/gi, '')
       .replace(/\[ADD_ITEM:[^\]]*\]/gi, '')
       .replace(/\[REMOVE_ITEM:[^\]]*\]/gi, '')
       .replace(/\[CLEAR_CART\]/gi, '')
       .replace(/\[CONFIRM_ORDER\]/gi, '')
+      .replace(/\[CONFIRM_BOOKING\]/gi, '')
       .trimEnd();
 
     // Persist stage/entity updates non-blocking (after lock, before reply send)
@@ -1671,6 +1705,18 @@ Which branch works best for you?
           );
         }
       }
+    }
+
+    // ── Table reservation confirmation handler (restaurant_bot only) ──────
+    // Fires on [CONFIRM_BOOKING]. latestVarsForScore already merges this
+    // turn's [ENTITY:] captures with the persisted ai_vars (computed above
+    // for lead scoring) — same source of truth, no second merge needed.
+    // See services/restaurant-bot/button-flow.ts for the handler itself.
+    if (productType === 'restaurant_bot' && toolEnabled(allowedTools, TOOL_IDS.TABLE_RESERVATION) && isConfirmBooking) {
+      await handleConfirmBooking({
+        db, gateway, config, incoming, conversation, tenantId,
+        contactId: contactData.id, vars: latestVarsForScore, log: fastify.log,
+      });
     }
 
     // ── Return / replacement request handler ─────────────────────────────

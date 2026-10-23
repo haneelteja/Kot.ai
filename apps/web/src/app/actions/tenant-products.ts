@@ -39,6 +39,39 @@ async function ensureBotConfig(adminClient: ReturnType<typeof getSupabaseAdminCl
   }
 }
 
+// Seeds the "main_menu" quick-reply button template (View menu / Reserve a
+// table / Order food) for a new restaurant_bot instance — mirrors the
+// one-time backfill migration for pre-existing tenants. Idempotent via the
+// table's unique(tenant_id, name) constraint.
+async function ensureDefaultButtonTemplates(adminClient: ReturnType<typeof getSupabaseAdminClient>, tenantId: string, productSlug: string) {
+  const { data: existing } = await adminClient
+    .from('interactive_button_templates')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('name', 'main_menu')
+    .maybeSingle();
+
+  if (!existing) {
+    await adminClient.from('interactive_button_templates').insert({
+      tenant_id:        tenantId,
+      product_slug:     productSlug,
+      name:             'main_menu',
+      description:      'Generic greeting fallback — view menu / reserve a table / order food',
+      type:             'quick_reply',
+      template_json: {
+        body: 'Hi there! 👋 How can I help you today?',
+        buttons: [
+          { id: 'view_menu',     title: 'View menu' },
+          { id: 'reserve_table', title: 'Reserve a table' },
+          { id: 'order_food',    title: 'Order food' },
+        ],
+      },
+      trigger_keywords: ['hi', 'hello', 'hey', 'hii', 'menu', 'start', 'good morning', 'good evening', 'good afternoon'],
+      is_active:        true,
+    });
+  }
+}
+
 // Activate the default (first) instance of a bot type.
 // Uses product_slug = product_type for backward compatibility.
 export async function activateTenantProductAction(productType: ProductType) {
@@ -61,6 +94,9 @@ export async function activateTenantProductAction(productType: ProductType) {
   );
 
   await ensureBotConfig(admin, session.tenantId, productType);
+  if (productType === 'restaurant_bot') {
+    await ensureDefaultButtonTemplates(admin, session.tenantId, productType);
+  }
 
   revalidatePath('/settings');
   return { success: true };
@@ -90,6 +126,9 @@ export async function addBotInstanceAction(productType: ProductType, instanceNam
   if (error) return { error: error.message };
 
   await ensureBotConfig(admin, session.tenantId, productSlug);
+  if (productType === 'restaurant_bot') {
+    await ensureDefaultButtonTemplates(admin, session.tenantId, productSlug);
+  }
 
   revalidatePath('/settings');
   return { success: true, productSlug };

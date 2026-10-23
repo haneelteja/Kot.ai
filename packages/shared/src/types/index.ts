@@ -120,6 +120,8 @@ export interface BotConfig {
   escalation_policy: EscalationPolicy | null;
   /** Per-bot voice configuration (JSONB). null = voice disabled. */
   voice_config: import('./voice.js').BotVoiceConfig | null;
+  /** restaurant_bot only — 'whatsapp' continues in-chat (cart/[CONFIRM_ORDER]), 'weblink' sends the public ordering page link. */
+  order_mode: 'whatsapp' | 'weblink';
   updated_at: string;
   updated_by: string | null;
 }

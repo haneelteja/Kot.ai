@@ -31,6 +31,8 @@ export interface SaveBotConfigInput {
   maxLowConfidenceReprompts: number;
   repromptMessage:           string;
   autoEscalateAfterHours:    number | null;
+  // restaurant_bot only
+  orderMode?: 'whatsapp' | 'weblink';
 }
 
 export async function saveBotConfigAction(input: SaveBotConfigInput) {
@@ -95,6 +97,7 @@ export async function saveBotConfigAction(input: SaveBotConfigInput) {
       guardrails_json,
       voice_config,
       escalation_policy,
+      ...(input.orderMode ? { order_mode: input.orderMode } : {}),
       updated_by:           session.userId,
     })
     .eq('tenant_id', session.tenantId)

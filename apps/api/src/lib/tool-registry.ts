@@ -14,6 +14,7 @@ export const TOOL_IDS = {
   VOICE_ESCALATION:   'voice_escalation',
   RETURN_REQUEST:     'return_request',
   MENU_ORDERING:      'menu_ordering',
+  TABLE_RESERVATION:  'table_reservation',
 } as const;
 
 export type ToolId = typeof TOOL_IDS[keyof typeof TOOL_IDS];
@@ -94,6 +95,13 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     id:          TOOL_IDS.MENU_ORDERING,
     label:       'Menu Browsing & Ordering',
     description: 'AI can show the menu, manage a cart, and place orders with a payment link.',
+    botTypes:    ['restaurant_bot'],
+    default:     true,
+  },
+  {
+    id:          TOOL_IDS.TABLE_RESERVATION,
+    label:       'Table Reservation',
+    description: 'AI captures party size, date, and time for a table booking and notifies staff. No availability/capacity checking.',
     botTypes:    ['restaurant_bot'],
     default:     true,
   },

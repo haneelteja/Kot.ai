@@ -29,21 +29,21 @@ export function PlatformNav({ role }: { role: string }) {
   }
 
   return (
-    <aside className="w-[240px] shrink-0 flex flex-col h-screen bg-rail border-r border-white/10">
+    <aside className="w-[240px] shrink-0 flex flex-col h-screen bg-surface border-r border-line">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-[64px] shrink-0 border-b border-white/10">
+      <div className="flex items-center gap-3 px-5 h-[64px] shrink-0 border-b border-line">
         <div className="w-8 h-8 rounded-lg bg-brand-strong flex items-center justify-center shrink-0">
           <Shield size={15} className="text-white" />
         </div>
         <div>
-          <p className="text-white font-bold text-sm tracking-tight">KOT.ai</p>
-          <p className="text-brand text-[10px] leading-none mt-0.5 font-medium">Platform Console</p>
+          <p className="text-text font-bold text-sm tracking-tight">KOT.ai</p>
+          <p className="text-brand-strong text-[10px] leading-none mt-0.5 font-medium">Platform Console</p>
         </div>
       </div>
 
       {/* Nav items */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest px-3 pb-2">
+        <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-widest px-3 pb-2">
           Management
         </p>
           {role === 'manager' && (() => {
@@ -55,8 +55,8 @@ export function PlatformNav({ role }: { role: string }) {
               href={href}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all group ${
                 active
-                  ? 'bg-[#3F2A1C] text-brand'
-                  : 'text-white/60 hover:bg-white/5 hover:text-white/90'
+                  ? 'bg-brand-wash text-brand-strong'
+                  : 'text-muted-foreground hover:bg-sunken hover:text-text'
               }`}
             >
               {active && (
@@ -75,8 +75,8 @@ export function PlatformNav({ role }: { role: string }) {
               href={href}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all group ${
                 active
-                  ? 'bg-[#3F2A1C] text-brand'
-                  : 'text-white/60 hover:bg-white/5 hover:text-white/90'
+                  ? 'bg-brand-wash text-brand-strong'
+                  : 'text-muted-foreground hover:bg-sunken hover:text-text'
               }`}
             >
               {active && (
@@ -90,12 +90,12 @@ export function PlatformNav({ role }: { role: string }) {
       </nav>
 
       {/* Role + sign out */}
-      <div className="p-3 border-t border-white/10 space-y-1">
+      <div className="p-3 border-t border-line space-y-1">
         <div className="px-3 py-1.5">
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
             role === 'manager'
-              ? 'bg-brand-wash text-brand'
-              : 'bg-white/10 text-white/60'
+              ? 'bg-brand-wash text-brand-strong'
+              : 'bg-sunken text-muted-foreground'
           }`}>
             {role === 'manager' ? 'Platform Manager' : 'Platform Admin'}
           </span>
@@ -103,7 +103,7 @@ export function PlatformNav({ role }: { role: string }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-white/50 hover:bg-white/5 hover:text-white/90 transition-all"
+          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-muted-foreground hover:bg-sunken hover:text-text transition-all"
         >
           <LogOut size={15} className="shrink-0" />
           <span className="font-medium">Sign out</span>

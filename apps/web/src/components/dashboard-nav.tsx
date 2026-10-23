@@ -101,11 +101,11 @@ export function DashboardNav({
 
   return (
     <aside
-      className="w-[240px] shrink-0 flex flex-col h-screen bg-rail border-r border-white/10"
+      className="w-[240px] shrink-0 flex flex-col h-screen bg-surface border-r border-line"
       aria-label="Main navigation"
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-[64px] shrink-0 border-b border-white/10">
+      <div className="flex items-center gap-3 px-5 h-[64px] shrink-0 border-b border-line">
         <div
           className="w-8 h-8 rounded-lg bg-brand-strong flex items-center justify-center shrink-0"
           aria-hidden="true"
@@ -113,14 +113,14 @@ export function DashboardNav({
           <Bot size={15} className="text-white" />
         </div>
         <div className="min-w-0">
-          <p className="text-white font-bold text-sm tracking-tight truncate">{tenantName}</p>
-          <p className="text-white/50 text-[10px] leading-none mt-0.5 font-medium capitalize">{roleLabel}</p>
+          <p className="text-text font-bold text-sm tracking-tight truncate">{tenantName}</p>
+          <p className="text-muted-foreground text-[10px] leading-none mt-0.5 font-medium capitalize">{roleLabel}</p>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" role="navigation" aria-label="Dashboard sections">
-        <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest px-3 pb-2" aria-hidden="true">
+        <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-widest px-3 pb-2" aria-hidden="true">
           Navigation
         </p>
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -137,14 +137,14 @@ export function DashboardNav({
               data-tour-id={tourId}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 group ${
                 active
-                  ? 'bg-[#3F2A1C] text-brand'
-                  : 'text-white/60 hover:bg-white/5 hover:text-white/90'
+                  ? 'bg-brand-wash text-brand-strong'
+                  : 'text-muted-foreground hover:bg-sunken hover:text-text'
               }`}
             >
               {active && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-brand" aria-hidden="true" />
               )}
-              <Icon size={15} className={`shrink-0 ${active ? 'text-brand' : 'text-white/40 group-hover:text-white/80'}`} aria-hidden="true" />
+              <Icon size={15} className={`shrink-0 ${active ? 'text-brand-strong' : 'text-muted-foreground group-hover:text-text'}`} aria-hidden="true" />
               <span className="font-medium">{label}</span>
             </Link>
           );
@@ -152,12 +152,12 @@ export function DashboardNav({
       </nav>
 
       {/* Bottom */}
-      <div className="p-3 border-t border-white/10">
+      <div className="p-3 border-t border-line">
         <button
           type="button"
           onClick={handleSignOut}
           aria-label="Sign out of KOT.ai"
-          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-white/50 hover:bg-white/5 hover:text-white/90 transition-all group"
+          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-muted-foreground hover:bg-sunken hover:text-text transition-all group"
         >
           <LogOut size={15} className="shrink-0" aria-hidden="true" />
           <span className="font-medium">Sign out</span>

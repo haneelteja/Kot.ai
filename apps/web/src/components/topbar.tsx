@@ -19,6 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/conversations':   'Conversations',
   '/escalations':     'Escalations',
   '/knowledge-base':  'Knowledge Base',
+  '/configurations':  'Configurations',
   '/settings':        'Settings',
   '/analytics':       'Analytics',
   '/campaigns':       'Campaigns',

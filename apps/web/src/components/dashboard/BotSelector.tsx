@@ -11,8 +11,7 @@ export interface ActiveBot {
 
 const BOT_SCOPED_PATHS = new Set([
   '/conversations',
-  '/guardrails',
-  '/knowledge-base',
+  '/configurations',
   '/settings',
 ]);
 

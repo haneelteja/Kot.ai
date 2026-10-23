@@ -278,7 +278,7 @@ export default function CollectionDetailPage() {
 
       {/* Breadcrumb + header */}
       <div className="space-y-2">
-        <Link href="/knowledge-base" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand-strong transition-colors font-medium">
+        <Link href="/configurations?tab=knowledge-base" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand-strong transition-colors font-medium">
           <ChevronLeft size={13} /> Knowledge Base
         </Link>
         <div className="flex items-center justify-between gap-4 flex-wrap">

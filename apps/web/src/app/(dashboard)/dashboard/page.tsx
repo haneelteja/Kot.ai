@@ -471,11 +471,11 @@ export default async function DashboardPage() {
 
                   {/* ── Footer ────────────────────────────────────────────── */}
                   <div className={`flex items-center gap-3 border-t ${meta.border} ${meta.accentBg} px-4 py-2`}>
-                    <Link href="/knowledge-base" className={`flex items-center gap-1 text-[11px] font-semibold ${meta.accent} hover:underline`}>
+                    <Link href="/configurations?tab=knowledge-base" className={`flex items-center gap-1 text-[11px] font-semibold ${meta.accent} hover:underline`}>
                       <BookOpen size={10} />Knowledge Base
                     </Link>
                     <ChevronRight size={10} className="text-muted-foreground" />
-                    <Link href="/guardrails" className={`flex items-center gap-1 text-[11px] font-semibold ${meta.accent} hover:underline`}>
+                    <Link href="/configurations?tab=guardrails" className={`flex items-center gap-1 text-[11px] font-semibold ${meta.accent} hover:underline`}>
                       <ShieldAlert size={10} />Guardrails
                     </Link>
                   </div>

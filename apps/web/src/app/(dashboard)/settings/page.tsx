@@ -612,7 +612,7 @@ export default async function SettingsPage({
           </div>
           <p className="text-xs text-amber-700">
             The bot escalates when a customer explicitly requests a human, or when it cannot confidently answer after a set number of retries. You can also configure keywords that trigger escalation in{' '}
-            <Link href="/guardrails" className="font-semibold underline">Guardrails</Link>.
+            <Link href="/configurations?tab=guardrails" className="font-semibold underline">Guardrails</Link>.
           </p>
         </div>
 

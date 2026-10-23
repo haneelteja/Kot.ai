@@ -6,30 +6,26 @@ import { usePathname } from 'next/navigation';
 import {
   MessageSquare,
   LayoutDashboard,
-  BookOpen,
   Settings,
   LogOut,
   Bot,
-  ShieldCheck,
   CreditCard,
   ShoppingCart,
-  MessageSquareMore,
   Plug,
   ClipboardList,
   RotateCcw,
   UtensilsCrossed,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 const BASE_NAV = [
-  { href: '/dashboard',        label: 'Overview',       icon: LayoutDashboard  },
-  { href: '/conversations',    label: 'Conversations',  icon: MessageSquare    },
-  { href: '/knowledge-base',   label: 'Knowledge Base', icon: BookOpen         },
-  { href: '/guardrails',       label: 'Guardrails',     icon: ShieldCheck      },
-  { href: '/button-templates', label: 'Buttons',        icon: MessageSquareMore },
-  { href: '/billing',          label: 'Billing',        icon: CreditCard       },
-  { href: '/settings',         label: 'Settings',       icon: Settings         },
+  { href: '/dashboard',        label: 'Overview',        icon: LayoutDashboard   },
+  { href: '/conversations',    label: 'Conversations',   icon: MessageSquare     },
+  { href: '/configurations',   label: 'Configurations',  icon: SlidersHorizontal },
+  { href: '/billing',          label: 'Billing',         icon: CreditCard        },
+  { href: '/settings',         label: 'Settings',        icon: Settings          },
 ];
 
 const INTEGRATIONS_ITEM   = { href: '/integrations',   label: 'Integrations', icon: Plug        };
@@ -69,14 +65,14 @@ export function DashboardNav({
     const convsIdx = items.findIndex(i => i.href === '/conversations');
     items.splice(convsIdx + 1, 0, INTEGRATIONS_ITEM);
     if (hasRestaurantBot) {
-      const guardrailsIdx = items.findIndex(i => i.href === '/guardrails');
+      const configIdx = items.findIndex(i => i.href === '/configurations');
       const toAdd = [MENU_ITEM, ...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM])];
-      items.splice(guardrailsIdx + 1, 0, ...toAdd);
+      items.splice(configIdx + 1, 0, ...toAdd);
     }
     if (hasLifecycleBot) {
-      const guardrailsIdx = items.findIndex(i => i.href === '/guardrails');
+      const configIdx = items.findIndex(i => i.href === '/configurations');
       const toAdd = [...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM]), RETURNS_ITEM];
-      items.splice(guardrailsIdx + 1, 0, ...toAdd);
+      items.splice(configIdx + 1, 0, ...toAdd);
     }
     // Audit log — client_admin and client_manager only.
     // tenant_users.role is constrained to 'client_admin' | 'client_manager' | 'agent'.

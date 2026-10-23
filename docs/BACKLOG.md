@@ -349,8 +349,9 @@ Epic: BR · Phase: 3 · Priority: P1 · Status: todo · Depends on: BR-04
 As a restaurant owner, I want to choose what happens when a customer messages outside hours.
 Acceptance criteria:
 - Given the tenant setting is "take booking", an out-of-hours customer is offered table booking instead of ordering.
+- Given the tenant has pre-orders enabled, the bot states the next opening time and offers to take a pre-order for then, instead of just declining.
 Tests: conversation test
-Brief refs: §11, §16
+Brief refs: §11, §16 — pre-order branch added per Restaurant OS Flow Map "Order and pay" flow
 Reuse: CFG-02 resolver
 
 ---
@@ -410,6 +411,16 @@ Acceptance criteria:
 Tests: integration (upload + resize)
 Brief refs: §8.4
 Reuse: Supabase Storage (existing)
+
+### MENU-07 Bulk menu import with change preview
+Epic: MENU · Phase: 3 · Priority: P1 · Status: todo · Depends on: MENU-01
+As a restaurant owner, I want to upload a spreadsheet of menu changes and see exactly what will change before it goes live.
+Acceptance criteria:
+- Given an uploaded sheet, every changed price and every added/removed item is shown as a diff; nothing is applied until the owner explicitly approves the preview.
+- Given approval, the change is applied atomically and logged the same way a single-item edit is (MENU-02's change log).
+Tests: integration (diff generation, atomic apply)
+Brief refs: net-new, derived from Restaurant OS Flow Map "Menu, stock and prices" flow
+Reuse: MENU-01 data model
 
 ---
 
@@ -506,8 +517,9 @@ Epic: AGT · Phase: 4 · Priority: P0 · Status: todo · Depends on: AGT-02
 As a customer, I want to trust that the bot never makes up a price or item.
 Acceptance criteria:
 - Given a prompt-injection attempt in customer text, the agent treats it as data, not instructions, and doesn't deviate from tool-verified facts.
-Tests: conversation tests (injection transcripts)
-Brief refs: §9, §19
+- Given any question involving allergens or health safety, the agent never answers from its own knowledge or an approved KB entry — it always escalates per CONV-06, with no exceptions.
+Tests: conversation tests (injection transcripts, allergy-question escalation)
+Brief refs: §9, §19 — allergy rule made explicit per Restaurant OS Flow Map "Questions and handoff" flow
 Reuse: none — net-new
 
 ### AGT-05 Language handling
@@ -592,9 +604,10 @@ Reuse: `services/voice/providers/stt/sarvam.ts` (STT-only, outbound calling remo
 Epic: CONV · Phase: 4 · Priority: P0 · Status: todo · Depends on: HND-01
 As a customer, I want a real person when the bot can't help.
 Acceptance criteria:
-- Given "talk to human", angry sentiment, refund/complaint keywords, or two failed understanding attempts, the conversation escalates to the inbox.
-Tests: conversation tests (each trigger)
-Brief refs: §8.12, §16 "Human takeover"
+- Given "talk to human", angry sentiment, refund/complaint keywords, an allergy or health-safety question, or two failed understanding attempts, the conversation escalates to the inbox with the recent chat attached — the bot never guesses on an allergen question.
+- Given a staff reply doesn't arrive within the tenant's configured window (default 5 minutes), a second alert fires and the customer gets a short holding message.
+Tests: conversation tests (each trigger), timer-driven (no-reply escalation)
+Brief refs: §8.12, §16 "Human takeover" — allergy trigger and no-reply escalation added per Restaurant OS Flow Map "Questions and handoff" flow
 Reuse: `services/escalation/index.ts`, `services/sentiment/detector.ts` — re-point call sites per `docs/AUDIT.md` §4 (previously wired to lead-scoring/outbound-calling, now to handoff)
 
 ---
@@ -821,11 +834,13 @@ Reuse: `xstate` or a typed transition table — decided in an ADR during Phase 5
 
 ### ORD-02 Order creation at checkout
 Epic: ORD · Phase: 5 · Priority: P0 · Status: todo · Depends on: ORD-01, PRC-04
-As the platform, I want an order row created only when a payment link is generated, carrying a snapshot of the bill and address.
+As the platform, I want an order row created only when payment is actually confirmed — never earlier — so the kitchen and dashboard never see an order that was never paid.
 Acceptance criteria:
-- Given checkout, the order's bill/address snapshot is immutable even if the menu or the customer's saved address later changes.
-Tests: integration
-Brief refs: §6, §7
+- Given a payment link is generated, no `orders` row exists yet — the cart/checkout lives as a chat-only draft (new `checkout_drafts`-style tracking, not yet in `docs/DATA_MODEL.md`) until the payment webhook confirms success.
+- Given payment confirms, the order row is created exactly once from the draft, with the bill/address snapshot immutable even if the menu or the customer's saved address later changes.
+- Given the payment link expires unpaid (PAY-02) or the customer never pays, the draft closes with reason `unpaid` and counts toward DSH-01's "left before paying" figure — no `orders` row is ever created for it.
+Tests: integration (paid vs. unpaid-expired paths), unit (immutable snapshot)
+Brief refs: §6, §7 — **revised** against Restaurant OS Flow Map "Order and pay" flow: the original wording created the order row at link-generation time; the flow map requires the order to not exist at all pre-payment
 Reuse: extends `routes/orders/index.ts`
 
 ### ORD-03 Gap-free order references
@@ -859,18 +874,19 @@ Reuse: existing orders dashboard route pattern
 Epic: ORD · Phase: 10 · Priority: P0 · Status: todo · Depends on: ORD-01, BRD-04
 As a restaurant staff member, I want a real-time kanban of active orders by status.
 Acceptance criteria:
-- Given a new order, it appears with a sound + browser notification; Accept/Reject (with reason) and Food Ready actions drive the state machine.
+- Given a new order, it appears with a sound + browser notification already in `preparing` (auto-accepted per FUL-02 — there is no manual Accept/Reject step); "Problem" (FUL-03) and "Food Ready" actions drive the remaining state transitions.
 Tests: E2E
-Brief refs: §12 "Live orders"
+Brief refs: §12 "Live orders" — **revised** per FUL-02's auto-accept model
 Reuse: Supabase Realtime, BRD-04's TicketCard
 
 ### ORD-07 Post-delivery feedback capture
 Epic: ORD · Phase: 7 · Priority: P2 · Status: todo · Depends on: ORD-04
 As a restaurant owner, I want a quick 1–5 rating + optional comment after delivery/collection so I can track satisfaction.
 Acceptance criteria:
-- Given an order reaches `delivered`/`collected`, a feedback prompt is sent once; a response is stored in `order_feedback`.
+- Given an order reaches `delivered`/`collected`, a feedback prompt (1–5 tappable buttons, not open text) is sent once; a response is stored in `order_feedback`.
+- Given a 1 or 2 star rating, an OWN-01 owner alert fires immediately with the order and a "Call customer" action — a low rating is never just a silent data point.
 Tests: integration
-Brief refs: §6 `order_feedback`, §8.8
+Brief refs: §6 `order_feedback`, §8.8 — rating mechanism and low-rating alert per Restaurant OS Flow Map "Prepare and hand over" flow
 Reuse: none — net-new (added during Phase 0 traceability check, `docs/TRACEABILITY.md`)
 
 ---
@@ -891,8 +907,9 @@ Epic: PAY · Phase: 6 · Priority: P0 · Status: todo · Depends on: PAY-01, ORD
 As a customer, I want a payment link that clearly states my order ref, total, and expiry.
 Acceptance criteria:
 - Given a payment link, `udf` fields carry the order ref; the WhatsApp message states total and expiry.
+- Given the tenant's configured expiry (default 30 minutes), one reminder is sent once at the configured offset before expiry (default 10 minutes before); past expiry the draft closes per ORD-02 — no second reminder is sent.
 Tests: integration
-Brief refs: §8.7, §10
+Brief refs: §8.7, §10 — timer defaults per Restaurant OS Flow Map "Order and pay" flow
 Reuse: `services/payment/easebuzz.ts`
 
 ### PAY-03 Server-to-server webhook with amount verification
@@ -953,32 +970,30 @@ Tests: integration
 Brief refs: §2 D4, §7
 Reuse: POS-01 adapter interface
 
-### FUL-02 Acceptance timeout and auto-refund
-Epic: FUL · Phase: 7 · Priority: P0 · Status: todo · Depends on: FUL-01, PAY-07, CFG-02
-As a customer, I want my order auto-cancelled and refunded if the restaurant never responds.
+### FUL-02 Automatic order acceptance
+Epic: FUL · Phase: 7 · Priority: P0 · Status: todo · Depends on: FUL-01
+As a customer, I want my paid order accepted automatically — I shouldn't have to wait on the restaurant to tap Accept.
 Acceptance criteria:
-- Given no acceptance within the tenant's configured alert time, dashboard+staff are alerted; given no acceptance by the auto-cancel time, the order is cancelled and fully refunded automatically.
-Tests: integration (timer-driven)
-Brief refs: §11, §16 "Restaurant does not accept"
+- Given an order reaches `new` (payment confirmed), it transitions to `preparing` automatically after a configured delay (default 10 seconds) — no staff action required to accept it.
+- Given the order is not marked Food Ready within the tenant's configured alert time after auto-accepting (default 25 minutes), an OWN-01 owner alert fires — this is an operational "stuck order" alert, not a refund trigger.
+Tests: integration (timer-driven auto-accept), integration (stuck-order alert)
+Brief refs: §11, §16 — **revised**: Restaurant OS Flow Map "Prepare and hand over" flow removes the manual-accept/auto-refund-on-no-response model this story originally described (every paid order is accepted; there is no "restaurant never responds" case any more)
 Reuse: `jobs/scheduler.ts`
 
-### FUL-03 Restaurant rejection with mandatory reason
-Epic: FUL · Phase: 7 · Priority: P0 · Status: todo · Depends on: FUL-01, PAY-07
-As a restaurant staff member, I want to reject a paid order with a reason, triggering an automatic full refund.
+### FUL-03 Item-unavailable "Problem" flow — swap or refund
+Epic: FUL · Phase: 7 · Priority: P0 · Status: todo · Depends on: FUL-01, PAY-07, WAB-06
+As a restaurant staff member, I want to flag that a paid item can't be made, and let the owner choose to offer a swap (with the customer's OK) or refund it — not reject the whole order.
 Acceptance criteria:
-- Given a rejection without a reason, the UI blocks submission; given a valid reason, refund is automatic and the customer is informed with a refund timeline.
-Tests: E2E
-Brief refs: §16 "Restaurant rejects a paid order"
-Reuse: none — net-new
+- Given kitchen taps "Problem" on the ticket (via the kitchen WhatsApp number, WAB-06, or the dashboard), the owner is alerted via OWN-01 with the order and item, and chooses "Offer a swap" or "Refund order".
+- Given "Offer a swap", the bot proposes a substitute to the customer and only proceeds on their explicit OK; given "Refund order", PAY-07's refund flow runs and the customer is informed; the rider (if any) is never booked until resolved.
+Tests: integration (both resolution paths)
+Brief refs: §16 "Restaurant rejects a paid order" / "Item unavailable after payment" — **revised**: replaces the original whole-order "rejection with mandatory reason" design per Restaurant OS Flow Map "Prepare and hand over" flow; see FUL-04
+Reuse: PAY-07 (refund)
 
 ### FUL-04 Item-unavailable flow
-Epic: FUL · Phase: 7 · Priority: P0 · Status: todo · Depends on: FUL-01, PAY-07
-As a customer, I want clear choices if an item I paid for turns out to be unavailable.
-Acceptance criteria:
-- Given staff mark an item unavailable, the customer is offered replace/remove-and-refund-item/cancel-and-full-refund; no reply within the configured window defaults to remove-and-refund; the rider is never booked until resolved.
-Tests: integration (each choice path + timeout default)
+Epic: FUL · Phase: 7 · Priority: P0 · Status: **consolidated into FUL-03** · Depends on: FUL-03
+**Consolidated into FUL-03.** The Restaurant OS Flow Map models "item unavailable after payment" as one single kitchen-"Problem" → owner-decides (swap or refund) flow, not a separate customer-facing replace/remove/cancel menu with its own timeout default. Kept as a story ID for traceability; implement under FUL-03.
 Brief refs: §16 "Item unavailable after payment"
-Reuse: none — net-new
 
 ### FUL-05 KOT print view
 Epic: FUL · Phase: 10 · Priority: P2 · Status: todo · Depends on: FUL-01
@@ -1056,8 +1071,9 @@ Epic: BKG · Phase: 9 · Priority: P0 · Status: todo · Depends on: BR-01
 As a restaurant owner, I want booking slots with capacity that can never be double-booked.
 Acceptance criteria:
 - Given concurrent booking requests for the last available slot, exactly one succeeds (transaction or exclusion constraint).
-Tests: concurrency test
-Brief refs: §6 `bookings`/`booking_slots`, §6 integrity rules
+- Given a slot is fully booked, the customer is offered the nearest alternative times or a waitlist join; a cancellation frees seats and offers them to the next waitlisted customer in order.
+Tests: concurrency test, integration (waitlist offer on cancellation)
+Brief refs: §6 `bookings`/`booking_slots`, §6 integrity rules — waitlist behaviour added per Restaurant OS Flow Map "Table booking" flow
 Reuse: none — net-new
 
 ### BKG-02 Booking conversation flow
@@ -1074,16 +1090,19 @@ Epic: BKG · Phase: 9 · Priority: P0 · Status: todo · Depends on: BKG-01, CFG
 As a restaurant owner, I want to choose whether bookings auto-confirm against capacity or need staff approval.
 Acceptance criteria:
 - Given staff-confirm mode, a new booking is `requested` until a staff action confirms or declines it.
-Tests: integration (both modes)
-Brief refs: §2 D8, §11
+- Given a party size over the tenant's configured threshold (default 8 guests), the booking always requires host approval before confirming, even in auto-confirm mode.
+Tests: integration (both modes, large-party override)
+Brief refs: §2 D8, §11 — large-party override added per Restaurant OS Flow Map "Table booking" flow
 Reuse: CFG-02 resolver
 
 ### BKG-04 Booking reminders
 Epic: BKG · Phase: 9 · Priority: P0 · Status: todo · Depends on: BKG-02
 As a customer, I want a reminder before my reservation.
 Acceptance criteria:
-- Given the tenant's configured reminder offset (default 2h), a WhatsApp template reminder fires at that offset before `booking_at`.
-Tests: integration (timer-driven)
+- Given the tenant's configured reminder offset (default 3h, per Restaurant OS Flow Map — was 2h), a reminder fires at that offset before `booking_at`, asking the customer to confirm or cancel.
+- Given the customer hasn't messaged in the last 24 hours (the usual case for a reminder), it's sent as an approved WhatsApp template, not free text.
+- Given no reply to the reminder, the booking stays held and staff see a "Call" action next to it — it is not auto-cancelled.
+Tests: integration (timer-driven, template-vs-free-text branching)
 Brief refs: §8.9, §11
 Reuse: `jobs/scheduler.ts`, `services/scheduled-messages/`
 
@@ -1101,9 +1120,20 @@ Epic: BKG · Phase: 10 · Priority: P0 · Status: todo · Depends on: BKG-01
 As a restaurant staff member, I want to mark a booking seated or no-show from the dashboard.
 Acceptance criteria:
 - Given the bookings calendar/day view, staff can confirm/decline (staff mode) and mark seated/no-show, with capacity indicators visible.
+- Given a no-show, it's recorded on the customer record (visible on DSH-11's Customers screen), and the released table is offered to the next waitlisted customer (BKG-01).
 Tests: E2E
-Brief refs: §12 "Bookings"
+Brief refs: §12 "Bookings" — no-show tracking added per Restaurant OS Flow Map "Table booking" flow
 Reuse: none — net-new
+
+### BKG-07 Post-dining feedback capture
+Epic: BKG · Phase: 9 · Priority: P2 · Status: todo · Depends on: BKG-06
+As a restaurant owner, I want a quick 1–5 rating after a booking is seated, the same way ORD-07 captures it for orders.
+Acceptance criteria:
+- Given a booking is marked seated and the dining window has passed, a feedback prompt (1–5 tappable buttons) is sent once; a response is stored against the booking and the customer record.
+- Given a 1 or 2 star rating, an OWN-01 owner alert fires, same as ORD-07.
+Tests: integration
+Brief refs: net-new, derived from Restaurant OS Flow Map "Table booking" flow — parity with ORD-07
+Reuse: ORD-07's pattern
 
 ---
 
@@ -1345,6 +1375,16 @@ Tests: E2E
 Brief refs: §12 "Settings"
 Reuse: `components/dashboard/WhatsAppSetupSection.tsx`
 
+### WAB-06 Multi-role WhatsApp numbers per restaurant
+Epic: WAB · Phase: 11 · Priority: P0 · Status: todo · Depends on: WAB-01
+As a restaurant owner, I want separate WhatsApp numbers for customers, the kitchen, and ops/owner alerts — not one number doing everything.
+Acceptance criteria:
+- Given a tenant, up to three `whatsapp_numbers` rows can be assigned distinct roles (`customer`, `kitchen`, `ops`) for the same restaurant bot instance; routing and outbound sends pick the correct number per role.
+- Given a tenant with only one number configured, all three roles fall back to it, so the feature is optional, not required.
+Tests: integration (role routing, single-number fallback)
+Brief refs: net-new, derived from the Restaurant OS Flow Map's three-number architecture (Customer number / Kitchen number / Ops number)
+Reuse: extends `whatsapp_numbers`, currently scoped by `product_slug` only per `20250101000043_multi_bot_instances.sql` — needs a new `role` column; feeds FUL-03's kitchen ticket delivery and OWN-01/02/03's ops-number use
+
 ---
 
 ## TPL — WhatsApp templates per tenant, submission status
@@ -1455,7 +1495,7 @@ Reuse: none — net-new
 Epic: DSH · Phase: 10 · Priority: P0 · Status: todo · Depends on: ORD-01, BKG-01
 As a restaurant owner, I want an at-a-glance view of today's business and what needs attention.
 Acceptance criteria:
-- Given today's data, GMV, orders by status, bookings, and a needs-attention list (timeouts, rider failures, open complaints, payment failures, POS/partner health) are all visible on one screen.
+- Given today's data, GMV, orders by status, bookings, a needs-attention list (timeouts, rider failures, open complaints, payment failures, POS/partner health), and the total value of checkout drafts abandoned before payment ("left before paying", per ORD-02) are all visible on one screen.
 Tests: E2E
 Brief refs: §12 "Today"
 Reuse: none — net-new
@@ -1556,6 +1596,41 @@ Reuse: existing settings page structure (heavily pruned this session — rebuilt
 
 ---
 
+## OWN — Owner WhatsApp command interface, alerts, night summary
+
+Net-new epic, derived from the Restaurant OS Flow Map's "Owner alerts and reports" flow (not present in the original brief-derived draft). Distinct from OBS (engineering/infra alerting to the platform operator) and ANL/DSH (dashboard screens) — this is business-event alerting and a lightweight admin surface for the restaurant owner, delivered entirely over WhatsApp.
+
+### OWN-01 Instant owner alerts with action buttons
+Epic: OWN · Phase: 10 · Priority: P0 · Status: todo · Depends on: ORD-01, BKG-01, WAB-06, FUL-03, ORD-07, BKG-07, BKG-03
+As a restaurant owner, I want to be alerted immediately on the ops number for anything needing a decision — a low rating, a kitchen-reported problem, a booking needing approval, a stuck order — with buttons to act right there.
+Acceptance criteria:
+- Given a trigger event (1–2 star rating, kitchen "Problem" tap, a booking over the staff-approval threshold, an order not ready within the configured alert time), a WhatsApp message fires to the tenant's ops number within seconds, with action buttons appropriate to that event.
+- Given no action is taken within the configured re-alert window, the alert repeats once to a configured fallback number.
+Tests: integration (each trigger type), timer-driven (no-action repeat)
+Brief refs: net-new, derived from Restaurant OS Flow Map "Owner alerts and reports" flow
+Reuse: `services/whatsapp/gateway.ts`; feeds from FUL-03, ORD-07, BKG-07, BKG-03's large-party override
+
+### OWN-02 Nightly business summary
+Epic: OWN · Phase: 10 · Priority: P0 · Status: todo · Depends on: ORD-01, ANL-02, WAB-06
+As a restaurant owner, I want a daily summary on WhatsApp at a configured time: orders, revenue, top dish, the total left before paying, bookings, and issue count.
+Acceptance criteria:
+- Given the tenant's configured summary time (default 11:00 PM), a scheduled job sends the day's summary as a WhatsApp message with an "Open dashboard" button.
+Tests: integration (timer-driven), unit (summary figures match underlying data)
+Brief refs: net-new, derived from Restaurant OS Flow Map "Owner alerts and reports" flow
+Reuse: `jobs/scheduler.ts`; the existing `daily_report_settings` table (pre-existing Alphabot feature, `20250101000047_daily_report_settings.sql`/`20260927010000_daily_report_settings.sql`) as a starting schema if its shape fits
+
+### OWN-03 Owner WhatsApp command parser
+Epic: OWN · Phase: 10 · Priority: P1 · Status: todo · Depends on: MENU-02, BR-03, OWN-02
+As a restaurant owner, I want to run short commands on the ops number instead of opening the dashboard — sales today, open orders, mark a dish out/back, pause/resume ordering.
+Acceptance criteria:
+- Given a recognised command (`sales today`, `open orders`, `OUT <dish name>`, `BACK <dish name>`, `PAUSE <minutes>`, `RESUME`), the matching action runs and a confirmation — including an undo instruction where relevant, e.g. "Send BACK <dish> to restore it" — is sent back.
+- Given an unrecognised command, the bot replies with the list of valid commands rather than silently failing.
+Tests: unit (parser, per command), integration (each command's side effect)
+Brief refs: net-new, derived from Restaurant OS Flow Map "Owner alerts and reports" flow
+Reuse: MENU-02 (stock toggle) and BR-03 (pause/resume) as the underlying actions — this story is just the WhatsApp text-command surface over them
+
+---
+
 ## CON — Platform console screens, onboarding wizard
 
 ### CON-01 Tenants list with health indicators
@@ -1572,8 +1647,11 @@ Epic: CON · Phase: 11 · Priority: P0 · Status: todo · Depends on: WAB-01, PA
 As a platform operator, I want a guided checklist to take a new restaurant from signup to live.
 Acceptance criteria:
 - Given the wizard's steps (business details → number → Easebuzz test → POS/manual → branches/hours → menu → delivery test → policies → templates → test order → go live), each step's completion is tracked and gates the next.
-Tests: E2E (full wizard walkthrough)
-Brief refs: §13 "Onboarding wizard"
+- Given a menu PDF/Excel/photo at the menu step, an AI-assisted extraction drafts the structured menu (name, price, veg/non-veg) for the team to verify line-by-line before the owner approves it — this does not replace manual entry, it drafts a starting point.
+- Given all prior steps are complete, "go live" is gated on a test order, a test booking, and a test handoff each succeeding with the owner present — not just on config being filled in.
+- Given go-live, the first 7 days are flagged on the checklist for daily chat/failure review, closed out explicitly rather than assumed done.
+Tests: E2E (full wizard walkthrough, including the AI-extraction review step and the go-live test gate)
+Brief refs: §13 "Onboarding wizard" — AI-assisted extraction, go-live test gate, and first-week review added per Restaurant OS Flow Map "Onboarding a new restaurant" flow
 Reuse: `tenant-intake.html`/`TENANT_MASTER_SPEC.template.md`'s field list as a reference for required fields (the files themselves were removed per `docs/AUDIT.md` §3 — fields are reused, not the Alphabot-specific tooling)
 
 ### CON-03 Integration health & webhook explorer
@@ -1862,8 +1940,20 @@ Reuse: CFG-02
 
 ## Summary
 
-Total stories: 145 across 34 epics (SET 6, AUD 4, SEC 6, QUE 4, BRD 4, CFG 5, BR 5, MENU 6, POS 6, AGT 7, CONV 6, SRV 5, CART 4, PRC 6, WEB 6, ORD 7, PAY 7, FUL 5, DLV 6, BKG 6, HND 4, CMP 4, CAN 3, MKT 4, PRV 4, WAB 5, TPL 3, LNK 3, TKW 4, DSH 15, CON 7, ANL 4, OBS 5, TST 6, DEP 5, CAT 3, FLW 2).
+Total stories: 198 across 38 epics (SET 6, AUD 4, SEC 6, QUE 4, BRD 4, CFG 5, BR 5, MENU 7, POS 6, AGT 7, CONV 6, SRV 5, CART 4, PRC 6, WEB 6, ORD 7, PAY 7, FUL 5, DLV 6, BKG 7, HND 4, CMP 4, CAN 3, MKT 4, PRV 4, WAB 6, TPL 3, LNK 3, TKW 4, DSH 15, OWN 3, CON 7, ANL 4, OBS 5, TST 6, DEP 5, CAT 3, FLW 2) — counted directly from the file (`grep -c '^### [A-Z]\+-[0-9]\+'`/`'^## [A-Z]'`) rather than hand-tracked, since this line's previous value (145 across 34 epics) had already drifted from reality before this pass (the real prior count was 192 across 37 epics) and nothing here checks it automatically.
 
 ORD-07, SRV-05, and AGT-07 were added after the initial draft to close gaps found during the Phase 0 traceability check (`docs/TRACEABILITY.md`): post-delivery feedback, the geocoding adapter itself, and the WhatsApp copy file brief §15.3 requires.
 
 Note: DSH-02/03/04/05/06/12/13/14 and CON-03 are cross-references to stories already fully specified under their originating epic (ORD, HND, BKG, MENU, CMP, ANL, LNK, QUE) — brief §12/§13 require "one story per screen minimum," satisfied here without duplicating acceptance criteria.
+
+### Restaurant OS Flow Map update (this pass)
+
+A detailed, timer-and-copy-level flow map (`Restaurant OS Flow Map.html`, 8 flows: Order and pay, Prepare and hand over, Table booking, Questions and handoff, Menu/stock/prices, Owner alerts/reports, Offers/win-back, Onboarding) was reviewed against this backlog and used to both add missing scope and tighten acceptance criteria with concrete values. Changes:
+
+- **New epic OWN** (3 stories: OWN-01/02/03) — an owner-facing WhatsApp command/alert/summary interface with no prior home in this backlog; distinct from OBS (engineering alerting) and DSH/ANL (dashboard screens).
+- **New stories**: MENU-07 (bulk menu import with change preview), WAB-06 (separate customer/kitchen/ops WhatsApp numbers per restaurant), BKG-07 (post-dining feedback, parity with ORD-07).
+- **Behavioural change, not just detail — flag for review**: FUL-02 is rewritten from "acceptance timeout → auto-refund if the restaurant never responds" to "automatic acceptance after a fixed delay (default 10s), no manual accept step at all." FUL-03 is narrowed from "whole-order rejection with a mandatory reason" to "item-level 'Problem' → owner picks swap or refund." FUL-04 is marked **consolidated into FUL-03** rather than deleted, to preserve its ID for traceability. ORD-06's kanban description is updated to match (no Accept/Reject action).
+- **Behavioural change, not just detail — flag for review**: ORD-02 is rewritten so the `orders` row is created only on confirmed payment, not at payment-link generation — the pre-payment state is a chat-only draft, tracked separately (a `checkout_drafts`-style concept not yet reflected in `docs/DATA_MODEL.md`). DSH-01 gained a "left before paying" figure sourced from this.
+- **Concrete defaults added or corrected** against existing placeholder/approximate values: PAY-02 (30 min link expiry, 10 min reminder), FUL-02 (10s auto-accept, 25 min stuck-order alert), BKG-04 (reminder default corrected from 2h to 3h), CONV-06 (5 min no-reply re-alert on handoff), BKG-03 (8-guest host-approval threshold), BKG-01 (waitlist on a full slot).
+- **Enriched, same scope**: BKG-06 (no-show recorded on the customer record), CONV-06/AGT-04 (allergy/health questions are an explicit, unconditional human-escalation trigger — the bot never guesses), BR-05 (pre-order offered when fully closed), CON-02 (AI-assisted menu extraction during onboarding, a go-live test gate, a first-week review checklist item).
+- These timer/threshold defaults (10s, 25min, 45min no-show, 3h booking reminder, 8-guest threshold, 30min payment expiry, 10min payment reminder, 11pm summary time, 5min handoff re-alert) are concrete enough that they belong in brief §11's settings table (CFG-01) as tenant-overridable values, not hardcoded — not yet synced into `KOTAI_BUILD_BRIEF.md` itself; flagged here for whoever next edits that doc.

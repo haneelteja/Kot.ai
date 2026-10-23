@@ -87,7 +87,6 @@ const TABS = [
   { key: 'team',         label: 'Team'          },
   { key: 'models',       label: 'AI Models'     },
   { key: 'automation',   label: 'Automation'    },
-  { key: 'webhooks',     label: 'Integrations'  },
   { key: 'notifications',label: 'Notifications' },
 ] as const;
 
@@ -130,14 +129,18 @@ export default async function SettingsPage({
 
   if (activeTab === 'workspace') {
     const apiBase = process.env['NEXT_PUBLIC_API_URL'] ?? 'https://your-api.onrender.com';
-    const [tenantRes, numbersRes, productsRes] = await Promise.all([
+    const [tenantRes, numbersRes, productsRes, webhooksRes, apiKeysRes] = await Promise.all([
       admin.from('tenants').select('*').eq('id', tenantId).single(),
       admin.from('whatsapp_numbers').select('*').eq('tenant_id', tenantId),
       admin.from('tenant_products').select('*').eq('tenant_id', tenantId),
+      admin.from('outbound_webhooks').select('id, url, event_types, active, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
+      admin.from('api_keys').select('id, name, key_prefix, scopes, last_used_at, created_at').eq('tenant_id', tenantId).is('revoked_at', null).order('created_at', { ascending: true }),
     ]);
     tenant   = tenantRes.data as Record<string, unknown> | null;
     numbers  = (numbersRes.data ?? []) as Record<string, unknown>[];
     products = (productsRes.data ?? []) as Record<string, unknown>[];
+    const webhookRows = webhooksRes.data;
+    const apiKeyRows  = apiKeysRes.data;
 
     const activeBots = products.filter(p => p['active']);
     const tenantWebhookUrl = tenant?.['id'] ? `${apiBase}/api/webhook/${tenant['id']}` : '';
@@ -231,6 +234,14 @@ export default async function SettingsPage({
               </div>
             </DashboardCollapsibleSection>
           )}
+
+          <DashboardCollapsibleSection icon={<Link2 size={16} />} title="Outbound Webhooks" hint="Notify your own systems in real time when orders are created, paid, or change status.">
+            <OutboundWebhooksManager initialWebhooks={(webhookRows ?? []) as OutboundWebhook[]} />
+          </DashboardCollapsibleSection>
+
+          <DashboardCollapsibleSection icon={<Wrench size={16} />} title="API Keys" hint="Let your own systems call the KOT.ai API directly, instead of using the dashboard.">
+            <ApiKeysManager initialKeys={(apiKeyRows ?? []) as ApiKey[]} />
+          </DashboardCollapsibleSection>
 
         </div>
       </SettingsShell>
@@ -574,28 +585,6 @@ export default async function SettingsPage({
 
           <DashboardCollapsibleSection icon={<ShieldOff size={16} />} title="Blocked Numbers" hint="Staff-side block list — independent of customer opt-out. Drops messages from a specific number silently.">
             <BlockedNumbersManager initialNumbers={(blockedRows ?? []) as BlockedNumber[]} />
-          </DashboardCollapsibleSection>
-        </div>
-      </SettingsShell>
-    );
-  }
-
-  // ── Integrations data (outbound webhooks + inbound API keys) ─────────────────
-  if (activeTab === 'webhooks') {
-    const [{ data: webhookRows }, { data: apiKeyRows }] = await Promise.all([
-      admin.from('outbound_webhooks').select('id, url, event_types, active, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
-      admin.from('api_keys').select('id, name, key_prefix, scopes, last_used_at, created_at').eq('tenant_id', tenantId).is('revoked_at', null).order('created_at', { ascending: true }),
-    ]);
-
-    return (
-      <SettingsShell activeTab={activeTab}>
-        <div className="space-y-5">
-          <DashboardCollapsibleSection icon={<Link2 size={16} />} title="Outbound Webhooks" hint="Notify your own systems in real time when orders are created, paid, or change status.">
-            <OutboundWebhooksManager initialWebhooks={(webhookRows ?? []) as OutboundWebhook[]} />
-          </DashboardCollapsibleSection>
-
-          <DashboardCollapsibleSection icon={<Wrench size={16} />} title="API Keys" hint="Let your own systems call the KOT.ai API directly, instead of using the dashboard.">
-            <ApiKeysManager initialKeys={(apiKeyRows ?? []) as ApiKey[]} />
           </DashboardCollapsibleSection>
         </div>
       </SettingsShell>

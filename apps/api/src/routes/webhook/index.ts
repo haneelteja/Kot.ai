@@ -837,25 +837,29 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
       return;
     }
 
-    // ── Fetch conversation history + KB context ────────────────────────────
+    // ── Fetch conversation history + KB context + button templates ────────
+    // These three don't depend on each other's results — run them
+    // concurrently instead of one at a time to save ~2 round-trip
+    // latencies per inbound message.
+    const contactData = contact as Contact;
+    const kbToolEnabled = Boolean(incoming.text && toolEnabled(allowedTools, TOOL_IDS.KNOWLEDGE_BASE));
+    const buttonTemplatesEnabled = toolEnabled(allowedTools, TOOL_IDS.BUTTON_TEMPLATES);
+
+    const [historyRes, kbLookupResult, btnRes] = await Promise.all([
+      db.from('messages').select('*').eq('conversation_id', conversation.id).order('timestamp', { ascending: false }).limit(40),
+      kbToolEnabled ? lookupKBWithScore(tenantId, productType, incoming.text!) : Promise.resolve({ results: [], topScore: 0 }),
+      buttonTemplatesEnabled
+        ? db.from('interactive_button_templates').select('name, description, type, template_json, trigger_keywords').eq('tenant_id', tenantId).eq('is_active', true).or(`product_slug.eq.${productType},product_slug.is.null`)
+        : Promise.resolve({ data: [] as ButtonTemplate[], error: null }),
+    ]);
+
     // Load up to 40 messages; the assembler splits them into recent verbatim
     // + archived summary so the LLM always gets fresh context efficiently.
-    const { data: historyDesc } = await db
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversation.id)
-      .order('timestamp', { ascending: false })
-      .limit(40);
-    const allHistory = ((historyDesc ?? []) as import('@alphabot/shared').Message[]).reverse();
-
+    const allHistory = ((historyRes.data ?? []) as import('@alphabot/shared').Message[]).reverse();
     const { archiveBlock, recentMessages, stats: historyStats } = assembleHistory(allHistory);
     fastify.log.info(historyStats, '[Webhook] history assembled');
 
-    const contactData = contact as Contact;
-    const kbToolEnabled = Boolean(incoming.text && toolEnabled(allowedTools, TOOL_IDS.KNOWLEDGE_BASE));
-    const { results: kbResults, topScore: kbTopScore } = kbToolEnabled
-      ? await lookupKBWithScore(tenantId, productType, incoming.text!)
-      : { results: [], topScore: 0 };
+    const { results: kbResults, topScore: kbTopScore } = kbLookupResult;
 
     if (kbToolEnabled && kbResults.length === 0) {
       void db.from('kb_unanswered_queries').insert({
@@ -872,20 +876,11 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
 
     const contactMemory = formatContactMemory(contactData.memory_json as unknown as Record<string, unknown> | null);
 
-    // Fetch active button templates — skipped when button_templates tool is disabled
-    let buttonTemplates: ButtonTemplate[] = [];
-    if (toolEnabled(allowedTools, TOOL_IDS.BUTTON_TEMPLATES)) {
-      const { data: btnRaw, error: btnTplError } = await db
-        .from('interactive_button_templates')
-        .select('name, description, type, template_json, trigger_keywords')
-        .eq('tenant_id', tenantId)
-        .eq('is_active', true)
-        .or(`product_slug.eq.${productType},product_slug.is.null`);
-      if (btnTplError) {
-        fastify.log.error({ btnTplError, tenantId }, '[Webhook] Failed to fetch button templates');
-      }
-      buttonTemplates = (btnRaw ?? []) as ButtonTemplate[];
+    const { data: btnRaw, error: btnTplError } = btnRes;
+    if (btnTplError) {
+      fastify.log.error({ btnTplError, tenantId }, '[Webhook] Failed to fetch button templates');
     }
+    const buttonTemplates: ButtonTemplate[] = (btnRaw ?? []) as ButtonTemplate[];
     fastify.log.info({ count: buttonTemplates.length, tenantId }, '[Webhook] button templates loaded');
 
     // ── Build effective system prompt with guardrails injected ───────────

@@ -246,7 +246,7 @@ async function processEnquiryFollowups(): Promise<void> {
 
   if (!jobs?.length) return;
 
-  for (const job of jobs) {
+  await Promise.allSettled(jobs.map(async (job) => {
     try {
       type JobRow = { id: string; tenant_id: string; conversation_id: string; contact_phone: string; whatsapp_number_id: string | null };
       const j = job as unknown as JobRow;
@@ -266,7 +266,7 @@ async function processEnquiryFollowups(): Promise<void> {
         await db.from('enquiry_followup_jobs')
           .update({ cancelled_at: now })
           .eq('id', j.id);
-        continue;
+        return;
       }
 
       // Load WA number for messaging + routing config for custom message
@@ -278,7 +278,7 @@ async function processEnquiryFollowups(): Promise<void> {
 
       if (!wn) {
         await db.from('enquiry_followup_jobs').update({ cancelled_at: now }).eq('id', j.id);
-        continue;
+        return;
       }
 
       const routingCfg = ((wn as unknown as { routing_config?: unknown }).routing_config ?? {}) as RoutingConfig;
@@ -312,7 +312,7 @@ async function processEnquiryFollowups(): Promise<void> {
     } catch (err) {
       console.error(`[EnquiryFollowup] Failed for job ${(job as { id: string }).id}:`, err instanceof Error ? err.message : String(err));
     }
-  }
+  }));
 }
 
 async function processAutoEscalate(): Promise<void> {
@@ -343,7 +343,7 @@ async function processAutoEscalate(): Promise<void> {
 
     if (!convs?.length) continue;
 
-    for (const conv of convs) {
+    await Promise.allSettled(convs.map(async (conv) => {
       try {
         await escalateConversation(
           conv as unknown as Conversation,
@@ -353,7 +353,7 @@ async function processAutoEscalate(): Promise<void> {
       } catch (err) {
         console.error(`[AutoEscalate] Failed for conversation ${conv.id}:`, err instanceof Error ? err.message : String(err));
       }
-    }
+    }));
   }
 }
 

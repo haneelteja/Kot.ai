@@ -137,54 +137,67 @@ export async function routedChatCompletion(params: {
           usage?: { prompt_tokens: number; completion_tokens: number };
         };
 
-        // One pass over every candidate model. Returns null (never throws) so
-        // the caller can retry the whole chain once more on a transient burst
-        // instead of giving up the moment every model happens to be 429'd at
-        // the same instant — free-tier shared-pool limits are usually brief.
+        // One pass over every candidate model, raced concurrently — first
+        // usable success wins and every other in-flight attempt is aborted.
+        // Previously these ran one after another (up to 4 models x 15s per
+        // pass x 2 passes ≈ 120s worst case); racing them means the worst
+        // case is a single 15s timeout window whenever at least one model
+        // is healthy, since a slow/dead model no longer blocks trying the
+        // others. Returns null (never throws) so the caller can retry the
+        // whole chain once more on a transient burst instead of giving up
+        // the moment every model happens to be 429'd at the same instant —
+        // free-tier shared-pool limits are usually brief.
         async function tryAllModels(): Promise<{ json: OpenAiResponse | null; lastErrText: string }> {
-          let lastErrText = '';
-          for (const candidateModel of modelsToTry) {
+          const winnerController = new AbortController();
+
+          async function attempt(candidateModel: string): Promise<{ json: OpenAiResponse; candidateModel: string }> {
+            const attemptController = new AbortController();
+            const timeoutId = setTimeout(() => attemptController.abort(), 15_000);
+            const onWinnerAbort = () => attemptController.abort();
+            winnerController.signal.addEventListener('abort', onWinnerAbort);
+
             try {
               const res = await fetch(`${baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({ model: candidateModel, messages: openaiMessages, max_tokens }),
-                // Shorter than before (was 25s) — with up to 3 models x 2 passes,
-                // a 25s timeout per attempt meant a 150s worst case. Free models
-                // that are actually going to respond usually do so well under
-                // 15s; a model stuck longer than that is better abandoned in
-                // favor of trying the next one than waited out.
-                signal: AbortSignal.timeout(15_000),
+                signal: attemptController.signal,
               });
 
               if (!res.ok) {
                 const body = await res.text();
                 let detail = `HTTP ${res.status}`;
                 try { const j = JSON.parse(body) as { error?: { message?: string } }; detail = j.error?.message ?? detail; } catch { /* use status */ }
-                lastErrText = `${res.status} on ${candidateModel}: ${detail}`;
-                continue;
+                throw new Error(`${res.status} on ${candidateModel}: ${detail}`);
               }
 
               const json = await res.json() as OpenAiResponse;
               const content = json.choices[0]?.message.content;
               // A 200 with empty/null content happens when a reasoning model burns
               // its whole token budget on internal "thinking" — not an HTTP error,
-              // but equally unusable. Try the next model instead of returning blank.
+              // but equally unusable. Reject so Promise.any moves on to another model.
               if (!content?.trim()) {
-                lastErrText = `empty content from ${candidateModel} (finish_reason: ${json.choices[0]?.finish_reason ?? 'unknown'})`;
-                continue;
+                throw new Error(`empty content from ${candidateModel} (finish_reason: ${json.choices[0]?.finish_reason ?? 'unknown'})`);
               }
 
-              resolvedModel = candidateModel;
-              return { json, lastErrText };
-            } catch (fetchErr) {
-              // Network-level failures (timeout, DNS, connection reset) throw
-              // before a Response exists at all — treat the same as a bad
-              // response from this model and move on to the next one.
-              lastErrText = `${candidateModel} threw: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`;
+              return { json, candidateModel };
+            } finally {
+              clearTimeout(timeoutId);
+              winnerController.signal.removeEventListener('abort', onWinnerAbort);
             }
           }
-          return { json: null, lastErrText };
+
+          try {
+            const winner = await Promise.any(modelsToTry.map(attempt));
+            resolvedModel = winner.candidateModel;
+            winnerController.abort(); // one usable reply is enough — cancel the rest
+            return { json: winner.json, lastErrText: '' };
+          } catch (aggErr) {
+            winnerController.abort(); // nothing won — make sure nothing is left hanging
+            const errors = aggErr instanceof AggregateError ? aggErr.errors : [aggErr];
+            const lastErrText = errors.map(e => (e instanceof Error ? e.message : String(e))).join('; ');
+            return { json: null, lastErrText };
+          }
         }
 
         let { json: okJson, lastErrText } = await tryAllModels();

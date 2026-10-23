@@ -10,6 +10,7 @@ import { captureException } from '../lib/sentry.js';
 import type { Conversation, WhatsAppProvider } from '@alphabot/shared';
 import type { RoutingConfig } from '../services/routing/router.js';
 import { escalateConversation } from '../services/escalation/index.js';
+import { sendDueBookingFeedbackPrompts } from '../lib/booking-feedback.js';
 
 function alertJobFailure(jobName: string, err: unknown): void {
   console.error(`[Scheduler] ${jobName} failed:`, (err as Error).message);
@@ -417,6 +418,13 @@ export function startScheduler(): void {
       }
     }).catch(err =>
       alertJobFailure('ai_insights', err)
+    );
+  });
+
+  // Booking feedback prompts (BKG-07) — every 30 min  [TTL: 1740s = 29min]
+  cron.schedule('*/30 * * * *', () => {
+    void withJobLock('booking_feedback', 1740, () => sendDueBookingFeedbackPrompts(getServerClient(), console)).catch(err =>
+      alertJobFailure('booking_feedback', err)
     );
   });
 

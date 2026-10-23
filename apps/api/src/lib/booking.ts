@@ -56,3 +56,32 @@ export async function createBooking(
     booking: { id: (data as { id: string }).id, partySize, bookingDate, bookingTime },
   };
 }
+
+export type CreateBookingFeedbackResult =
+  | { ok: true; rating: number }
+  | { ok: false; error: 'invalid_rating' | 'already_submitted' | 'create_failed' };
+
+/** BKG-07: records the customer's reply to the post-dining feedback prompt. */
+export async function createBookingFeedback(
+  db:        Db,
+  tenantId:  string,
+  bookingId: string,
+  contactId: string,
+  rating:    number,
+): Promise<CreateBookingFeedbackResult> {
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { ok: false, error: 'invalid_rating' };
+  }
+
+  const { error } = await db
+    .from('booking_feedback')
+    .insert({ tenant_id: tenantId, booking_id: bookingId, contact_id: contactId, rating });
+
+  if (error) {
+    return error.code === '23505' // unique_violation on booking_id — already rated
+      ? { ok: false, error: 'already_submitted' }
+      : { ok: false, error: 'create_failed' };
+  }
+
+  return { ok: true, rating };
+}

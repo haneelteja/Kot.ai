@@ -111,3 +111,40 @@ export async function notifyStaffOfBooking(
     );
   }
 }
+
+/** BKG-07: low-rating (1-2 star) owner alert, same recipient lists as notifyStaffOfBooking. */
+export async function notifyStaffOfLowBookingRating(
+  tenantId:     string,
+  productSlug:  string,
+  customerName: string,
+  customerPhone: string,
+  rating:       number,
+): Promise<void> {
+  const db = getServerClient();
+
+  const [settingsRes, wn] = await Promise.all([
+    db.from('tenant_notification_settings')
+      .select('lead_notification_wa_numbers')
+      .eq('tenant_id', tenantId)
+      .single(),
+    resolveNumberForRole(db, tenantId, productSlug, 'ops'),
+  ]);
+
+  const waNumbers = (settingsRes.data?.lead_notification_wa_numbers as string[] | null) ?? [];
+  if (waNumbers.length === 0 || !wn) return;
+
+  const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+  const text = [
+    `⚠️ *Low booking rating — ${rating}/5*`,
+    ``,
+    `*Customer:* ${customerName}`,
+    `*Phone:* ${customerPhone}`,
+  ].join('\n');
+
+  await Promise.allSettled(
+    waNumbers.map(number =>
+      gateway.sendMessage(wn.phone_number_id, wn.access_token, { type: 'text', to: number, text })
+        .catch(err => console.error(`[BookingNotify] Failed to send low-rating alert to ${number}:`, err))
+    )
+  );
+}

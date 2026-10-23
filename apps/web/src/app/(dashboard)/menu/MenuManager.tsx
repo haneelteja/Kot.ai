@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import {
   Plus, Pencil, Trash2, Loader2, Check, X,
-  UtensilsCrossed, IndianRupee, Tag, Info, Leaf,
+  UtensilsCrossed, IndianRupee, Tag, Info, Leaf, Upload,
 } from 'lucide-react';
 import {
   createMenuItemAction,
@@ -12,6 +12,7 @@ import {
   createMenuCategoryAction,
   deleteMenuCategoryAction,
 } from '@/app/actions/menu';
+import { MenuBulkImport } from './MenuBulkImport';
 import type { MenuCategory, MenuItemRow } from '@alphabot/shared';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -214,6 +215,7 @@ export function MenuManager({
   const [, startTransition]         = useTransition();
   const [saving, setSaving]         = useState(false);
   const [toggling, setToggling]     = useState<string | null>(null);
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   const categoryName = (id: string | null) => categories.find(c => c.id === id)?.name ?? null;
 
@@ -328,15 +330,26 @@ export function MenuManager({
           {items.length} item{items.length !== 1 ? 's' : ''}
         </p>
         {!showAdd && (
-          <button
-            type="button"
-            onClick={() => { setShowAdd(true); setEditingId(null); }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-strong text-white text-sm font-semibold hover:opacity-90 transition-colors"
-          >
-            <Plus size={14} /> Add item
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowBulkImport(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-line text-text text-sm font-medium hover:bg-sunken transition-colors"
+            >
+              <Upload size={13} /> Bulk import
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowAdd(true); setEditingId(null); }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-strong text-white text-sm font-semibold hover:opacity-90 transition-colors"
+            >
+              <Plus size={14} /> Add item
+            </button>
+          </div>
         )}
       </div>
+
+      {showBulkImport && <MenuBulkImport onClose={() => setShowBulkImport(false)} />}
 
       {showAdd && (
         <div className="bg-surface border border-brand/20 rounded-2xl p-4 shadow-float">

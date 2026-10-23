@@ -20,7 +20,7 @@ import { getProductCatalogue } from '../../lib/product-cache.js';
 import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
 import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
-import { handleRestaurantButtonTap, handleConfirmBooking, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
+import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { handleOwnerCommand } from '../../services/restaurant-bot/owner-commands.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
@@ -753,12 +753,7 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
     // Resolve tool manifest — falls back to defaults for bots without a row yet
     const allowedTools = ((botConfig as unknown as { allowed_tools?: string[] } | null)?.allowed_tools) ?? [];
 
-    // ── Restaurant bot: deterministic main-menu button-tap routing ─────────
-    // view_menu / reserve_table / order_food all skip the AI entirely — same
-    // fast-path philosophy as matchAutoReply. Checked after the escalation
-    // tap check above (mutually exclusive — escalate:true buttons never
-    // carry these ids) and before any guardrails/system-prompt building.
-    // See services/restaurant-bot/button-flow.ts for the handler itself.
+    // Main-menu button taps — see services/restaurant-bot/button-flow.ts.
     if (
       incoming.type === 'interactive' &&
       incoming.interactiveReplyId &&
@@ -769,6 +764,15 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
         db, gateway, config, incoming, conversation, tenantId, botConfig, log: fastify.log,
       });
       if (handled) return;
+    }
+
+    // BKG-07: reply to the post-dining feedback prompt.
+    if (incoming.type === 'interactive' && incoming.interactiveReplyId && productType === 'restaurant_bot') {
+      const fed = await handleBookingFeedbackReply({
+        db, gateway, config, incoming, tenantId, productSlug: productType,
+        contactId: contact.id, contactName: contact.name ?? null, contactPhone: contact.phone,
+      });
+      if (fed) return;
     }
 
     const escalationTriggers: string[] =

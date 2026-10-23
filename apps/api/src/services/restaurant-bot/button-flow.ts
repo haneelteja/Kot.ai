@@ -3,8 +3,8 @@ import type { getServerClient } from '@alphabot/database';
 import type { BotConfig, Conversation, IncomingWhatsAppMessage, Product } from '@alphabot/shared';
 import { WhatsAppGateway } from '../whatsapp/gateway.js';
 import { getMenu } from '../../lib/menu-cache.js';
-import { createBooking } from '../../lib/booking.js';
-import { notifyStaffOfBooking } from '../booking/notify.js';
+import { createBooking, createBookingFeedback } from '../../lib/booking.js';
+import { notifyStaffOfBooking, notifyStaffOfLowBookingRating } from '../booking/notify.js';
 import { dispatchWebhook } from '../../lib/dispatch-webhook.js';
 import { fireForget } from '../../lib/fire-forget.js';
 
@@ -135,4 +135,50 @@ export async function handleConfirmBooking(ctx: ConfirmBookingContext): Promise<
       log,
     );
   }
+}
+
+const BOOKING_FEEDBACK_REPLY_RE = /^bkgfb:([0-9a-f-]{36}):([1-5])$/i;
+
+interface BookingFeedbackContext {
+  db:           Db;
+  gateway:      WhatsAppGateway;
+  config:       { phone_number_id: string; access_token: string };
+  incoming:     IncomingWhatsAppMessage;
+  tenantId:     string;
+  productSlug:  string;
+  contactId:    string;
+  contactName:  string | null;
+  contactPhone: string;
+}
+
+/**
+ * BKG-07: captures a reply to the "bkgfb:<bookingId>:<rating>" list prompt
+ * sent by lib/booking-feedback.ts's scheduled job. Returns true whenever
+ * the reply ID matched this pattern, whether or not the write succeeded —
+ * the caller should never fall through to the AI for a reply we ourselves
+ * generated the options for.
+ */
+export async function handleBookingFeedbackReply(ctx: BookingFeedbackContext): Promise<boolean> {
+  const match = ctx.incoming.interactiveReplyId?.match(BOOKING_FEEDBACK_REPLY_RE);
+  if (!match) return false;
+
+  const bookingId = match[1]!;
+  const rating    = Number(match[2]);
+
+  const result = await createBookingFeedback(ctx.db, ctx.tenantId, bookingId, ctx.contactId, rating);
+
+  if (result.ok) {
+    await ctx.gateway.sendMessage(ctx.config.phone_number_id, ctx.config.access_token, {
+      type: 'text',
+      to:   ctx.incoming.from,
+      text: 'Thank you for your feedback! 🙏',
+    });
+    if (rating <= 2) {
+      void notifyStaffOfLowBookingRating(ctx.tenantId, ctx.productSlug, ctx.contactName ?? ctx.contactPhone, ctx.contactPhone, rating);
+    }
+  }
+  // 'already_submitted'/'create_failed': stay silent rather than confuse the
+  // customer with an error for a tap that already landed once, if at all.
+
+  return true;
 }

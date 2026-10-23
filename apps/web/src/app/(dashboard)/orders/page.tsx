@@ -2,13 +2,15 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Plus, ExternalLink, CheckCircle, Clock, Truck, XCircle, Package } from 'lucide-react';
+import { ShoppingCart, Plus, ExternalLink, CheckCircle, Clock, Truck, XCircle, Package, ChefHat, BellRing } from 'lucide-react';
 import { OrderStatusBadge }   from '@/components/dashboard/OrderStatusBadge';
 import { SendInvoiceButton } from '@/components/dashboard/SendInvoiceButton';
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   pending:    <Clock size={13} className="text-amber-500" />,
   confirmed:  <CheckCircle size={13} className="text-done" />,
+  preparing:  <ChefHat size={13} className="text-violet-500" />,
+  ready:      <BellRing size={13} className="text-done" />,
   dispatched: <Truck size={13} className="text-indigo-500" />,
   delivered:  <Package size={13} className="text-neutral" />,
   cancelled:  <XCircle size={13} className="text-red-400" />,
@@ -57,7 +59,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
 
   const { data: orders } = await query.limit(100);
 
-  const STATUSES = ['all', 'pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
+  const STATUSES = ['all', 'pending', 'confirmed', 'preparing', 'ready', 'dispatched', 'delivered', 'cancelled'];
 
   // Single pass over orders to compute all counts — previously three separate filter passes.
   const totals = (orders ?? []).reduce(

@@ -9,6 +9,8 @@ import { generateAndSendInvoice } from '../../services/invoice/generator.js';
 import type { WhatsAppProvider } from '@alphabot/shared';
 import { requireAuth, requireScope } from '../../middleware/auth.js';
 import { dispatchWebhook } from '../../lib/dispatch-webhook.js';
+import { resolveNumberForRole } from '../../lib/number-roles.js';
+import { convertDraftToOrder } from '../../lib/checkout-draft.js';
 
 type Db = ReturnType<typeof getServerClient>;
 
@@ -18,31 +20,22 @@ type Db = ReturnType<typeof getServerClient>;
  * actually created the order), falling back to any active number for the
  * tenant — a tenant may only have a restaurant_bot number and no
  * lifecycle_bot number (or vice versa), and nothing stops a tenant running
- * both bot types at once.
+ * both bot types at once. WAB-06: delegates to resolveNumberForRole('customer')
+ * so a tenant's kitchen/ops numbers are never picked for a customer-facing
+ * order message — the old direct query had no role filter at all.
  */
 async function resolveOrderWhatsAppNumber(
   db: Db, tenantId: string, preferredSlug: string,
 ): Promise<{ config_json: Record<string, unknown>; provider: string } | null> {
-  const { data: preferred } = await db
-    .from('whatsapp_numbers')
-    .select('config_json, provider')
-    .eq('tenant_id', tenantId)
-    .eq('product_slug', preferredSlug)
-    .eq('active', true)
-    .maybeSingle();
-  if (preferred) return preferred as { config_json: Record<string, unknown>; provider: string };
-
-  const { data: fallback } = await db
-    .from('whatsapp_numbers')
-    .select('config_json, provider')
-    .eq('tenant_id', tenantId)
-    .eq('active', true)
-    .limit(1)
-    .maybeSingle();
-  return fallback as { config_json: Record<string, unknown>; provider: string } | null;
+  const resolved = await resolveNumberForRole(db, tenantId, preferredSlug, 'customer');
+  if (!resolved) return null;
+  return {
+    config_json: { phone_number_id: resolved.phone_number_id, access_token: resolved.access_token },
+    provider: resolved.provider,
+  };
 }
 
-type OrderStatus = 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled';
+type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
 
 // Moved here from apps/web/src/app/actions/orders.ts — that copy wrote
 // straight to Supabase and duplicated resolveOrderWhatsAppNumber's fallback
@@ -355,7 +348,13 @@ export async function easebuzzCallbackRoute(fastify: FastifyInstance): Promise<v
         .select('order_id')
         .single();
 
-      if (!payment) return;
+      if (!payment) {
+        // ORD-02 (revised): txnid may be a checkout_drafts id rather than a
+        // payments id — a restaurant order (WhatsApp or weblink) has no
+        // payments row until payment is confirmed. See lib/checkout-draft.ts.
+        await handleRestaurantDraftPaid(db, fastify, txnid);
+        return;
+      }
 
       await db.from('orders')
         .update({ status: 'confirmed', updated_at: new Date().toISOString() })
@@ -395,10 +394,110 @@ export async function easebuzzCallbackRoute(fastify: FastifyInstance): Promise<v
     }
 
     if (status === 'failure' || status === 'userCancelled') {
-      await db.from('payments')
+      const { data: updated } = await db.from('payments')
         .update({ status: 'failed', webhook_received_at: new Date().toISOString() })
-        .eq('id', txnid);
+        .eq('id', txnid)
+        .select('id');
+
+      if (!updated?.length) {
+        // Same draft-vs-payment ambiguity as the success branch above.
+        await db.from('checkout_drafts').update({ status: 'cancelled' }).eq('id', txnid).eq('status', 'awaiting_payment');
+      }
     }
   });
+}
+
+/**
+ * ORD-02 + FUL-01/02 (revised): converts the draft to a real order (the
+ * order now exists for the first time, already paid), sends the customer
+ * confirmation with the order ref, pushes a kitchen ticket if a kitchen
+ * number is configured (WAB-06; falls back to the customer number), and
+ * schedules the FUL-02 auto-accept transition.
+ */
+async function handleRestaurantDraftPaid(db: Db, fastify: FastifyInstance, draftId: string): Promise<void> {
+  const result = await convertDraftToOrder(db, draftId);
+  if (!result.ok) {
+    if (result.error !== 'already_converted') {
+      fastify.log.warn({ draftId, error: result.error }, '[Easebuzz] Could not convert checkout draft to an order');
+    }
+    return;
+  }
+  if (!result.orderRef) return; // already-converted replay — confirmation already sent once
+
+  dispatchWebhook(result.tenantId, 'order.created', { orderId: result.orderId, orderRef: result.orderRef, totalPaise: result.totalPaise, source: result.source });
+  dispatchWebhook(result.tenantId, 'order.paid', { orderId: result.orderId, orderRef: result.orderRef, totalPaise: result.totalPaise });
+
+  const { data: contact } = await db.from('contacts').select('phone').eq('id', result.contactId).single();
+  const customerWn = await resolveNumberForRole(db, result.tenantId, 'restaurant_bot', 'customer');
+
+  if (customerWn && contact?.phone) {
+    const gateway = new WhatsAppGateway(customerWn.provider as WhatsAppProvider);
+    await gateway.sendMessage(customerWn.phone_number_id, customerWn.access_token, {
+      type: 'text',
+      to:   contact.phone,
+      text: `Payment received. We are confirming your order ${result.orderRef}.`,
+    });
+  }
+
+  await sendKitchenTicket(db, fastify, result.tenantId, result.orderId, result.orderRef);
+  scheduleAutoAccept(db, fastify, result.orderId);
+}
+
+/**
+ * FUL-01 (minimal): pushes a kitchen ticket with Ready/Problem buttons, sent
+ * FROM the tenant's 'kitchen'-role WhatsApp number (WAB-06) TO the actual
+ * kitchen staff phone(s) configured in tenant_notification_settings
+ * .kitchen_notification_wa_numbers — same recipient-list pattern as lead/
+ * daily-report notifications. No-op if either isn't configured.
+ */
+async function sendKitchenTicket(db: Db, fastify: FastifyInstance, tenantId: string, orderId: string, orderRef: string): Promise<void> {
+  const [itemsRes, kitchenWn, settingsRes] = await Promise.all([
+    db.from('order_items').select('name, quantity').eq('order_id', orderId),
+    resolveNumberForRole(db, tenantId, 'restaurant_bot', 'kitchen'),
+    db.from('tenant_notification_settings').select('kitchen_notification_wa_numbers').eq('tenant_id', tenantId).maybeSingle(),
+  ]);
+
+  const kitchenNumbers = (settingsRes.data?.kitchen_notification_wa_numbers as string[] | null) ?? [];
+  if (!kitchenWn || kitchenNumbers.length === 0) return;
+
+  const items = itemsRes.data ?? [];
+  const lines = items.map(i => `${i.quantity} × ${i.name}`).join('\n');
+  const gateway = new WhatsAppGateway(kitchenWn.provider as WhatsAppProvider);
+  const body = `NEW ${orderRef}\n${lines}\nPAID`;
+
+  await Promise.allSettled(
+    kitchenNumbers.map(number =>
+      gateway.sendMessage(kitchenWn.phone_number_id, kitchenWn.access_token, {
+        type:            'interactive',
+        interactiveType: 'button',
+        to:              number,
+        body,
+        buttons: [
+          { type: 'reply', reply: { id: `kitchen_ready:${orderId}`,   title: 'Ready' } },
+          { type: 'reply', reply: { id: `kitchen_problem:${orderId}`, title: 'Problem' } },
+        ],
+      }).catch(err => fastify.log.warn({ orderId, number, err }, '[FUL-01] kitchen ticket send failed'))
+    ),
+  );
+}
+
+/**
+ * FUL-02: automatic order acceptance after a fixed delay (default 10s) —
+ * no manual Accept action exists. Uses an in-process timer rather than a
+ * cron tick since the target window is short; a lost timer on a mid-window
+ * restart just means the order sits at 'confirmed' a little longer, not a
+ * correctness issue (see docs/BACKLOG.md's flow-map update note).
+ */
+function scheduleAutoAccept(db: Db, fastify: FastifyInstance, orderId: string): void {
+  const AUTO_ACCEPT_DELAY_MS = 10_000;
+  setTimeout(() => {
+    void db.from('orders')
+      .update({ status: 'preparing', accepted_at: new Date().toISOString() })
+      .eq('id', orderId)
+      .eq('status', 'confirmed') // guard: no-op if something else already moved it on
+      .then(({ error }) => {
+        if (error) fastify.log.warn({ orderId, error }, '[FUL-02] auto-accept update failed');
+      });
+  }, AUTO_ACCEPT_DELAY_MS);
 }
 

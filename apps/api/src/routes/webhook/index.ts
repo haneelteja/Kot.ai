@@ -21,7 +21,7 @@ import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
 import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
-import { handleOwnerCommand } from '../../services/restaurant-bot/owner-commands.js';
+import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
 import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
@@ -1688,21 +1688,20 @@ Which branch works best for you?
       if (isClearCart) void clearCart(db, tenantId, contactData.id);
 
       if (isConfirmOrder) {
+        // ORD-02: this creates a checkout draft, not an order — the order
+        // exists only once Easebuzz confirms payment (routes/orders/index.ts).
         const result = await confirmOrderFromCart(db, tenantId, contactData.id, conversation.id);
-        if (result.ok) {
-          dispatchWebhook(tenantId, 'order.created', { orderId: result.orderId, orderRef: result.orderRef, totalPaise: result.totalPaise, source: 'whatsapp_bot' });
-          const msg = result.linkUrl
-            ? `🧾 *Order Confirmed — ${result.orderRef}*\n\nTotal: ₹${(result.totalPaise / 100).toFixed(2)}\n\n💳 Pay securely:\n${result.linkUrl}`
-            : `🧾 *Order Confirmed — ${result.orderRef}*\n\nTotal: ₹${(result.totalPaise / 100).toFixed(2)}\n\nOur team will reach out shortly to arrange payment.`;
+        if (result.ok && result.linkUrl) {
+          const msg = `Please pay ₹${(result.totalPaise / 100).toFixed(2)} to confirm your order. This link is valid for 30 minutes.\n\n💳 ${result.linkUrl}`;
           fireForget(
             gateway.sendMessage(config.phone_number_id, config.access_token, { type: 'text', to: incoming.from, text: msg }),
             'send-order-confirmation',
             fastify.log,
           );
         } else {
-          const msg = result.error === 'empty_cart'
+          const msg = !result.ok && result.error === 'empty_cart'
             ? "Your cart is empty — add a few items first! 🍽️"
-            : "Sorry, I couldn't place that order right now. Please try again in a moment.";
+            : "Sorry, I couldn't set up payment for that order right now. Please try again in a moment.";
           fireForget(
             gateway.sendMessage(config.phone_number_id, config.access_token, { type: 'text', to: incoming.from, text: msg }),
             'send-order-confirm-failure',
@@ -1915,16 +1914,8 @@ Which branch works best for you?
       return;
     }
 
-    // OWN-03: ops-role number — route to the command parser, skip the AI pipeline.
-    if (wnRow.role === 'ops') {
-      const gateway = new WhatsAppGateway(wnRow.provider as WhatsAppProvider);
-      const config  = wnRow.config_json as { phone_number_id: string; access_token: string };
-      const incoming = gateway.parseIncoming(body);
-      if (incoming && incoming.type !== 'unsupported') {
-        await handleOwnerCommand({ db, gateway, config, incoming, tenantId, log: fastify.log });
-      }
-      return;
-    }
+    // OWN-03/FUL-03: ops/kitchen numbers never reach the AI pipeline.
+    if (await routeNonCustomerRoleMessage(wnRow.role, db, wnRow, body, tenantId, fastify.log)) return;
 
     // ── Multi-bot routing layer ───────────────────────────────────────────
     if (wnRow.routing_mode === 'multi') {

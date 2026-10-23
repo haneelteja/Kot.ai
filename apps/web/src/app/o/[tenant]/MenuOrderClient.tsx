@@ -59,19 +59,19 @@ export function MenuOrderClient({ tenantId, menu }: { tenantId: string; menu: Pu
           items: cartLines.map(l => ({ menuItemId: l.item.id, quantity: l.quantity })),
         }),
       });
-      const data = await res.json() as { error?: string; linkUrl?: string | null; orderRef?: string };
+      const data = await res.json() as { error?: string; linkUrl?: string | null };
       if (!res.ok || data.error) {
-        setError(data.error ?? 'Could not place your order — please try again.');
+        setError(data.error ?? 'Could not set up payment for this order — please try again.');
         setSubmit(false);
         return;
       }
       if (data.linkUrl) {
         window.location.href = data.linkUrl;
       } else {
-        setError(null);
+        // ORD-02: no order exists until payment is confirmed, so without a
+        // payment link there's nothing to show the customer as "placed".
+        setError('Payment isn’t available right now — please try again in a moment.');
         setSubmit(false);
-        setQty({});
-        alert(`Order ${data.orderRef} placed! Our team will reach out shortly to arrange payment.`);
       }
     } catch {
       setError('Network error — please try again.');

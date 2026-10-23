@@ -11,6 +11,8 @@ import type { Conversation, WhatsAppProvider } from '@alphabot/shared';
 import type { RoutingConfig } from '../services/routing/router.js';
 import { escalateConversation } from '../services/escalation/index.js';
 import { sendDueBookingFeedbackPrompts } from '../lib/booking-feedback.js';
+import { checkStuckOrders } from '../lib/stuck-order-check.js';
+import { processCheckoutDraftReminders } from '../lib/checkout-draft-expiry.js';
 
 function alertJobFailure(jobName: string, err: unknown): void {
   console.error(`[Scheduler] ${jobName} failed:`, (err as Error).message);
@@ -425,6 +427,20 @@ export function startScheduler(): void {
   cron.schedule('*/30 * * * *', () => {
     void withJobLock('booking_feedback', 1740, () => sendDueBookingFeedbackPrompts(getServerClient(), console)).catch(err =>
       alertJobFailure('booking_feedback', err)
+    );
+  });
+
+  // Stuck-order alert (FUL-02) — every 5 min  [TTL: 270s = 4.5min]
+  cron.schedule('*/5 * * * *', () => {
+    void withJobLock('stuck_orders', 270, () => checkStuckOrders(getServerClient(), console)).catch(err =>
+      alertJobFailure('stuck_orders', err)
+    );
+  });
+
+  // Checkout draft reminders + expiry (PAY-02/ORD-02) — every 2 min  [TTL: 110s]
+  cron.schedule('*/2 * * * *', () => {
+    void withJobLock('checkout_draft_reminders', 110, () => processCheckoutDraftReminders(getServerClient(), console)).catch(err =>
+      alertJobFailure('checkout_draft_reminders', err)
     );
   });
 

@@ -2,7 +2,6 @@ import type { FastifyInstance } from 'fastify';
 import { getServerClient } from '@alphabot/database';
 import { getMenu } from '../../lib/menu-cache.js';
 import { createWebOrder } from '../../lib/restaurant-order.js';
-import { dispatchWebhook } from '../../lib/dispatch-webhook.js';
 
 const PHONE_RE = /^\+?[0-9]{8,15}$/;
 const MAX_LINES = 50;
@@ -69,21 +68,20 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
       '[PublicOrders] order attempt',
     );
 
+    // ORD-02 (revised): this creates a checkout draft, not an order — the
+    // order itself is only created once Easebuzz confirms payment.
     const result = await createWebOrder(db, tenantId, phone.trim(), name?.trim() || null, normalisedItems);
 
     if (!result.ok) {
       const status = result.error === 'empty_order' ? 400 : 500;
       const message = result.error === 'empty_order'
         ? 'None of the selected items are currently available'
-        : 'Could not create the order — please try again';
+        : 'Could not set up payment for this order — please try again';
       return reply.status(status).send({ error: message });
     }
 
-    dispatchWebhook(tenantId, 'order.created', { orderId: result.orderId, orderRef: result.orderRef, totalPaise: result.totalPaise, source: 'weblink' });
-
     return reply.send({
-      orderId:    result.orderId,
-      orderRef:   result.orderRef,
+      draftId:    result.draftId,
       totalPaise: result.totalPaise,
       linkUrl:    result.linkUrl,
     });

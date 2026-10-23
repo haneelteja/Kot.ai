@@ -10,6 +10,7 @@ import {
 import { WhatsAppSetupSection }  from '@/components/dashboard/WhatsAppSetupSection';
 import { NotificationSettings }  from '@/components/dashboard/NotificationSettings';
 import { LeadNotificationSettings } from '@/components/dashboard/LeadNotificationSettings';
+import { KitchenNotificationSettings } from '@/components/dashboard/KitchenNotificationSettings';
 import { DailyReportSettings } from '@/components/dashboard/DailyReportSettings';
 import { NotificationPreferences } from '@/components/dashboard/NotificationPreferences';
 import { WhatsAppNumbersManager} from '@/components/dashboard/WhatsAppNumbersManager';
@@ -644,7 +645,7 @@ export default async function SettingsPage({
           />
         </Section>
 
-        <Section icon={<Bell size={16} />} title="Lead Notifications" hint="Notify your sales team the moment a lead is captured — when the bot detects buying intent. Configure email addresses and WhatsApp numbers to receive instant lead alerts.">
+        <Section icon={<Bell size={16} />} title={hasRestaurantBot ? 'Owner Alerts' : 'Lead Notifications'} hint={hasRestaurantBot ? 'The owner/manager WhatsApp numbers that get instant alerts — new table bookings, a kitchen-reported order problem, a low rating, or a stuck order — in addition to lead alerts.' : 'Notify your sales team the moment a lead is captured — when the bot detects buying intent. Configure email addresses and WhatsApp numbers to receive instant lead alerts.'}>
           <LeadNotificationSettings
             initialEmails={(notifSettings as { lead_notification_emails?: string[] | null } | null)?.lead_notification_emails ?? []}
             initialWaNumbers={(notifSettings as { lead_notification_wa_numbers?: string[] | null } | null)?.lead_notification_wa_numbers ?? []}
@@ -659,6 +660,14 @@ export default async function SettingsPage({
             showTimeField={hasRestaurantBot}
           />
         </Section>
+
+        {hasRestaurantBot && (
+          <Section icon={<Bell size={16} />} title="Kitchen Notifications" hint="Where new order tickets go (FUL-01). Separate from Owner Alerts above — this is the kitchen staff's own phone(s), not the owner's.">
+            <KitchenNotificationSettings
+              initialWaNumbers={(notifSettings as { kitchen_notification_wa_numbers?: string[] | null } | null)?.kitchen_notification_wa_numbers ?? []}
+            />
+          </Section>
+        )}
 
         <Section icon={<Bell size={16} />} title="My Alert Preferences" hint="Control which notification emails you personally receive. These settings only affect your account.">
           <NotificationPreferences

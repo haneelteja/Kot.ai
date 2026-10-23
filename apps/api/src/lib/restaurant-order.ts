@@ -132,3 +132,32 @@ export async function createWebOrder(
 
   return { ok: true, draftId: draft.id, totalPaise, linkUrl };
 }
+
+export type CreateOrderFeedbackResult =
+  | { ok: true; rating: number }
+  | { ok: false; error: 'invalid_rating' | 'already_submitted' | 'create_failed' };
+
+/** ORD-07: records the customer's reply to the post-pickup feedback prompt — parity with lib/booking.ts's createBookingFeedback. */
+export async function createOrderFeedback(
+  db:        Db,
+  tenantId:  string,
+  orderId:   string,
+  contactId: string,
+  rating:    number,
+): Promise<CreateOrderFeedbackResult> {
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { ok: false, error: 'invalid_rating' };
+  }
+
+  const { error } = await db
+    .from('order_feedback')
+    .insert({ tenant_id: tenantId, order_id: orderId, contact_id: contactId, rating });
+
+  if (error) {
+    return error.code === '23505'
+      ? { ok: false, error: 'already_submitted' }
+      : { ok: false, error: 'create_failed' };
+  }
+
+  return { ok: true, rating };
+}

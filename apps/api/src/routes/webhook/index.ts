@@ -20,7 +20,7 @@ import { getProductCatalogue } from '../../lib/product-cache.js';
 import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
 import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
-import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
+import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
@@ -766,13 +766,14 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
       if (handled) return;
     }
 
-    // BKG-07: reply to the post-dining feedback prompt.
+    // BKG-07/ORD-07: reply to the post-dining/post-pickup feedback prompt.
     if (incoming.type === 'interactive' && incoming.interactiveReplyId && productType === 'restaurant_bot') {
-      const fed = await handleBookingFeedbackReply({
+      const fbCtx = {
         db, gateway, config, incoming, tenantId, productSlug: productType,
         contactId: contact.id, contactName: contact.name ?? null, contactPhone: contact.phone,
-      });
-      if (fed) return;
+      };
+      if (await handleBookingFeedbackReply(fbCtx)) return;
+      if (await handleOrderFeedbackReply(fbCtx)) return;
     }
 
     const escalationTriggers: string[] =

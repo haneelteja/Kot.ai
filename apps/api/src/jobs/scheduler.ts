@@ -11,6 +11,7 @@ import type { Conversation, WhatsAppProvider } from '@alphabot/shared';
 import type { RoutingConfig } from '../services/routing/router.js';
 import { escalateConversation } from '../services/escalation/index.js';
 import { sendDueBookingFeedbackPrompts } from '../lib/booking-feedback.js';
+import { sendDueOrderFeedbackPrompts } from '../lib/order-feedback.js';
 import { checkStuckOrders, checkUncollectedOrders } from '../lib/stuck-order-check.js';
 import { processCheckoutDraftReminders } from '../lib/checkout-draft-expiry.js';
 
@@ -427,6 +428,13 @@ export function startScheduler(): void {
   cron.schedule('*/30 * * * *', () => {
     void withJobLock('booking_feedback', 1740, () => sendDueBookingFeedbackPrompts(getServerClient(), console)).catch(err =>
       alertJobFailure('booking_feedback', err)
+    );
+  });
+
+  // Order feedback prompts (ORD-07) — every 30 min  [TTL: 1740s = 29min]
+  cron.schedule('*/30 * * * *', () => {
+    void withJobLock('order_feedback', 1740, () => sendDueOrderFeedbackPrompts(getServerClient(), console)).catch(err =>
+      alertJobFailure('order_feedback', err)
     );
   });
 

@@ -4,7 +4,8 @@ import type { BotConfig, Conversation, IncomingWhatsAppMessage, Product } from '
 import { WhatsAppGateway } from '../whatsapp/gateway.js';
 import { getMenu } from '../../lib/menu-cache.js';
 import { createBooking, createBookingFeedback } from '../../lib/booking.js';
-import { notifyStaffOfBooking, notifyStaffOfLowBookingRating } from '../booking/notify.js';
+import { createOrderFeedback } from '../../lib/restaurant-order.js';
+import { notifyStaffOfBooking, notifyStaffOfLowRating } from '../booking/notify.js';
 import { dispatchWebhook } from '../../lib/dispatch-webhook.js';
 import { fireForget } from '../../lib/fire-forget.js';
 
@@ -138,8 +139,9 @@ export async function handleConfirmBooking(ctx: ConfirmBookingContext): Promise<
 }
 
 const BOOKING_FEEDBACK_REPLY_RE = /^bkgfb:([0-9a-f-]{36}):([1-5])$/i;
+const ORDER_FEEDBACK_REPLY_RE   = /^ordfb:([0-9a-f-]{36}):([1-5])$/i;
 
-interface BookingFeedbackContext {
+interface FeedbackReplyContext {
   db:           Db;
   gateway:      WhatsAppGateway;
   config:       { phone_number_id: string; access_token: string };
@@ -150,6 +152,7 @@ interface BookingFeedbackContext {
   contactName:  string | null;
   contactPhone: string;
 }
+type BookingFeedbackContext = FeedbackReplyContext;
 
 /**
  * BKG-07: captures a reply to the "bkgfb:<bookingId>:<rating>" list prompt
@@ -174,11 +177,35 @@ export async function handleBookingFeedbackReply(ctx: BookingFeedbackContext): P
       text: 'Thank you for your feedback! 🙏',
     });
     if (rating <= 2) {
-      void notifyStaffOfLowBookingRating(ctx.tenantId, ctx.productSlug, ctx.contactName ?? ctx.contactPhone, ctx.contactPhone, rating);
+      void notifyStaffOfLowRating(ctx.tenantId, ctx.productSlug, 'booking', ctx.contactName ?? ctx.contactPhone, ctx.contactPhone, rating);
     }
   }
   // 'already_submitted'/'create_failed': stay silent rather than confuse the
   // customer with an error for a tap that already landed once, if at all.
+
+  return true;
+}
+
+/** ORD-07: captures a reply to the "ordfb:<orderId>:<rating>" list prompt — parity with handleBookingFeedbackReply above. */
+export async function handleOrderFeedbackReply(ctx: FeedbackReplyContext): Promise<boolean> {
+  const match = ctx.incoming.interactiveReplyId?.match(ORDER_FEEDBACK_REPLY_RE);
+  if (!match) return false;
+
+  const orderId = match[1]!;
+  const rating  = Number(match[2]);
+
+  const result = await createOrderFeedback(ctx.db, ctx.tenantId, orderId, ctx.contactId, rating);
+
+  if (result.ok) {
+    await ctx.gateway.sendMessage(ctx.config.phone_number_id, ctx.config.access_token, {
+      type: 'text',
+      to:   ctx.incoming.from,
+      text: 'Thank you for your feedback! 🙏',
+    });
+    if (rating <= 2) {
+      void notifyStaffOfLowRating(ctx.tenantId, ctx.productSlug, 'order', ctx.contactName ?? ctx.contactPhone, ctx.contactPhone, rating);
+    }
+  }
 
   return true;
 }

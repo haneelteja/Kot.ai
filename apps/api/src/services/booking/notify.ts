@@ -112,13 +112,14 @@ export async function notifyStaffOfBooking(
   }
 }
 
-/** BKG-07: low-rating (1-2 star) owner alert, same recipient lists as notifyStaffOfBooking. */
-export async function notifyStaffOfLowBookingRating(
-  tenantId:     string,
-  productSlug:  string,
-  customerName: string,
+/** BKG-07/ORD-07: low-rating (1-2 star) owner alert, same recipient lists as notifyStaffOfBooking. */
+export async function notifyStaffOfLowRating(
+  tenantId:      string,
+  productSlug:   string,
+  kind:          'booking' | 'order',
+  customerName:  string,
   customerPhone: string,
-  rating:       number,
+  rating:        number,
 ): Promise<void> {
   const db = getServerClient();
 
@@ -135,7 +136,7 @@ export async function notifyStaffOfLowBookingRating(
 
   const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
   const text = [
-    `⚠️ *Low booking rating — ${rating}/5*`,
+    `⚠️ *Low ${kind} rating — ${rating}/5*`,
     ``,
     `*Customer:* ${customerName}`,
     `*Phone:* ${customerPhone}`,
@@ -144,7 +145,7 @@ export async function notifyStaffOfLowBookingRating(
   await Promise.allSettled(
     waNumbers.map(number =>
       gateway.sendMessage(wn.phone_number_id, wn.access_token, { type: 'text', to: number, text })
-        .catch(err => console.error(`[BookingNotify] Failed to send low-rating alert to ${number}:`, err))
+        .catch(err => console.error(`[RatingNotify] Failed to send low-rating alert to ${number}:`, err))
     )
   );
 }

@@ -15,6 +15,7 @@ import {
   RotateCcw,
   UtensilsCrossed,
   SlidersHorizontal,
+  CalendarCheck,
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -30,6 +31,7 @@ const INTEGRATIONS_ITEM   = { href: '/integrations',   label: 'Integrations', ic
 const ORDERS_ITEM         = { href: '/orders',          label: 'Orders',       icon: ShoppingCart };
 const RETURNS_ITEM        = { href: '/returns',         label: 'Returns',      icon: RotateCcw   };
 const MENU_ITEM            = { href: '/menu',            label: 'Menu',         icon: UtensilsCrossed };
+const BOOKINGS_ITEM        = { href: '/bookings',        label: 'Bookings',     icon: CalendarCheck   };
 
 export function DashboardNav({
   tenantName,
@@ -64,7 +66,7 @@ export function DashboardNav({
     items.splice(convsIdx + 1, 0, INTEGRATIONS_ITEM);
     if (hasRestaurantBot) {
       const configIdx = items.findIndex(i => i.href === '/configurations');
-      const toAdd = [MENU_ITEM, ...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM])];
+      const toAdd = [MENU_ITEM, BOOKINGS_ITEM, ...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM])];
       items.splice(configIdx + 1, 0, ...toAdd);
     }
     if (hasLifecycleBot) {

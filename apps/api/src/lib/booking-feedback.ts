@@ -7,32 +7,33 @@ type Db = ReturnType<typeof getServerClient>;
 const DINING_WINDOW_MARGIN_MS = 2 * 60 * 60 * 1000; // assume dining is over 2h after the booked time
 
 /**
- * BKG-07: finds confirmed bookings whose dining window has passed and sends
- * a one-time feedback prompt. Time-based stand-in for the "seated" trigger
- * BKG-06 would normally provide (not built yet). Called on a schedule from
- * jobs/scheduler.ts.
+ * BKG-07: sends a one-time feedback prompt once dining has happened.
+ * BKG-06's "seated" action (if staff use it) is immediately eligible;
+ * otherwise this falls back to a time-based guess (dining window assumed
+ * over DINING_WINDOW_MARGIN_MS after the booked time) for bookings nobody
+ * ever marks — no BKG-03 (auto/staff-confirm) exists yet, so every booking
+ * stays 'pending' indefinitely unless explicitly seated/cancelled/no-show.
+ * Called on a schedule from jobs/scheduler.ts.
  */
 export async function sendDueBookingFeedbackPrompts(db: Db, log: { warn: (o: unknown, m: string) => void }): Promise<void> {
   const cutoff = new Date(Date.now() - DINING_WINDOW_MARGIN_MS);
   const cutoffDate = cutoff.toISOString().slice(0, 10);
 
-  // Coarse DB-side filter (booking_date on or before the cutoff date), then
-  // an exact date+time check in JS — avoids needing a Postgres function to
-  // combine the two columns for comparison.
-  // No BKG-03 (auto/staff-confirm) exists yet, so every booking stays
-  // 'pending' indefinitely today — only 'cancelled' is reachable besides
-  // that. Treat 'pending' as "happened" too, or this would never fire.
+  // Coarse DB-side filter, then an exact check in JS — avoids needing a
+  // Postgres function to combine the date+time columns for comparison.
   const { data: candidates } = await db
     .from('bookings')
-    .select('id, tenant_id, contact_id, booking_date, booking_time, conversations(product_type)')
-    .in('status', ['pending', 'confirmed'])
+    .select('id, tenant_id, contact_id, booking_date, booking_time, status, conversations(product_type)')
+    .in('status', ['pending', 'confirmed', 'seated'])
     .is('feedback_requested_at', null)
-    .lte('booking_date', cutoffDate);
+    .or(`status.eq.seated,booking_date.lte.${cutoffDate}`);
 
   for (const row of candidates ?? []) {
     try {
-      const diningAt = new Date(`${row.booking_date}T${row.booking_time}`);
-      if (diningAt > cutoff) continue;
+      if (row.status !== 'seated') {
+        const diningAt = new Date(`${row.booking_date}T${row.booking_time}`);
+        if (diningAt > cutoff) continue;
+      }
 
       const conv = row.conversations as unknown as { product_type: string } | { product_type: string }[] | null;
       const productSlug = (Array.isArray(conv) ? conv[0]?.product_type : conv?.product_type) ?? 'restaurant_bot';

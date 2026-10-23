@@ -45,7 +45,13 @@ export async function handleKitchenReply(ctx: Ctx): Promise<boolean> {
   if (!order) return true; // acknowledge the tap either way — nothing more to do
 
   if (readyMatch) {
-    await ctx.db.from('orders').update({ status: 'ready' }).eq('id', orderId);
+    // TKW-02: a pickup code the customer shows at the counter — always
+    // generated (not configurable in this slice; harmless for a tenant
+    // that doesn't care to use it).
+    const pickupCode = String(Math.floor(1000 + Math.random() * 9000));
+    await ctx.db.from('orders')
+      .update({ status: 'ready', ready_at: new Date().toISOString(), pickup_code: pickupCode })
+      .eq('id', orderId);
 
     const customerWn = await resolveNumberForRole(ctx.db, ctx.tenantId, 'restaurant_bot', 'customer');
     if (customerWn && order.contact?.phone) {
@@ -53,11 +59,11 @@ export async function handleKitchenReply(ctx: Ctx): Promise<boolean> {
       await gw.sendMessage(customerWn.phone_number_id, customerWn.access_token, {
         type: 'text',
         to:   order.contact.phone,
-        text: `Your order ${order.order_ref ?? ''} is ready for pickup! 🎉`,
+        text: `Your order ${order.order_ref ?? ''} is ready for pickup! 🎉\n\nShow this code at the counter: *${pickupCode}*`,
       });
     }
     await ctx.gateway.sendMessage(ctx.config.phone_number_id, ctx.config.access_token, {
-      type: 'text', to: ctx.incoming.from, text: `Marked ${order.order_ref ?? orderId} ready. Customer notified.`,
+      type: 'text', to: ctx.incoming.from, text: `Marked ${order.order_ref ?? orderId} ready. Pickup code ${pickupCode} sent to the customer.`,
     });
     return true;
   }

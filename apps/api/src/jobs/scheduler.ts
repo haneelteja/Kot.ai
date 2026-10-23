@@ -11,7 +11,7 @@ import type { Conversation, WhatsAppProvider } from '@alphabot/shared';
 import type { RoutingConfig } from '../services/routing/router.js';
 import { escalateConversation } from '../services/escalation/index.js';
 import { sendDueBookingFeedbackPrompts } from '../lib/booking-feedback.js';
-import { checkStuckOrders } from '../lib/stuck-order-check.js';
+import { checkStuckOrders, checkUncollectedOrders } from '../lib/stuck-order-check.js';
 import { processCheckoutDraftReminders } from '../lib/checkout-draft-expiry.js';
 
 function alertJobFailure(jobName: string, err: unknown): void {
@@ -434,6 +434,13 @@ export function startScheduler(): void {
   cron.schedule('*/5 * * * *', () => {
     void withJobLock('stuck_orders', 270, () => checkStuckOrders(getServerClient(), console)).catch(err =>
       alertJobFailure('stuck_orders', err)
+    );
+  });
+
+  // Uncollected-order alert (TKW-03) — every 5 min  [TTL: 270s = 4.5min]
+  cron.schedule('*/5 * * * *', () => {
+    void withJobLock('uncollected_orders', 270, () => checkUncollectedOrders(getServerClient(), console)).catch(err =>
+      alertJobFailure('uncollected_orders', err)
     );
   });
 

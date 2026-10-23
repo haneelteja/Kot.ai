@@ -26,17 +26,27 @@ const NEXT_STATUS: Record<OrderStatus, OrderStatus | null> = {
   cancelled:  null,
 };
 
+// TKW-04: restaurant pickup orders (no delivery epic exists) skip the
+// delivery-specific 'dispatched' step — Ready advances straight to
+// "collected" (delivered).
+const PICKUP_NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus | null>> = {
+  ready: 'delivered',
+};
+
 export function OrderStatusBadge({
   orderId,
   currentStatus,
+  isPickup = false,
 }: {
   orderId:       string;
   currentStatus: OrderStatus;
+  /** restaurant_bot orders (whatsapp_bot/weblink source) — see PICKUP_NEXT_STATUS. */
+  isPickup?:     boolean;
 }) {
   const [status,  setStatus]  = useState<OrderStatus>(currentStatus);
   const [pending, startTransition] = useTransition();
 
-  const next = NEXT_STATUS[status];
+  const next = (isPickup ? PICKUP_NEXT_STATUS[status] : undefined) ?? NEXT_STATUS[status];
 
   function advance() {
     if (!next) return;
@@ -52,7 +62,7 @@ export function OrderStatusBadge({
       type="button"
       onClick={advance}
       disabled={pending || !next}
-      title={next ? `Mark as ${next}` : 'Final status'}
+      title={next ? `Mark as ${isPickup && next === 'delivered' ? 'collected' : next}` : 'Final status'}
       className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 capitalize transition-all disabled:cursor-default ${STATUS_STYLES[status]}`}
     >
       {status.replace('_', ' ')}

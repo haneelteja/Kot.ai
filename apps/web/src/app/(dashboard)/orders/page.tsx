@@ -45,7 +45,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
   let query = admin
     .from('orders')
     .select(`
-      id, total, total_paise, order_ref, source, status, created_at, updated_at, items_json,
+      id, total, total_paise, order_ref, source, status, created_at, updated_at, items_json, pickup_code,
       contact:contacts(phone, name),
       payments(id, status, link_url, webhook_received_at),
       order_items(id, name, unit_price_paise, quantity, line_total_paise)
@@ -148,6 +148,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 : legacyItems.map(i => ({ name: i.name, quantity: i.quantity }));
               const totalDisplay = order.total_paise != null ? order.total_paise / 100 : Number(order.total);
               const isWhatsAppOrder = order.source === 'whatsapp_bot';
+              const isPickup = order.source === 'whatsapp_bot' || order.source === 'weblink';
 
               return (
                 <div key={order.id} className="flex items-center gap-4 px-5 py-4">
@@ -185,7 +186,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                       </span>
                     )}
 
-                    <OrderStatusBadge orderId={order.id} currentStatus={order.status as 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled'} />
+                    {order.status === 'ready' && order.pickup_code && (
+                      <span className="text-[11px] font-mono font-bold text-text bg-sunken px-2 py-0.5 rounded-md" title="Pickup verification code">
+                        #{order.pickup_code}
+                      </span>
+                    )}
+
+                    <OrderStatusBadge orderId={order.id} currentStatus={order.status as 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled'} isPickup={isPickup} />
 
                     <SendInvoiceButton orderId={order.id} />
 

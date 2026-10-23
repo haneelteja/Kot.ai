@@ -18,7 +18,6 @@ import {
   CalendarClock,
   ClipboardList,
   RotateCcw,
-  Inbox,
   UtensilsCrossed,
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -27,7 +26,6 @@ import { useRouter } from 'next/navigation';
 const BASE_NAV = [
   { href: '/dashboard',        label: 'Overview',       icon: LayoutDashboard  },
   { href: '/conversations',    label: 'Conversations',  icon: MessageSquare    },
-  { href: '/inbox',            label: 'Inbox',          icon: Inbox            },
   { href: '/knowledge-base',   label: 'Knowledge Base', icon: BookOpen         },
   { href: '/guardrails',       label: 'Guardrails',     icon: ShieldCheck      },
   { href: '/button-templates', label: 'Buttons',        icon: MessageSquareMore },
@@ -66,7 +64,7 @@ export function DashboardNav({
   const supabase = getSupabaseBrowserClient();
 
   const ADMIN_ONLY_HREFS = new Set(['/audit']);
-  const AGENT_HREFS      = new Set(['/dashboard', '/conversations', '/inbox']);
+  const AGENT_HREFS      = new Set(['/dashboard', '/conversations']);
 
   const navItems = (() => {
     const items = [...BASE_NAV];

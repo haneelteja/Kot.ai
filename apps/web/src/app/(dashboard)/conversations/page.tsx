@@ -5,10 +5,13 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
-  MessageSquare, AlertCircle, Clock, Users, Star, Search,
+  MessageSquare, AlertCircle, Clock, Users, Star, Search, ChevronLeft,
 } from 'lucide-react';
 import { BotFilterBar } from '@/components/dashboard/BotFilterBar';
 import { ContactsTabClient } from '@/components/dashboard/ContactsTabClient';
+import { ConversationMessages } from '@/components/conversation-messages';
+import { ConversationActions } from '@/components/conversation-actions';
+import { getConversationDetailAction } from '@/app/actions/conversation';
 import type { ContactSentiment } from '@alphabot/shared';
 
 // ── Shared constants ──────────────────────────────────────────────────────────
@@ -68,9 +71,9 @@ type ContactRow = {
 export default async function ConversationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; bot?: string; status?: string; sentiment?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; bot?: string; status?: string; sentiment?: string; q?: string; id?: string }>;
 }) {
-  const { tab: tabParam, bot: botParam, status: statusParam, sentiment: sentimentFilter = 'all', q: search = '' } = await searchParams;
+  const { tab: tabParam, bot: botParam, status: statusParam, sentiment: sentimentFilter = 'all', q: search = '', id: selectedId } = await searchParams;
 
   const activeTab = tabParam === 'contacts' ? 'contacts' : 'chats';
   const botFilter    = botParam    && VALID_BOTS.has(botParam)       ? botParam    : null;
@@ -102,9 +105,10 @@ export default async function ConversationsPage({
   let conversations: unknown[] = [];
   let activeSlugs: string[]    = [];
   let escalatedCount           = 0;
+  let selectedDetail: Awaited<ReturnType<typeof getConversationDetailAction>> = null;
 
   if (activeTab === 'chats') {
-    const [convResult, productsResult, escalatedResult] = await Promise.all([
+    const [convResult, productsResult, escalatedResult, detailResult] = await Promise.all([
       (() => {
         let q = admin
           .from('conversations')
@@ -118,10 +122,12 @@ export default async function ConversationsPage({
       })(),
       admin.from('tenant_products').select('product_type').eq('tenant_id', tenantId).eq('active', true),
       admin.from('conversations').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'escalated'),
+      selectedId ? getConversationDetailAction(selectedId) : Promise.resolve(null),
     ]);
-    conversations  = convResult.data ?? [];
-    activeSlugs    = (productsResult.data ?? []).map((p: { product_type: string }) => p.product_type);
-    escalatedCount = escalatedResult.count ?? 0;
+    conversations   = convResult.data ?? [];
+    activeSlugs     = (productsResult.data ?? []).map((p: { product_type: string }) => p.product_type);
+    escalatedCount  = escalatedResult.count ?? 0;
+    selectedDetail  = detailResult;
   }
 
   // Contacts data
@@ -166,6 +172,16 @@ export default async function ConversationsPage({
     p.set('tab', 'chats');
     if (botFilter) p.set('bot', botFilter);
     if (status)    p.set('status', status);
+    return `/conversations?${p.toString()}`;
+  }
+
+  // Selecting a conversation keeps the current filters and just adds/changes `id`.
+  function rowHref(conversationId: string) {
+    const p = new URLSearchParams();
+    p.set('tab', 'chats');
+    if (botFilter)    p.set('bot', botFilter);
+    if (statusFilter) p.set('status', statusFilter);
+    p.set('id', conversationId);
     return `/conversations?${p.toString()}`;
   }
 
@@ -232,7 +248,7 @@ export default async function ConversationsPage({
 
       {/* ── CHATS TAB ─────────────────────────────────────────────────────────── */}
       {activeTab === 'chats' && (
-        <div role="tabpanel" id="tabpanel-chats" aria-label="Chats">
+        <div role="tabpanel" id="tabpanel-chats" aria-label="Chats" className="space-y-4">
           {/* Status filters */}
           <div className="flex items-center gap-2 flex-wrap">
             {([
@@ -246,7 +262,7 @@ export default async function ConversationsPage({
                 {tab.label}
               </Link>
             ))}
-            {/* Escalated special tab */}
+            {/* Escalated special tab — the "needs attention" quick filter */}
             <Link href={statusHref('escalated')}
               className={`relative flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-full border transition-all duration-150 ${
                 statusFilter === 'escalated'
@@ -266,102 +282,176 @@ export default async function ConversationsPage({
           {/* Bot filter */}
           <BotFilterBar activeSlugs={activeSlugs} current={botFilter} />
 
-          {(() => {
-            // Group by contact_id so the same person doesn't appear twice
-            type RawConv = {
-              id: string; status: string; product_type: string; updated_at: string; contact_id: string;
-              contacts: { phone: string; name: string | null; memory_json: Record<string, unknown> | null } | null;
-            };
-            const grouped = new Map<string, { convs: RawConv[]; contact: RawConv['contacts'] }>();
-            for (const c of (conversations as RawConv[])) {
-              const key = c.contact_id ?? c.id;
-              const existing = grouped.get(key);
-              if (existing) {
-                existing.convs.push(c);
-              } else {
-                grouped.set(key, { convs: [c], contact: c.contacts });
+          {/* Split view: conversation list + live detail panel in one screen.
+              On mobile, the list and the detail panel are mutually exclusive
+              (selecting a conversation swaps the list out for the detail,
+              with a "Back" link to return) since there's no room for both. */}
+          <div className="flex gap-4 items-start">
+            {(() => {
+              // Group by contact_id so the same person doesn't appear twice
+              type RawConv = {
+                id: string; status: string; product_type: string; updated_at: string; contact_id: string;
+                contacts: { phone: string; name: string | null; memory_json: Record<string, unknown> | null } | null;
+              };
+              const grouped = new Map<string, { convs: RawConv[]; contact: RawConv['contacts'] }>();
+              for (const c of (conversations as RawConv[])) {
+                const key = c.contact_id ?? c.id;
+                const existing = grouped.get(key);
+                if (existing) {
+                  existing.convs.push(c);
+                } else {
+                  grouped.set(key, { convs: [c], contact: c.contacts });
+                }
               }
-            }
-            const groups = [...grouped.values()];
+              const groups = [...grouped.values()];
 
-            return groups.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-line shadow-sm flex flex-col items-center justify-center py-24 text-center">
-                {statusFilter === 'escalated' ? (
-                  <>
-                    <div className="w-16 h-16 rounded-2xl bg-done-bg flex items-center justify-center mb-4">
-                      <AlertCircle size={28} className="text-done" />
-                    </div>
-                    <p className="text-sm font-semibold text-muted-foreground">All clear — no escalations</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-xs">No conversations are currently waiting for human attention.</p>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 rounded-2xl bg-sunken flex items-center justify-center mb-4 border border-line">
-                      <MessageSquare size={28} className="text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-semibold text-muted-foreground">No conversations yet</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                      {botFilter ? 'No conversations for this bot. Switch to All or try another bot.' : 'Send a WhatsApp message to your bot number to start.'}
-                    </p>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${statusFilter === 'escalated' ? 'border-red-100' : 'border-line'}`}>
-                <div className="divide-y divide-line">
-                  {groups.map(({ convs, contact }) => {
-                    const primary     = convs[0]!;
-                    const displayName = contact?.name ?? contact?.phone ?? 'Unknown';
-                    const style       = CONV_STATUS_STYLES[primary.status] ?? CONV_STATUS_STYLES.resolved;
-                    const colorIdx    = displayName.charCodeAt(0) % AVATAR_COLORS.length;
-                    const sentiment   = contact?.memory_json?.['sentiment'] as ContactSentiment | undefined;
-                    const sentMeta    = sentiment ? SENTIMENT_META[sentiment] : null;
-                    const diffMins    = Math.floor((Date.now() - new Date(primary.updated_at).getTime()) / 60000);
-                    const timeAgo     = diffMins < 1 ? 'Just now' : diffMins < 60 ? `${diffMins}m` : diffMins < 1440 ? `${Math.floor(diffMins / 60)}h` : `${Math.floor(diffMins / 1440)}d`;
-
-                    return (
-                      <Link key={primary.id} href={`/conversations/${primary.id}`}
-                        className="flex items-center gap-4 px-6 py-4 hover:bg-sunken transition-colors group">
-                        <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[colorIdx]} flex items-center justify-center font-bold text-sm shrink-0`}>
-                          {displayName[0]?.toUpperCase() ?? '?'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-text truncate group-hover:text-done transition-colors">{displayName}</p>
-                          {contact?.name && <p className="text-xs text-muted-foreground truncate">{contact.phone}</p>}
-                          {/* Bot badges — one per conversation this contact has */}
-                          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                            {convs.map(c => {
-                              const p = PRODUCT_LABELS[c.product_type];
-                              const s = CONV_STATUS_STYLES[c.status] ?? CONV_STATUS_STYLES.resolved;
-                              if (!p) return null;
-                              return (
-                                <span key={c.id} className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-px rounded ${p.color}`}>
-                                  <span className={`w-1 h-1 rounded-full ${s.dot}`} />
-                                  {p.label}
-                                </span>
-                              );
-                            })}
+              return (
+                <div className={`w-full lg:w-[380px] shrink-0 ${selectedId ? 'hidden lg:block' : 'block'}`}>
+                  {groups.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-line shadow-sm flex flex-col items-center justify-center py-24 text-center">
+                      {statusFilter === 'escalated' ? (
+                        <>
+                          <div className="w-16 h-16 rounded-2xl bg-done-bg flex items-center justify-center mb-4">
+                            <AlertCircle size={28} className="text-done" />
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                          {sentMeta && (
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${sentMeta.bg} ${sentMeta.text}`} title={sentMeta.label}>
-                              {sentMeta.emoji} {sentMeta.label}
-                            </span>
-                          )}
-                          <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ring-1 ${style.badge}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-                            {humanizeStatus(primary.status)}
-                          </span>
-                          <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">{timeAgo}</span>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                          <p className="text-sm font-semibold text-muted-foreground">All clear — no escalations</p>
+                          <p className="text-xs text-muted-foreground mt-1 max-w-xs">No conversations are currently waiting for human attention.</p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 rounded-2xl bg-sunken flex items-center justify-center mb-4 border border-line">
+                            <MessageSquare size={28} className="text-muted-foreground" />
+                          </div>
+                          <p className="text-sm font-semibold text-muted-foreground">No conversations yet</p>
+                          <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                            {botFilter ? 'No conversations for this bot. Switch to All or try another bot.' : 'Send a WhatsApp message to your bot number to start.'}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${statusFilter === 'escalated' ? 'border-red-100' : 'border-line'}`}>
+                      <div className="divide-y divide-line max-h-[calc(100vh-280px)] overflow-y-auto">
+                        {groups.map(({ convs, contact }) => {
+                          const primary     = convs[0]!;
+                          const displayName = contact?.name ?? contact?.phone ?? 'Unknown';
+                          const style       = CONV_STATUS_STYLES[primary.status] ?? CONV_STATUS_STYLES.resolved;
+                          const colorIdx    = displayName.charCodeAt(0) % AVATAR_COLORS.length;
+                          const sentiment   = contact?.memory_json?.['sentiment'] as ContactSentiment | undefined;
+                          const sentMeta    = sentiment ? SENTIMENT_META[sentiment] : null;
+                          const diffMins    = Math.floor((Date.now() - new Date(primary.updated_at).getTime()) / 60000);
+                          const timeAgo     = diffMins < 1 ? 'Just now' : diffMins < 60 ? `${diffMins}m` : diffMins < 1440 ? `${Math.floor(diffMins / 60)}h` : `${Math.floor(diffMins / 1440)}d`;
+                          const isSelected  = primary.id === selectedId;
+
+                          return (
+                            <Link key={primary.id} href={rowHref(primary.id)}
+                              className={`flex items-center gap-4 px-6 py-4 transition-colors group ${isSelected ? 'bg-brand-wash' : 'hover:bg-sunken'}`}>
+                              <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[colorIdx]} flex items-center justify-center font-bold text-sm shrink-0`}>
+                                {displayName[0]?.toUpperCase() ?? '?'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-semibold truncate transition-colors ${isSelected ? 'text-brand-strong' : 'text-text group-hover:text-done'}`}>{displayName}</p>
+                                {contact?.name && <p className="text-xs text-muted-foreground truncate">{contact.phone}</p>}
+                                {/* Bot badges — one per conversation this contact has */}
+                                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                  {convs.map(c => {
+                                    const p = PRODUCT_LABELS[c.product_type];
+                                    const s = CONV_STATUS_STYLES[c.status] ?? CONV_STATUS_STYLES.resolved;
+                                    if (!p) return null;
+                                    return (
+                                      <span key={c.id} className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-px rounded ${p.color}`}>
+                                        <span className={`w-1 h-1 rounded-full ${s.dot}`} />
+                                        {p.label}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                                {sentMeta && (
+                                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${sentMeta.bg} ${sentMeta.text}`} title={sentMeta.label}>
+                                    {sentMeta.emoji} {sentMeta.label}
+                                  </span>
+                                )}
+                                <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ring-1 ${style.badge}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                                  {humanizeStatus(primary.status)}
+                                </span>
+                                <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">{timeAgo}</span>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
+
+            {/* ── Detail panel ──────────────────────────────────────────────── */}
+            <div className={`flex-col flex-1 bg-white rounded-2xl border border-line shadow-sm overflow-hidden h-[calc(100vh-280px)] min-h-[500px] ${selectedId ? 'flex' : 'hidden lg:flex'}`}>
+              {!selectedId ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                  <div className="w-16 h-16 rounded-3xl bg-sunken border border-line flex items-center justify-center mb-4">
+                    <MessageSquare size={26} className="text-muted-foreground" />
+                  </div>
+                  <p className="text-sm font-semibold text-muted-foreground">Select a conversation</p>
+                  <p className="text-xs text-muted-foreground mt-1">Choose one from the list to view and reply</p>
+                </div>
+              ) : !selectedDetail ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                  <p className="text-sm font-semibold text-muted-foreground">Conversation not found</p>
+                  <Link href={statusHref(statusFilter)} className="text-xs text-brand-strong font-medium mt-2 hover:underline">Back to list</Link>
+                </div>
+              ) : (() => {
+                const detail       = selectedDetail;
+                const displayName  = detail.contact?.name ?? detail.contact?.phone ?? 'Unknown';
+                const style        = CONV_STATUS_STYLES[detail.status] ?? CONV_STATUS_STYLES.resolved;
+                const productColor = PRODUCT_LABELS[detail.product_type]?.color ?? 'bg-neutral-bg text-neutral';
+
+                return (
+                  <>
+                    <div className="flex items-center gap-3 px-5 py-3.5 bg-white border-b border-line shrink-0">
+                      {/* Mobile-only back link — desktop always shows both panes */}
+                      <Link href={statusHref(statusFilter)} className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken hover:text-brand-strong transition-colors shrink-0">
+                        <ChevronLeft size={18} />
+                      </Link>
+                      <div className="w-9 h-9 rounded-full bg-brand-wash flex items-center justify-center text-brand-strong font-bold text-sm shrink-0">
+                        {displayName[0]?.toUpperCase() ?? '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-text truncate">{displayName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{detail.contact?.phone}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-[11px] px-2 py-0.5 rounded-md font-medium ${productColor}`}>
+                          {detail.product_type.replace(/_bot$/, '').replace(/_/g, ' ')} bot
+                        </span>
+                        <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ring-1 ${style.badge}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                          {detail.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <ConversationMessages
+                      conversationId={detail.id}
+                      initialMessages={detail.messages}
+                      productType={detail.product_type}
+                    />
+
+                    <ConversationActions
+                      conversationId={detail.id}
+                      status={detail.status}
+                      teamMembers={detail.teamMembers}
+                      assignedAgentId={detail.assigned_agent_id}
+                    />
+                  </>
+                );
+              })()}
+            </div>
+          </div>
         </div>
       )}
 

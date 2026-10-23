@@ -1,8 +1,91 @@
 'use server';
 
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getSession }             from '@/lib/session';
 import { revalidatePath }         from 'next/cache';
+import { unstable_cache }         from 'next/cache';
+
+export interface ConversationDetail {
+  id:               string;
+  status:           string;
+  product_type:     string;
+  assigned_agent_id: string | null;
+  contact: { phone: string | null; name: string | null } | null;
+  messages: Array<{ id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: string; confidence_score: number | null }>;
+  teamMembers: Array<{ id: string; name: string }>;
+}
+
+const getAuthUsersCached = unstable_cache(
+  async (tid: string) => {
+    const { data: { users } } = await getSupabaseAdminClient().auth.admin.listUsers({ page: 1, perPage: 200 });
+    return users;
+  },
+  ['auth-users'],
+  { revalidate: 600 },
+);
+
+// Shared detail fetch — used by both the Conversations split-pane (chats tab)
+// and the /conversations/[id] redirect target, so there is one source of
+// truth for "what does opening a conversation need" instead of two.
+export async function getConversationDetailAction(conversationId: string): Promise<ConversationDetail | null> {
+  const supabase = await getSupabaseServerClient();
+  const admin    = getSupabaseAdminClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: tenantUser } = await admin
+    .from('tenant_users')
+    .select('tenant_id')
+    .eq('user_id', user.id)
+    .single();
+  const tenantId = tenantUser?.tenant_id;
+  if (!tenantId) return null;
+
+  const { data: conversation } = await admin
+    .from('conversations')
+    .select('id, status, product_type, assigned_agent_id, contacts(phone, name)')
+    .eq('id', conversationId)
+    .eq('tenant_id', tenantId)
+    .single();
+
+  if (!conversation) return null;
+
+  const { data: messagesDesc } = await admin
+    .from('messages')
+    .select('id, role, content, timestamp, confidence_score')
+    .eq('conversation_id', conversationId)
+    .order('timestamp', { ascending: false })
+    .limit(50);
+
+  const { data: tenantUsersData } = await admin
+    .from('tenant_users')
+    .select('user_id, role')
+    .eq('tenant_id', tenantId);
+
+  const memberIds   = new Set((tenantUsersData ?? []).map(tu => tu.user_id));
+  const authUsers   = await getAuthUsersCached(tenantId);
+  const authUserMap = new Map(authUsers.filter(u => memberIds.has(u.id)).map(u => [u.id, u]));
+
+  const teamMembers = (tenantUsersData ?? []).map(tu => {
+    const authUser = authUserMap.get(tu.user_id);
+    return {
+      id:   tu.user_id,
+      name: (authUser?.user_metadata?.full_name as string | undefined) ?? authUser?.email ?? tu.user_id,
+    };
+  });
+
+  return {
+    id:                conversation.id,
+    status:            conversation.status,
+    product_type:      conversation.product_type,
+    assigned_agent_id: conversation.assigned_agent_id ?? null,
+    contact:           (conversation.contacts as unknown as { phone: string | null; name: string | null } | null) ?? null,
+    messages:          ((messagesDesc ?? []) as ConversationDetail['messages']).reverse(),
+    teamMembers,
+  };
+}
 
 // DEV-ONLY — remove before production (see production checklist §5)
 export async function clearConversationAction(conversationId: string): Promise<{ error?: string }> {

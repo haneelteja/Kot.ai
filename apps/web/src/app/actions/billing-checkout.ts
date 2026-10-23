@@ -201,7 +201,7 @@ export async function verifyEasebuzzBillingPaymentAction(
       .eq('tenant_id', session.tenantId),
   ]);
 
-  revalidatePath('/billing');
+  revalidatePath('/settings');
   return { success: true, plan: targetPlan };
 }
 
@@ -216,7 +216,7 @@ export async function cancelPlanAction(): Promise<{ success?: boolean; error?: s
     .update({ subscription_status: 'cancelled' })
     .eq('id', session.tenantId);
 
-  revalidatePath('/billing');
+  revalidatePath('/settings');
   return { success: true };
 }
 
@@ -279,7 +279,6 @@ export async function downgradePlanAction(
       : []),
   ]);
 
-  revalidatePath('/billing');
   revalidatePath('/settings');
   return { success: true, deactivatedBots: deactivated };
 }

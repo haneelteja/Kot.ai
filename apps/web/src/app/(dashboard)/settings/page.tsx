@@ -33,6 +33,7 @@ import { ApiKeysManager } from '@/components/dashboard/ApiKeysManager';
 import type { BlockedNumber, AutoReply } from '@/app/actions/automation';
 import type { OutboundWebhook } from '@/app/actions/webhooks';
 import type { ApiKey } from '@/app/actions/api-keys';
+import { BillingTab } from '@/components/dashboard/BillingTab';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ const TABS = [
   { key: 'team',         label: 'Team'          },
   { key: 'models',       label: 'AI Models'     },
   { key: 'automation',   label: 'Automation'    },
+  { key: 'billing',      label: 'Billing'       },
   { key: 'notifications',label: 'Notifications' },
 ] as const;
 
@@ -97,7 +99,7 @@ type TabKey = typeof TABS[number]['key'];
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: { tab?: string };
+  searchParams: { tab?: string; eb?: string };
 }) {
   const rawTab = searchParams.tab ?? 'workspace';
   const activeTab: TabKey = TABS.some(t => t.key === rawTab)
@@ -171,7 +173,7 @@ export default async function SettingsPage({
                 <span className="text-sm text-muted-foreground shrink-0">Status</span>
                 <StatusBadge status={(tenant?.['status'] as string) ?? 'active'} />
               </div>
-              <Link href="/billing" className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-sunken transition-colors group">
+              <Link href="/settings?tab=billing" className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-sunken transition-colors group">
                 <div className="flex items-center gap-2">
                   <CreditCard size={14} className="text-brand" />
                   <span className="text-sm text-text font-medium">Billing &amp; Usage</span>
@@ -587,6 +589,15 @@ export default async function SettingsPage({
             <BlockedNumbersManager initialNumbers={(blockedRows ?? []) as BlockedNumber[]} />
           </DashboardCollapsibleSection>
         </div>
+      </SettingsShell>
+    );
+  }
+
+  // ── Billing data ─────────────────────────────────────────────────────────────
+  if (activeTab === 'billing') {
+    return (
+      <SettingsShell activeTab={activeTab}>
+        <BillingTab searchParams={{ eb: searchParams.eb }} />
       </SettingsShell>
     );
   }

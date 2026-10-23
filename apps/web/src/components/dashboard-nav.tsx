@@ -9,7 +9,6 @@ import {
   Settings,
   LogOut,
   Bot,
-  CreditCard,
   ShoppingCart,
   Plug,
   ClipboardList,
@@ -24,7 +23,6 @@ const BASE_NAV = [
   { href: '/dashboard',        label: 'Overview',        icon: LayoutDashboard   },
   { href: '/conversations',    label: 'Conversations',   icon: MessageSquare     },
   { href: '/configurations',   label: 'Configurations',  icon: SlidersHorizontal },
-  { href: '/billing',          label: 'Billing',         icon: CreditCard        },
   { href: '/settings',         label: 'Settings',        icon: Settings          },
 ];
 

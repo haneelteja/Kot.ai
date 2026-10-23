@@ -51,8 +51,8 @@ const PLAN_AMOUNTS: Record<string, string> = {
 // of whether Easebuzz's page or the user's browser made the POST.
 export async function POST(req: NextRequest) {
   const base    = getBaseUrl(req);
-  const success = `${base}/billing?eb=paid`;
-  const failure = `${base}/billing?eb=failed`;
+  const success = `${base}/settings?tab=billing&eb=paid`;
+  const failure = `${base}/settings?tab=billing&eb=failed`;
 
   try {
     let body: Record<string, string> = {};
@@ -139,5 +139,5 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const base = getBaseUrl(req);
   const eb   = new URL(req.url).searchParams.get('eb') ?? 'failed';
-  return NextResponse.redirect(`${base}/billing?eb=${eb}`, { status: 303 });
+  return NextResponse.redirect(`${base}/settings?tab=billing&eb=${eb}`, { status: 303 });
 }

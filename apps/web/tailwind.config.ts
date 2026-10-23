@@ -28,7 +28,7 @@ const config: Config = {
         surface: 'var(--surface)',
         sunken: 'var(--surface-sunken)',
         text: 'var(--text)',
-        line: 'var(--line)',
+        line: { DEFAULT: 'var(--line)', strong: 'var(--line-strong)' },
         brand: { DEFAULT: 'var(--brand)', strong: 'var(--brand-strong)', wash: 'var(--brand-wash)' },
         waiting: { DEFAULT: 'var(--waiting)', bg: 'var(--waiting-bg)' },
         progress: { DEFAULT: 'var(--progress)', bg: 'var(--progress-bg)' },

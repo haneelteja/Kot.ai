@@ -9,7 +9,7 @@ const STATUS_STYLES: Record<string, string> = {
   pending:   'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
   approved:  'bg-done-bg text-done ring-1 ring-done/30',
   rejected:  'bg-red-50 text-red-700 ring-1 ring-red-200',
-  completed: 'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
+  completed: 'bg-sunken text-muted-foreground ring-1 ring-line',
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -38,18 +38,18 @@ export function ReturnRequestCard({ request }: { request: ReturnRequest }) {
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-3 shadow-sm">
+    <div className="bg-white border border-line rounded-xl p-4 flex flex-col gap-3 shadow-sm">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-gray-800">{name}</span>
-            <span className="text-xs text-gray-400">{phone}</span>
+            <span className="text-sm font-semibold text-text">{name}</span>
+            <span className="text-xs text-muted-foreground">{phone}</span>
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${request.type === 'replacement' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' : 'bg-orange-50 text-orange-700 ring-1 ring-orange-200'}`}>
               {TYPE_LABEL[request.type]}
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 mt-0.5" suppressHydrationWarning>
+          <p className="text-[11px] text-muted-foreground mt-0.5" suppressHydrationWarning>
             {new Date(request.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
@@ -60,7 +60,7 @@ export function ReturnRequestCard({ request }: { request: ReturnRequest }) {
 
       {/* Reason */}
       {request.reason && (
-        <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 italic">
+        <p className="text-sm text-muted-foreground bg-sunken rounded-lg px-3 py-2 italic">
           &ldquo;{request.reason}&rdquo;
         </p>
       )}
@@ -71,7 +71,7 @@ export function ReturnRequestCard({ request }: { request: ReturnRequest }) {
         value={notes}
         onChange={e => setNotes(e.target.value)}
         placeholder="Staff notes (optional)…"
-        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder:text-gray-300"
+        className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder:text-muted-foreground"
       />
 
       {error && <p className="text-xs text-red-600">{error}</p>}

@@ -10,7 +10,7 @@ import { ConversationActions } from '@/components/conversation-actions';
 const STATUS_STYLES: Record<string, { dot: string; badge: string }> = {
   open:       { dot: 'bg-done',    badge: 'bg-done-bg text-done ring-transparent' },
   escalated:  { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 ring-red-100' },
-  resolved:   { dot: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-500 ring-gray-200' },
+  resolved:   { dot: 'bg-sunken',    badge: 'bg-sunken text-muted-foreground ring-line' },
   bot_paused: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-700 ring-amber-100' },
 };
 
@@ -98,7 +98,7 @@ export default async function ConversationDetailPage({
       <div className="flex items-center gap-3 px-5 py-3.5 bg-white border-b border-line shrink-0">
         <Link
           href="/conversations"
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-sunken hover:text-brand-strong transition-colors"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken hover:text-brand-strong transition-colors"
         >
           <ChevronLeft size={18} />
         </Link>
@@ -108,8 +108,8 @@ export default async function ConversationDetailPage({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
-          <p className="text-xs text-gray-400 truncate">{contact?.phone}</p>
+          <p className="text-sm font-semibold text-text truncate">{displayName}</p>
+          <p className="text-xs text-muted-foreground truncate">{contact?.phone}</p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

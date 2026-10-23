@@ -6,8 +6,8 @@ export default async function PlatformSettingsPage() {
   return (
     <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Platform Settings</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h2 className="text-xl font-bold text-text">Platform Settings</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Platform configuration and technical info.
         </p>
       </div>
@@ -28,7 +28,7 @@ export default async function PlatformSettingsPage() {
       <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
         <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
           <Globe size={16} className="text-indigo-500" />
-          <h3 className="text-sm font-semibold text-gray-700">Platform Info</h3>
+          <h3 className="text-sm font-semibold text-text">Platform Info</h3>
         </div>
         <div className="px-5 py-4 space-y-2">
           <InfoRow label="API URL"     value={process.env['NEXT_PUBLIC_API_URL'] ?? '—'} mono />
@@ -43,8 +43,8 @@ export default async function PlatformSettingsPage() {
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-sm text-gray-400 shrink-0">{label}</span>
-      <span className={mono ? 'font-mono text-xs text-gray-600 bg-sunken px-2 py-0.5 rounded-md truncate max-w-[60%]' : 'text-sm text-gray-700'}>
+      <span className="text-sm text-muted-foreground shrink-0">{label}</span>
+      <span className={mono ? 'font-mono text-xs text-muted-foreground bg-sunken px-2 py-0.5 rounded-md truncate max-w-[60%]' : 'text-sm text-text'}>
         {value}
       </span>
     </div>

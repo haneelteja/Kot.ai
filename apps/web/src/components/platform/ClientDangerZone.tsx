@@ -110,7 +110,7 @@ export function ClientDangerZone({ tenantId, tenantName, status }: Props) {
             </button>
             <button
               onClick={() => setClearConfirm(false)}
-              className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-xs text-muted-foreground hover:text-text transition-colors"
             >
               Cancel
             </button>
@@ -153,7 +153,7 @@ export function ClientDangerZone({ tenantId, tenantName, status }: Props) {
             </button>
             <button
               onClick={() => setResetConfirm(false)}
-              className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-xs text-muted-foreground hover:text-text transition-colors"
             >
               Cancel
             </button>
@@ -232,7 +232,7 @@ export function ClientDangerZone({ tenantId, tenantName, status }: Props) {
               </button>
               <button
                 onClick={() => { setConfirmDelete(false); setConfirmText(''); }}
-                className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-xs text-muted-foreground hover:text-text transition-colors"
               >
                 Cancel
               </button>

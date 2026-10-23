@@ -350,7 +350,7 @@ export default async function DashboardPage() {
                   </div>
 
                   {/* ── 2-column body ─────────────────────────────────────── */}
-                  <div className="flex-1 grid grid-cols-2 divide-x divide-gray-100">
+                  <div className="flex-1 grid grid-cols-2 divide-x divide-line">
 
                     {/* LEFT: Knows About */}
                     <div className="px-3.5 py-3 space-y-2">
@@ -368,26 +368,26 @@ export default async function DashboardPage() {
                         <p className="text-[10px] text-red-600 leading-snug">KB-only mode on but no collections — bot cannot answer.</p>
                       ) : collections.length === 0 ? (
                         <div className="flex items-center gap-1.5">
-                          <Sparkles size={10} className="text-gray-400 shrink-0" />
-                          <p className="text-[10px] text-gray-400">General AI only — no KB configured</p>
+                          <Sparkles size={10} className="text-muted-foreground shrink-0" />
+                          <p className="text-[10px] text-muted-foreground">General AI only — no KB configured</p>
                         </div>
                       ) : (
                         <>
                           {collections.map((col) => (
                             <div key={col.id} className="flex items-center gap-1.5">
                               <CheckCircle2 size={10} className="text-done shrink-0" />
-                              <p className="text-[10px] text-gray-700 font-medium truncate flex-1">{col.name}</p>
-                              <span className="text-[10px] text-gray-400 tabular-nums shrink-0">
+                              <p className="text-[10px] text-text font-medium truncate flex-1">{col.name}</p>
+                              <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
                                 {col.entry_count === 0
                                   ? <span className="text-amber-500">Empty</span>
                                   : col.entry_count}
                               </span>
                             </div>
                           ))}
-                          <div className="flex items-center gap-1 pt-1 border-t border-gray-100">
+                          <div className="flex items-center gap-1 pt-1 border-t border-line">
                             {kbOnly
                               ? <><Lock size={9} className="text-violet-500 shrink-0" /><p className="text-[10px] text-violet-600">KB-only · no general AI</p></>
-                              : <><Sparkles size={9} className="text-gray-400 shrink-0" /><p className="text-[10px] text-gray-400">+ general AI fallback</p></>
+                              : <><Sparkles size={9} className="text-muted-foreground shrink-0" /><p className="text-[10px] text-muted-foreground">+ general AI fallback</p></>
                             }
                           </div>
                         </>
@@ -395,7 +395,7 @@ export default async function DashboardPage() {
                     </div>
 
                     {/* RIGHT: Escalation + Restrictions stacked */}
-                    <div className="flex flex-col divide-y divide-gray-100">
+                    <div className="flex flex-col divide-y divide-line">
 
                       {/* Escalates When */}
                       <div className="px-3.5 py-3 space-y-1.5">
@@ -405,7 +405,7 @@ export default async function DashboardPage() {
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-px rounded shrink-0">AI</span>
-                          <p className="text-[10px] text-gray-600">Confidence &lt; <span className="font-bold text-amber-700">{Math.round(threshold * 100)}%</span></p>
+                          <p className="text-[10px] text-muted-foreground">Confidence &lt; <span className="font-bold text-amber-700">{Math.round(threshold * 100)}%</span></p>
                         </div>
                         {triggers.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
@@ -415,11 +415,11 @@ export default async function DashboardPage() {
                               </span>
                             ))}
                             {triggers.length > 6 && (
-                              <span className="text-[10px] text-gray-400">+{triggers.length - 6}</span>
+                              <span className="text-[10px] text-muted-foreground">+{triggers.length - 6}</span>
                             )}
                           </div>
                         ) : (
-                          <p className="text-[10px] text-gray-400">No keyword triggers</p>
+                          <p className="text-[10px] text-muted-foreground">No keyword triggers</p>
                         )}
                       </div>
 
@@ -430,7 +430,7 @@ export default async function DashboardPage() {
                           <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Restrictions</p>
                         </div>
                         {!hasRestrictions ? (
-                          <p className="text-[10px] text-gray-400">None — open topic responses</p>
+                          <p className="text-[10px] text-muted-foreground">None — open topic responses</p>
                         ) : (
                           <div className="flex flex-wrap gap-1">
                             {kbOnly && (
@@ -457,10 +457,10 @@ export default async function DashboardPage() {
                               <span key={t} className="text-[10px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-px rounded-full font-medium">{t}</span>
                             ))}
                             {blockedKeywords.slice(0, 4).map((k) => (
-                              <span key={k} className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-px rounded-full font-medium">{k}</span>
+                              <span key={k} className="text-[10px] bg-sunken text-muted-foreground px-1.5 py-px rounded-full font-medium">{k}</span>
                             ))}
                             {blockedKeywords.length > 4 && (
-                              <span className="text-[10px] text-gray-400">+{blockedKeywords.length - 4}</span>
+                              <span className="text-[10px] text-muted-foreground">+{blockedKeywords.length - 4}</span>
                             )}
                           </div>
                         )}
@@ -474,7 +474,7 @@ export default async function DashboardPage() {
                     <Link href="/knowledge-base" className={`flex items-center gap-1 text-[11px] font-semibold ${meta.accent} hover:underline`}>
                       <BookOpen size={10} />Knowledge Base
                     </Link>
-                    <ChevronRight size={10} className="text-gray-300" />
+                    <ChevronRight size={10} className="text-muted-foreground" />
                     <Link href="/guardrails" className={`flex items-center gap-1 text-[11px] font-semibold ${meta.accent} hover:underline`}>
                       <ShieldAlert size={10} />Guardrails
                     </Link>

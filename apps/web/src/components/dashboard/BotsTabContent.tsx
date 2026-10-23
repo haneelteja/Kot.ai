@@ -128,24 +128,24 @@ function CopyButton({ text }: { text: string }) {
   }
   return (
     <button type="button" onClick={handleCopy} title="Copy"
-      className="shrink-0 p-1 rounded-md hover:bg-white text-gray-400 hover:text-brand-strong transition-colors">
+      className="shrink-0 p-1 rounded-md hover:bg-white text-muted-foreground hover:text-brand-strong transition-colors">
       {copied ? <Check size={12} /> : <Copy size={12} />}
     </button>
   );
 }
 
 function UsageBar({ usage, limit }: { usage: number | null; limit: number | null }) {
-  if (usage === null) return <span className="text-gray-400 text-xs">Using platform default</span>;
+  if (usage === null) return <span className="text-muted-foreground text-xs">Using platform default</span>;
   const pct    = limit ? Math.min(100, Math.round((usage / limit) * 100)) : null;
-  const colour = pct === null ? 'bg-gray-200' : pct > 80 ? 'bg-rose-400' : pct > 50 ? 'bg-amber-400' : 'bg-done';
+  const colour = pct === null ? 'bg-sunken' : pct > 80 ? 'bg-rose-400' : pct > 50 ? 'bg-amber-400' : 'bg-done';
   return (
     <div className="flex items-center gap-2 flex-1">
       {pct !== null && (
-        <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+        <div className="flex-1 h-1.5 rounded-full bg-sunken overflow-hidden">
           <div className={`h-full rounded-full transition-all ${colour}`} style={{ width: `${pct}%` }} />
         </div>
       )}
-      <span className="text-[10px] text-gray-500 font-mono whitespace-nowrap" suppressHydrationWarning>
+      <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap" suppressHydrationWarning>
         {usage.toLocaleString()}{limit ? ` / ${limit.toLocaleString()} tokens` : ' tokens used'}
       </span>
     </div>
@@ -167,11 +167,11 @@ function BotCatalog({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-bold text-gray-800">Choose a bot to add</h3>
-          <p className="text-[11px] text-gray-400 mt-0.5">Select the bot type that fits your use case</p>
+          <h3 className="text-sm font-bold text-text">Choose a bot to add</h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Select the bot type that fits your use case</p>
         </div>
         <button type="button" onClick={onCancel}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken transition-colors">
           <X size={14} />
         </button>
       </div>
@@ -195,7 +195,7 @@ function BotCatalog({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-sm font-bold text-gray-800">{meta.name}</span>
+                    <span className="text-sm font-bold text-text">{meta.name}</span>
                     {meta.badge && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600">
                         {meta.badge}
@@ -207,12 +207,12 @@ function BotCatalog({
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] font-semibold text-gray-500 mb-2">{meta.tagline}</p>
-                  <p className="text-xs text-gray-500 leading-relaxed mb-3">{meta.description}</p>
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-2">{meta.tagline}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">{meta.description}</p>
 
                   <ul className="space-y-1 mb-3">
                     {meta.capabilities.map(cap => (
-                      <li key={cap} className="flex items-center gap-2 text-[11px] text-gray-600">
+                      <li key={cap} className="flex items-center gap-2 text-[11px] text-muted-foreground">
                         <CheckCircle2 size={11} className={`shrink-0 ${meta.color}`} />
                         {cap}
                       </li>
@@ -224,7 +224,7 @@ function BotCatalog({
                       <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${meta.bg} ${meta.color}`}>
                         {meta.price}
                       </span>
-                      <span className="text-[10px] text-gray-400 ml-2">{meta.priceNote}</span>
+                      <span className="text-[10px] text-muted-foreground ml-2">{meta.priceNote}</span>
                     </div>
                     <span className={`flex items-center gap-1 text-[11px] font-semibold ${meta.color} opacity-0 group-hover:opacity-100 transition-opacity`}>
                       Select <ChevronRight size={11} />
@@ -309,7 +309,7 @@ function BotSetupForm({
       {/* Header */}
       <div className="flex items-center gap-3">
         <button type="button" onClick={onBack}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors shrink-0">
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken transition-colors shrink-0">
           <ArrowLeft size={14} />
         </button>
         <div className="flex items-center gap-3">
@@ -317,8 +317,8 @@ function BotSetupForm({
             <Icon size={16} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-gray-800">{meta.name}</h3>
-            <p className="text-[11px] text-gray-400">{isFirstInstance ? 'Set up your first instance' : 'Add another instance'}</p>
+            <h3 className="text-sm font-bold text-text">{meta.name}</h3>
+            <p className="text-[11px] text-muted-foreground">{isFirstInstance ? 'Set up your first instance' : 'Add another instance'}</p>
           </div>
         </div>
       </div>
@@ -326,7 +326,7 @@ function BotSetupForm({
       {/* Instance name (only for additional instances) */}
       {!isFirstInstance && (
         <div>
-          <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+          <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
             Instance name <span className="text-red-400">*</span>
           </label>
           <input
@@ -336,23 +336,23 @@ function BotSetupForm({
             onKeyDown={e => e.key === 'Enter' && handleConfirm()}
             placeholder={`e.g. Hindi, North India, Tier 1 Support`}
             maxLength={40}
-            className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand"
+            className="w-full text-sm border border-line rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand"
           />
-          <p className="text-[10px] text-gray-400 mt-1">Used to identify this instance in the dashboard</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Used to identify this instance in the dashboard</p>
         </div>
       )}
 
       {/* Phone number selection */}
       <div>
-        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-          WhatsApp number <span className="text-gray-300">(optional)</span>
+        <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
+          WhatsApp number <span className="text-muted-foreground">(optional)</span>
         </label>
         {availableNumbers.length > 0 ? (
           <>
             <select
               value={numberId}
               onChange={e => setNumberId(e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full text-sm border border-line rounded-xl px-4 py-2.5 bg-white text-text focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="">Skip for now</option>
               {availableNumbers.map(n => (
@@ -361,10 +361,10 @@ function BotSetupForm({
                 </option>
               ))}
             </select>
-            <p className="text-[10px] text-gray-400 mt-1">Only unassigned numbers are shown. You can change this later.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Only unassigned numbers are shown. You can change this later.</p>
           </>
         ) : (
-          <div className="rounded-xl border border-dashed border-gray-200 px-4 py-3 text-[11px] text-gray-400">
+          <div className="rounded-xl border border-dashed border-line px-4 py-3 text-[11px] text-muted-foreground">
             No unassigned numbers available. Add a number in the Workspace tab, then come back to assign it.
           </div>
         )}
@@ -375,7 +375,7 @@ function BotSetupForm({
         <p className={`text-[11px] font-semibold ${meta.color}`}>What this bot does</p>
         <ul className="space-y-1">
           {meta.capabilities.map(cap => (
-            <li key={cap} className="flex items-center gap-2 text-[11px] text-gray-600">
+            <li key={cap} className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <CheckCircle2 size={10} className={`shrink-0 ${meta.color}`} />
               {cap}
             </li>
@@ -387,7 +387,7 @@ function BotSetupForm({
 
       <div className="flex gap-2">
         <button type="button" onClick={onBack} disabled={pending}
-          className="flex-1 text-sm px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 font-semibold transition-colors">
+          className="flex-1 text-sm px-4 py-2.5 rounded-xl border border-line text-muted-foreground hover:bg-sunken disabled:opacity-40 font-semibold transition-colors">
           Back
         </button>
         <button type="button" onClick={handleConfirm} disabled={pending}
@@ -428,7 +428,7 @@ function AddBotFlow({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5">
+    <div className="bg-white rounded-2xl border border-line shadow-lg p-5">
       {state.step === 'catalog' && (
         <BotCatalog
           existingInstances={existingProducts}
@@ -522,7 +522,7 @@ function BotInstanceCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-bold text-gray-800">{displayName}</p>
+            <p className="text-sm font-bold text-text">{displayName}</p>
             <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-ready-bg text-ready px-1.5 py-0.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-ready animate-pulse" />
               Active
@@ -533,10 +533,10 @@ function BotInstanceCard({
               </span>
             )}
           </div>
-          <p className="text-[11px] text-gray-400 mt-0.5">{meta.tagline}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{meta.tagline}</p>
           <div className="mt-2">
             {assigned ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono bg-sunken text-muted-foreground px-2 py-0.5 rounded-full">
                 <Phone size={9} />{assigned.phone_number}
               </span>
             ) : (
@@ -551,51 +551,51 @@ function BotInstanceCard({
           <button type="button" title={isPrimary ? 'Primary bot' : 'Set as primary'}
             onClick={() => onSetPrimary(bot.product_slug)}
             className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-              isPrimary ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:bg-amber-50 hover:text-amber-400'
+              isPrimary ? 'bg-amber-50 text-amber-500' : 'text-muted-foreground hover:bg-amber-50 hover:text-amber-400'
             }`}>
             {isPrimary ? <Star size={13} /> : <StarOff size={13} />}
           </button>
           <button type="button" onClick={() => setExpanded(e => !e)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-sunken transition-colors">
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-gray-50 px-5 py-4 space-y-4 bg-gray-50/40">
+        <div className="border-t border-line px-5 py-4 space-y-4 bg-sunken/40">
           <div>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1">
               <Coins size={10} />Token Usage
             </p>
             {usage?.credit_info
               ? <UsageBar usage={usage.credit_info.usage} limit={usage.credit_info.limit} />
-              : <span className="text-gray-400 text-xs">Using platform default</span>
+              : <span className="text-muted-foreground text-xs">Using platform default</span>
             }
           </div>
 
           <div>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Webhook URL</p>
-            <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Webhook URL</p>
+            <div className="flex items-center gap-2 bg-white rounded-lg border border-line px-3 py-2">
               <code className="flex-1 text-[11px] text-brand-strong font-mono break-all leading-relaxed">{webhookUrl}</code>
               <CopyButton text={webhookUrl} />
             </div>
           </div>
 
           <div>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
               <Phone size={10} />WhatsApp Number
             </p>
             {assigned ? (
-              <div className="flex items-center justify-between gap-2 bg-white rounded-lg border border-gray-100 px-3 py-2">
+              <div className="flex items-center justify-between gap-2 bg-white rounded-lg border border-line px-3 py-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <Phone size={11} className="text-brand-strong shrink-0" />
-                  <span className="text-xs font-mono text-gray-700 truncate">{assigned.phone_number}</span>
-                  {assigned.label && <span className="text-[10px] text-gray-400 truncate">{assigned.label}</span>}
+                  <span className="text-xs font-mono text-text truncate">{assigned.phone_number}</span>
+                  {assigned.label && <span className="text-[10px] text-muted-foreground truncate">{assigned.label}</span>}
                 </div>
                 <button type="button" disabled={assigning}
                   onClick={() => handleUnassign(assigned.id)}
-                  className="text-[10px] font-semibold text-gray-400 hover:text-red-500 transition-colors disabled:opacity-40 shrink-0">
+                  className="text-[10px] font-semibold text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40 shrink-0">
                   {assigning ? '…' : 'Remove'}
                 </button>
               </div>
@@ -603,7 +603,7 @@ function BotInstanceCard({
               <div className="flex items-center gap-2">
                 <select value={selectNum} disabled={assigning}
                   onChange={e => setSelectNum(e.target.value)}
-                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50">
+                  className="flex-1 text-xs border border-line rounded-lg px-2.5 py-1.5 bg-white text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50">
                   <option value="" disabled>Select a number…</option>
                   {available.map(n => (
                     <option key={n.id} value={n.id}>
@@ -619,7 +619,7 @@ function BotInstanceCard({
                 )}
               </div>
             ) : (
-              <p className="text-xs text-gray-400 italic">
+              <p className="text-xs text-muted-foreground italic">
                 {numbers.length === 0
                   ? 'No phone numbers added yet — add one in the Workspace tab.'
                   : 'All numbers are assigned to other bots.'}
@@ -627,9 +627,9 @@ function BotInstanceCard({
             )}
           </div>
 
-          <div className="pt-2 border-t border-gray-100 flex justify-end">
+          <div className="pt-2 border-t border-line flex justify-end">
             <button type="button" disabled={pending} onClick={handleDeactivate}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-40 font-semibold">
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-line text-muted-foreground hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-40 font-semibold">
               <PowerOff size={12} />Deactivate
             </button>
           </div>
@@ -700,7 +700,7 @@ export function BotsTabContent({ tenantId, apiBase, botProducts: initialProducts
     <div className="space-y-4">
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           {active.length === 0
             ? 'No bots active yet.'
             : `${active.length} bot instance${active.length !== 1 ? 's' : ''} active`}
@@ -736,8 +736,8 @@ export function BotsTabContent({ tenantId, apiBase, botProducts: initialProducts
         return (
           <div className="flex items-center gap-2 px-1">
             <Star size={11} className="text-amber-400" />
-            <p className="text-[11px] text-gray-500">
-              <span className="font-semibold text-gray-700">{label}</span> is your primary bot — default when no specific bot is selected. Tap ⭐ on any card to change.
+            <p className="text-[11px] text-muted-foreground">
+              <span className="font-semibold text-text">{label}</span> is your primary bot — default when no specific bot is selected. Tap ⭐ on any card to change.
             </p>
           </div>
         );
@@ -753,8 +753,8 @@ export function BotsTabContent({ tenantId, apiBase, botProducts: initialProducts
               <div className={`w-5 h-5 rounded-md flex items-center justify-center ${meta.bg} ${meta.color}`}>
                 <Icon size={11} />
               </div>
-              <span className="text-xs font-bold text-gray-600">{meta.name}</span>
-              <span className="text-[10px] text-gray-400">{instances.length} instance{instances.length !== 1 ? 's' : ''}</span>
+              <span className="text-xs font-bold text-muted-foreground">{meta.name}</span>
+              <span className="text-[10px] text-muted-foreground">{instances.length} instance{instances.length !== 1 ? 's' : ''}</span>
             </div>
             {instances.map(bot => (
               <BotInstanceCard
@@ -776,7 +776,7 @@ export function BotsTabContent({ tenantId, apiBase, botProducts: initialProducts
 
       {active.length === 0 && !showAdd && (
         <div className="text-center py-10">
-          <p className="text-gray-400 text-sm">Click <span className="font-semibold text-brand-strong">Add Bot</span> to get started.</p>
+          <p className="text-muted-foreground text-sm">Click <span className="font-semibold text-brand-strong">Add Bot</span> to get started.</p>
         </div>
       )}
     </div>

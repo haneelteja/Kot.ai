@@ -62,17 +62,17 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
         <div className="w-12 h-12 rounded-full bg-done-bg flex items-center justify-center mx-auto">
           <Check size={22} className="text-done" />
         </div>
-        <p className="text-lg font-bold text-gray-800">Order Created!</p>
+        <p className="text-lg font-bold text-text">Order Created!</p>
         {result.linkUrl ? (
           <>
-            <p className="text-sm text-gray-500">Payment link sent via WhatsApp.</p>
+            <p className="text-sm text-muted-foreground">Payment link sent via WhatsApp.</p>
             <a href={result.linkUrl} target="_blank" rel="noopener noreferrer"
               className="text-xs text-indigo-600 underline break-all">{result.linkUrl}</a>
           </>
         ) : (
-          <p className="text-sm text-gray-500">Order saved. No payment link generated.</p>
+          <p className="text-sm text-muted-foreground">Order saved. No payment link generated.</p>
         )}
-        <p className="text-xs text-gray-400">Redirecting to orders…</p>
+        <p className="text-xs text-muted-foreground">Redirecting to orders…</p>
       </div>
     );
   }
@@ -81,11 +81,11 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
     <div className="bg-white rounded-2xl border border-line shadow-sm p-6 space-y-5">
       {/* Contact */}
       <div>
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Contact</label>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Contact</label>
         <select
           value={contactId}
           onChange={e => { setContactId(e.target.value); setConversationId(''); }}
-          className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand bg-white"
+          className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand bg-white"
         >
           <option value="">Select a contact…</option>
           {contacts.map(c => (
@@ -97,14 +97,14 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
       {/* Conversation */}
       {contactId && (
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Conversation</label>
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Conversation</label>
           {contactConversations.length === 0 ? (
-            <p className="text-xs text-gray-400">No open conversations for this contact.</p>
+            <p className="text-xs text-muted-foreground">No open conversations for this contact.</p>
           ) : (
             <select
               value={conversationId}
               onChange={e => setConversationId(e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand bg-white"
+              className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand bg-white"
             >
               <option value="">Select a conversation…</option>
               {contactConversations.map(c => (
@@ -120,7 +120,7 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
       {/* Items */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Items</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Items</label>
           <button type="button" onClick={addItem} className="flex items-center gap-1 text-xs text-brand-strong hover:opacity-80 font-semibold">
             <Plus size={12} /> Add item
           </button>
@@ -133,7 +133,7 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
                 value={item.name}
                 onChange={e => updateItem(i, 'name', e.target.value)}
                 placeholder="Item name"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
               />
               <input
                 type="number"
@@ -141,7 +141,7 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
                 min={1}
                 onChange={e => updateItem(i, 'quantity', e.target.value)}
                 placeholder="Qty"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand text-center"
+                className="text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand text-center"
               />
               <input
                 type="number"
@@ -150,10 +150,10 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
                 step={0.01}
                 onChange={e => updateItem(i, 'price', e.target.value)}
                 placeholder="₹ Price"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
               />
               <button type="button" onClick={() => removeItem(i)} disabled={items.length === 1}
-                className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-30">
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-30">
                 <Trash2 size={13} />
               </button>
             </div>
@@ -162,17 +162,17 @@ export function NewOrderForm({ tenantId, contacts, conversations }: Props) {
       </div>
 
       {/* Total */}
-      <div className="flex items-center justify-between py-3 border-t border-gray-100">
-        <p className="text-sm font-semibold text-gray-600">Total</p>
-        <p className="text-xl font-bold text-gray-800 tabular-nums" suppressHydrationWarning>₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+      <div className="flex items-center justify-between py-3 border-t border-line">
+        <p className="text-sm font-semibold text-muted-foreground">Total</p>
+        <p className="text-xl font-bold text-text tabular-nums" suppressHydrationWarning>₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
       </div>
 
       {/* Send payment link */}
-      <div className="space-y-3 pt-1 border-t border-gray-100">
+      <div className="space-y-3 pt-1 border-t border-line">
         <label className="flex items-center gap-3 cursor-pointer">
           <input type="checkbox" checked={sendLink} onChange={e => setSendLink(e.target.checked)}
             className="w-4 h-4 accent-brand-strong" />
-          <span className="text-sm text-gray-600 font-medium">Send payment link via WhatsApp</span>
+          <span className="text-sm text-muted-foreground font-medium">Send payment link via WhatsApp</span>
         </label>
 
       </div>

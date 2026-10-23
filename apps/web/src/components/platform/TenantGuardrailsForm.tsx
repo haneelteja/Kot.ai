@@ -27,7 +27,7 @@ function TagInput({
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
           placeholder={placeholder}
-          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-done"
+          className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-done"
         />
         <button type="button" onClick={add} className="px-3 py-2 text-sm bg-done-bg text-done rounded-lg hover:bg-done-bg font-medium">
           Add
@@ -114,53 +114,53 @@ export function TenantGuardrailsForm({
           <p className="text-xs text-amber-600 mt-0.5">Force every bot for this client to only answer from its knowledge base.</p>
         </div>
         <button type="button" onClick={() => setKbOnly(v => !v)}
-          className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${kbOnly ? 'bg-amber-500' : 'bg-gray-200'}`}>
+          className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${kbOnly ? 'bg-amber-500' : 'bg-sunken'}`}>
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${kbOnly ? 'translate-x-5' : ''}`} />
         </button>
       </div>
 
       {/* Blocked topics */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Blocked Topics</label>
-        <p className="text-xs text-gray-400">Applied across all this client&apos;s bots — none of them will discuss these topics.</p>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Blocked Topics</label>
+        <p className="text-xs text-muted-foreground">Applied across all this client&apos;s bots — none of them will discuss these topics.</p>
         <TagInput value={blockedTopics} onChange={setBlockedTopics} placeholder="e.g. refund policy" />
       </div>
 
       {/* Blocked keywords */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Blocked Keywords</label>
-        <p className="text-xs text-gray-400">Messages containing these words are blocked before any AI call across all bots.</p>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Blocked Keywords</label>
+        <p className="text-xs text-muted-foreground">Messages containing these words are blocked before any AI call across all bots.</p>
         <TagInput value={blockedKeywords} onChange={setBlockedKeywords} placeholder="e.g. competitor name" />
       </div>
 
       {/* Max length */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Max Response Length (chars)</label>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Max Response Length (chars)</label>
         <input type="number" min={100} max={4000} value={maxLength}
           onChange={e => setMaxLength(parseInt(e.target.value, 10))}
-          className={`w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${ring}`}
+          className={`w-40 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${ring}`}
         />
       </div>
 
       {/* Content filters */}
       <div className="space-y-2">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Content Filters</label>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Content Filters</label>
         {[
           { label: 'No personal data in responses', value: noPersonalData,  set: setNoPersonalData  },
           { label: 'No external links in responses', value: noExternalLinks, set: setNoExternalLinks },
         ].map(({ label, value, set }) => (
           <label key={label} className="flex items-center gap-3 cursor-pointer">
             <input type="checkbox" checked={value} onChange={e => set(e.target.checked)} className="w-4 h-4 accent-done" />
-            <span className="text-sm text-gray-700">{label}</span>
+            <span className="text-sm text-text">{label}</span>
           </label>
         ))}
       </div>
 
       {/* On blocked */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">When Blocked Keyword Detected</label>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">When Blocked Keyword Detected</label>
         <select value={onBlocked} onChange={e => setOnBlocked(e.target.value as LayeredGuardrailsConfig['on_blocked_topic'])}
-          className={`text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${ring}`}>
+          className={`text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${ring}`}>
           <option value="escalate">Escalate to human agent</option>
           <option value="ignore">Send custom message and stop</option>
         </select>
@@ -168,10 +168,10 @@ export function TenantGuardrailsForm({
 
       {onBlocked === 'ignore' && (
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Custom Blocked Message</label>
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Custom Blocked Message</label>
           <input type="text" value={customMsg} onChange={e => setCustomMsg(e.target.value)}
             placeholder="I'm sorry, I can't help with that topic."
-            className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${ring}`}
+            className={`w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${ring}`}
           />
         </div>
       )}

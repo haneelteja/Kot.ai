@@ -351,7 +351,7 @@ export default async function ClientDetailPage({
             </p>
             <LlmConfigCard label="Client Default" description="Applies to all this client's bots when no per-bot key is set." tenantId={tenantId} productSlug={null} initial={llmMap['__generic__'] ? maskLlm(llmMap['__generic__']!) : null} accent="indigo" />
             {tpRows.filter(p => p.active).map(p => {
-              const meta = BOT_META[p.product_type] ?? { name: p.product_type, badge: 'bg-gray-100 text-gray-600 border-gray-200' };
+              const meta = BOT_META[p.product_type] ?? { name: p.product_type, badge: 'bg-sunken text-muted-foreground border-line' };
               return (
                 <LlmConfigCard key={p.product_type} label={meta.name} description={`Override for this client's ${meta.name.toLowerCase()} only.`} tenantId={tenantId} productSlug={p.product_type} initial={llmMap[p.product_type] ? maskLlm(llmMap[p.product_type]!) : null} accent="indigo" />
               );

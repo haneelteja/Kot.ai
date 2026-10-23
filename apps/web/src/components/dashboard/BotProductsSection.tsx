@@ -82,7 +82,7 @@ export function BotProductsSection({ tenantId, apiBase, tenantProducts: initialP
   return (
     <div className="space-y-3 px-5 py-4">
       {activeBots.length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-4">No bots are active on this account. Contact support to add a bot.</p>
+        <p className="text-sm text-muted-foreground text-center py-4">No bots are active on this account. Contact support to add a bot.</p>
       )}
       {activeBots.map(pt => {
         const meta = BOT_META[pt];
@@ -102,20 +102,20 @@ export function BotProductsSection({ tenantId, apiBase, tenantProducts: initialP
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-gray-800">{meta.name}</p>
+                    <p className="text-sm font-semibold text-text">{meta.name}</p>
                     <span className="flex items-center gap-1 text-[10px] font-semibold bg-ready-bg text-ready px-2 py-0.5 rounded-full">
                       <span className="w-1.5 h-1.5 rounded-full bg-ready" />
                       Active
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{meta.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{meta.description}</p>
                 </div>
               </div>
               <button
                 type="button"
                 disabled={isLoading || pending}
                 onClick={() => handleDeactivate(pt)}
-                className="shrink-0 text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors disabled:opacity-50 border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200"
+                className="shrink-0 text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors disabled:opacity-50 border border-line text-muted-foreground hover:bg-red-50 hover:text-red-500 hover:border-red-200"
               >
                 {isLoading ? '…' : 'Deactivate'}
               </button>
@@ -123,7 +123,7 @@ export function BotProductsSection({ tenantId, apiBase, tenantProducts: initialP
 
             <div className="mt-3 pt-3 border-t border-ready/30 space-y-2">
                 <div>
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Webhook URL</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Webhook URL</p>
                   <div className="flex items-center gap-2 bg-white rounded-lg border border-ready/30 px-3 py-2">
                     <code className="flex-1 text-xs text-brand-strong font-mono break-all">{webhookUrl}</code>
                     <CopyButton text={webhookUrl} />
@@ -133,18 +133,18 @@ export function BotProductsSection({ tenantId, apiBase, tenantProducts: initialP
                 {/* WhatsApp number assignment */}
                 {numbers.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Assigned Phone Numbers</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Assigned Phone Numbers</p>
                     {assignedNumbers.length > 0 ? (
                       <div className="space-y-1.5">
                         {assignedNumbers.map(n => (
                           <div key={n.id} className="flex items-center justify-between gap-2 bg-white rounded-lg border border-ready/30 px-3 py-2">
-                            <span className="text-xs font-mono text-gray-700">{n.phone_number}</span>
-                            {n.label && <span className="text-[11px] text-gray-400">{n.label}</span>}
+                            <span className="text-xs font-mono text-text">{n.phone_number}</span>
+                            {n.label && <span className="text-[11px] text-muted-foreground">{n.label}</span>}
                             <button
                               type="button"
                               disabled={pending}
                               onClick={() => handleAssignNumber(n.id, null)}
-                              className="text-[10px] text-gray-400 hover:text-red-500 transition-colors shrink-0 disabled:opacity-50"
+                              className="text-[10px] text-muted-foreground hover:text-red-500 transition-colors shrink-0 disabled:opacity-50"
                             >
                               Unassign
                             </button>
@@ -152,7 +152,7 @@ export function BotProductsSection({ tenantId, apiBase, tenantProducts: initialP
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-400 italic">No numbers assigned — assign one below.</p>
+                      <p className="text-xs text-muted-foreground italic">No numbers assigned — assign one below.</p>
                     )}
                   </div>
                 )}
@@ -169,8 +169,8 @@ export function BotProductsSection({ tenantId, apiBase, tenantProducts: initialP
             {numbers.filter(n => !n.product_slug).map(n => (
               <div key={n.id} className="flex items-center justify-between gap-2 bg-white rounded-lg border border-amber-100 px-3 py-2">
                 <div>
-                  <span className="text-xs font-mono text-gray-700">{n.phone_number}</span>
-                  {n.label && <span className="text-[11px] text-gray-400 ml-2">{n.label}</span>}
+                  <span className="text-xs font-mono text-text">{n.phone_number}</span>
+                  {n.label && <span className="text-[11px] text-muted-foreground ml-2">{n.label}</span>}
                 </div>
                 <select
                   disabled={pending}
@@ -179,7 +179,7 @@ export function BotProductsSection({ tenantId, apiBase, tenantProducts: initialP
                     const val = e.target.value as ProductType;
                     if (val) handleAssignNumber(n.id, val);
                   }}
-                  className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50"
+                  className="text-xs border border-line rounded-lg px-2 py-1.5 bg-white text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50"
                 >
                   <option value="" disabled>Assign to bot…</option>
                   {ALL_PRODUCTS.filter(pt => activeSet.has(pt)).map(pt => (

@@ -99,10 +99,10 @@ export default async function GuardrailsPage({
   return (
     <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Guardrails</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h2 className="text-xl font-bold text-text">Guardrails</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
           {selectedBotName
-            ? <>Rules for <span className="font-semibold text-gray-700">{selectedBotName}</span></>
+            ? <>Rules for <span className="font-semibold text-text">{selectedBotName}</span></>
             : 'Control what your bots can and cannot do.'}
         </p>
       </div>
@@ -125,14 +125,14 @@ export default async function GuardrailsPage({
       <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
         <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
           <Shield size={16} className="text-brand-strong" />
-          <h3 className="text-sm font-semibold text-gray-700">Layer 3 — General Rules (All Bots)</h3>
+          <h3 className="text-sm font-semibold text-text">Layer 3 — General Rules (All Bots)</h3>
           <span className="ml-auto text-[11px] px-2 py-0.5 bg-brand-wash text-brand-strong rounded-full font-semibold border border-transparent">
             Every bot
           </span>
         </div>
         <div className="px-5 py-5">
-          <p className="text-xs text-gray-400 mb-5">
-            Rules here apply across <span className="font-medium text-gray-600">all your bots</span> without needing to repeat them per-bot.
+          <p className="text-xs text-muted-foreground mb-5">
+            Rules here apply across <span className="font-medium text-muted-foreground">all your bots</span> without needing to repeat them per-bot.
           </p>
           <TenantGuardrailsForm
             initial={tenantGuardrails}
@@ -146,13 +146,13 @@ export default async function GuardrailsPage({
       <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
         <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
           <ShieldAlert size={16} className="text-brand-strong" />
-          <h3 className="text-sm font-semibold text-gray-700">Layer 4 — Per-Bot Configuration</h3>
+          <h3 className="text-sm font-semibold text-text">Layer 4 — Per-Bot Configuration</h3>
           <span className="ml-auto text-[11px] px-2 py-0.5 bg-brand-wash text-brand-strong rounded-full font-semibold border border-transparent">
             {selectedBotName ?? 'Individual bots'}
           </span>
         </div>
         <div className="px-5 py-5">
-          <p className="text-xs text-gray-400 mb-5">
+          <p className="text-xs text-muted-foreground mb-5">
             Fine-tune system prompts, confidence thresholds, tone, and additional guardrails per bot.
             Click a bot to expand.
           </p>

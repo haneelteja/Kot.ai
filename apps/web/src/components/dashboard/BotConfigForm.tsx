@@ -48,7 +48,7 @@ function TagInput({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
           placeholder={placeholder}
-          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+          className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
         />
         <button
           type="button"
@@ -63,13 +63,13 @@ function TagInput({
           {value.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full"
+              className="inline-flex items-center gap-1 text-xs bg-sunken text-text px-2.5 py-1 rounded-full"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => remove(tag)}
-                className="text-gray-400 hover:text-gray-700 leading-none"
+                className="text-muted-foreground hover:text-text leading-none"
               >
                 ×
               </button>
@@ -100,7 +100,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
       aria-label={`${label}: ${value ? 'on' : 'off'}`}
       title={label}
       onClick={() => onChange(!value)}
-      className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${value ? 'bg-ready' : 'bg-gray-200'}`}
+      className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${value ? 'bg-ready' : 'bg-sunken'}`}
     >
       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : ''}`} />
     </button>
@@ -179,18 +179,18 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
     });
   }
 
-  const colorClass = PRODUCT_COLORS[config.product_slug] ?? 'bg-gray-50 text-gray-700 border-gray-200';
+  const colorClass = PRODUCT_COLORS[config.product_slug] ?? 'bg-sunken text-text border-line';
 
   return (
-    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+    <div className="border border-line rounded-2xl overflow-hidden shadow-sm">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-sunken transition-colors"
       >
         <div className="flex items-center gap-3">
           <Bot size={15} className="text-brand-strong" />
-          <span className="font-semibold text-sm text-gray-800">
+          <span className="font-semibold text-sm text-text">
             {PRODUCT_LABELS[config.product_slug] ?? config.product_slug}
           </span>
           <span className={`text-[11px] px-2 py-0.5 rounded-md font-medium border ${colorClass}`}>
@@ -202,17 +202,17 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
             </span>
           )}
         </div>
-        {open ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        {open ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 bg-white px-5 py-5 space-y-6">
+        <div className="border-t border-line bg-white px-5 py-5 space-y-6">
           {/* System Prompt */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               System Prompt
             </label>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Custom instructions for this bot. Leave empty to use the product default.
             </p>
             <textarea
@@ -220,7 +220,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={5}
               placeholder={defaultPrompt}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand resize-y font-mono"
+              className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand resize-y font-mono"
             />
           </div>
 
@@ -237,7 +237,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               aria-label={`Knowledge Base Only Mode: ${kbOnly ? 'on' : 'off'}`}
               title="Toggle Knowledge Base Only Mode"
               onClick={() => setKbOnly((v) => !v)}
-              className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${kbOnly ? 'bg-amber-500' : 'bg-gray-200'}`}
+              className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${kbOnly ? 'bg-amber-500' : 'bg-sunken'}`}
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${kbOnly ? 'translate-x-5' : ''}`} />
             </button>
@@ -246,12 +246,12 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
           {/* Tone + Confidence */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label htmlFor={`tone-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Tone</label>
+              <label htmlFor={`tone-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tone</label>
               <select
                 id={`tone-${config.product_slug}`}
                 value={tone}
                 onChange={(e) => setTone(e.target.value as GuardrailsConfig['tone'])}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
               >
                 <option value="professional">Professional</option>
                 <option value="casual">Casual</option>
@@ -260,7 +260,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               </select>
             </div>
             <div className="space-y-1.5">
-              <label htmlFor={`confidence-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              <label htmlFor={`confidence-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Confidence Threshold
               </label>
               <div className="flex items-center gap-3">
@@ -274,12 +274,12 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                   onChange={(e) => setConfidence(parseFloat(e.target.value))}
                   className="flex-1 accent-brand-strong"
                 />
-                <span className="text-sm font-mono text-gray-700 w-10 text-right">{confidence.toFixed(2)}</span>
+                <span className="text-sm font-mono text-text w-10 text-right">{confidence.toFixed(2)}</span>
               </div>
-              <p className="text-xs text-gray-400">Escalate if AI confidence falls below this threshold</p>
+              <p className="text-xs text-muted-foreground">Escalate if AI confidence falls below this threshold</p>
             </div>
             <div className="space-y-1.5">
-              <label htmlFor={`reprompts-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              <label htmlFor={`reprompts-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Low-Confidence Reprompts Before Escalation
               </label>
               <div className="flex items-center gap-3">
@@ -293,15 +293,15 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                   onChange={(e) => setMaxReprompts(parseInt(e.target.value, 10))}
                   className="flex-1 accent-brand-strong"
                 />
-                <span className="text-sm font-mono text-gray-700 w-6 text-right">{maxReprompts}</span>
+                <span className="text-sm font-mono text-text w-6 text-right">{maxReprompts}</span>
               </div>
-              <p className="text-xs text-gray-400">How many consecutive low-confidence replies before escalating to a human</p>
+              <p className="text-xs text-muted-foreground">How many consecutive low-confidence replies before escalating to a human</p>
             </div>
           </div>
 
           {/* Max response length */}
           <div className="space-y-1.5">
-            <label htmlFor={`maxlength-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <label htmlFor={`maxlength-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Max Response Length (characters)
             </label>
             <input
@@ -311,14 +311,14 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               max={4000}
               value={maxLength}
               onChange={(e) => setMaxLength(parseInt(e.target.value, 10))}
-              className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-40 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             />
           </div>
 
           {/* Reprompt message */}
           <div className="space-y-1.5">
-            <label htmlFor={`reprompt-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Low-Confidence Reprompt Message <span className="normal-case font-normal text-gray-400">(optional)</span>
+            <label htmlFor={`reprompt-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Low-Confidence Reprompt Message <span className="normal-case font-normal text-muted-foreground">(optional)</span>
             </label>
             <input
               id={`reprompt-${config.product_slug}`}
@@ -326,15 +326,15 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               placeholder="e.g. I want to make sure I understand you correctly — could you rephrase?"
               value={repromptMessage}
               onChange={(e) => setRepromptMessage(e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             />
-            <p className="text-xs text-gray-400">Sent to the customer on each low-confidence reply before escalating. Leave blank to escalate silently.</p>
+            <p className="text-xs text-muted-foreground">Sent to the customer on each low-confidence reply before escalating. Leave blank to escalate silently.</p>
           </div>
 
           {/* Auto-escalate after hours */}
           <div className="space-y-1.5">
-            <label htmlFor={`autohours-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Auto-Escalate Stale Conversations After <span className="normal-case font-normal text-gray-400">(hours, optional)</span>
+            <label htmlFor={`autohours-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Auto-Escalate Stale Conversations After <span className="normal-case font-normal text-muted-foreground">(hours, optional)</span>
             </label>
             <input
               id={`autohours-${config.product_slug}`}
@@ -344,26 +344,26 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               placeholder="e.g. 24"
               value={autoEscalateHours}
               onChange={(e) => setAutoEscalateHours(e.target.value)}
-              className="w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-32 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             />
-            <p className="text-xs text-gray-400">Escalate open conversations to a human if they have no resolution after this many hours. Leave blank to disable.</p>
+            <p className="text-xs text-muted-foreground">Escalate open conversations to a human if they have no resolution after this many hours. Leave blank to disable.</p>
           </div>
 
           {/* Blocked topics */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Blocked Topics
             </label>
-            <p className="text-xs text-gray-400">Bot will refuse to discuss these topics (press Enter or Add).</p>
+            <p className="text-xs text-muted-foreground">Bot will refuse to discuss these topics (press Enter or Add).</p>
             <TagInput value={blockedTopics} onChange={setBlockedTopics} placeholder="e.g. competitor pricing" />
           </div>
 
           {/* Blocked keywords */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Blocked Keywords
             </label>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               If an incoming message contains any of these words, it will be blocked before reaching the AI.
             </p>
             <TagInput value={blockedKeywords} onChange={setBlockedKeywords} placeholder="e.g. lawsuit" />
@@ -371,14 +371,14 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
 
           {/* On blocked topic */}
           <div className="space-y-1.5">
-            <label htmlFor={`onblocked-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <label htmlFor={`onblocked-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               When Blocked Keyword Detected
             </label>
             <select
               id={`onblocked-${config.product_slug}`}
               value={onBlocked}
               onChange={(e) => setOnBlocked(e.target.value as GuardrailsConfig['on_blocked_topic'])}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="escalate">Escalate to human agent</option>
               <option value="ignore">Send custom message (no escalation)</option>
@@ -389,23 +389,23 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                 value={customBlockedMessage}
                 onChange={(e) => setCustomBlockedMessage(e.target.value)}
                 placeholder="I'm sorry, I can't help with that topic."
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand mt-2"
+                className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand mt-2"
               />
             )}
           </div>
 
           {/* Escalation triggers */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Escalation Trigger Phrases
             </label>
-            <p className="text-xs text-gray-400">Conversations containing these phrases are immediately escalated to a human.</p>
+            <p className="text-xs text-muted-foreground">Conversations containing these phrases are immediately escalated to a human.</p>
             <TagInput value={escalationTriggers} onChange={setEscalationTriggers} placeholder="e.g. speak to human" />
           </div>
 
           {/* Content filters */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Content Filters</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Content Filters</label>
             {[
               { label: 'No external links in responses', value: noLinks,         set: setNoLinks         },
               { label: 'No personal data in responses',  value: noPersonalData,  set: setNoPersonalData  },
@@ -418,7 +418,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                   onChange={(e) => set(e.target.checked)}
                   className="w-4 h-4 accent-brand-strong"
                 />
-                <span className="text-sm text-gray-700">{label}</span>
+                <span className="text-sm text-text">{label}</span>
               </label>
             ))}
           </div>
@@ -441,25 +441,25 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
               <div className="px-4 py-4 space-y-4">
                 {/* Language */}
                 <div className="space-y-1.5">
-                  <label htmlFor={`voice-lang-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  <label htmlFor={`voice-lang-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Call Language
                   </label>
                   <select
                     id={`voice-lang-${config.product_slug}`}
                     value={voiceLanguage}
                     onChange={(e) => setVoiceLanguage(e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                    className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-300"
                   >
                     {LANGUAGE_OPTIONS.map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
-                  <p className="text-xs text-gray-400">Language used for STT transcription and TTS speech synthesis.</p>
+                  <p className="text-xs text-muted-foreground">Language used for STT transcription and TTS speech synthesis.</p>
                 </div>
 
                 {/* Greeting */}
                 <div className="space-y-1.5">
-                  <label htmlFor={`voice-greeting-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  <label htmlFor={`voice-greeting-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Opening Greeting
                   </label>
                   <textarea
@@ -468,14 +468,14 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                     onChange={(e) => setVoiceGreeting(e.target.value)}
                     rows={2}
                     placeholder="Hello! I'm your support assistant. How can I help you today?"
-                    className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-300 resize-none"
+                    className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-300 resize-none"
                   />
-                  <p className="text-xs text-gray-400">First sentence spoken when the customer answers. Leave empty for the system default.</p>
+                  <p className="text-xs text-muted-foreground">First sentence spoken when the customer answers. Leave empty for the system default.</p>
                 </div>
 
                 {/* Voicemail */}
                 <div className="space-y-1.5">
-                  <label htmlFor={`voice-voicemail-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  <label htmlFor={`voice-voicemail-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Voicemail / No-Answer Message
                   </label>
                   <textarea
@@ -484,16 +484,16 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                     onChange={(e) => setVoiceVoicemail(e.target.value)}
                     rows={2}
                     placeholder="We missed your call. Our AI assistant will call you back shortly."
-                    className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-300 resize-none"
+                    className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-300 resize-none"
                   />
-                  <p className="text-xs text-gray-400">Played when the call is not answered (if voicemail is enabled by the provider).</p>
+                  <p className="text-xs text-muted-foreground">Played when the call is not answered (if voicemail is enabled by the provider).</p>
                 </div>
 
                 {/* Auto-dispatch on escalation */}
                 <div className="flex items-start justify-between gap-4 p-3 bg-white rounded-xl border border-sky-100">
                   <div>
-                    <p className="text-sm font-semibold text-gray-700">Auto-call on WhatsApp Escalation</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-sm font-semibold text-text">Auto-call on WhatsApp Escalation</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       When a WhatsApp conversation is escalated, immediately dispatch an AI voice callback to the customer.
                     </p>
                   </div>
@@ -506,7 +506,7 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
 
                 {autoDispatch && (
                   <div className="space-y-1.5">
-                    <label htmlFor={`voice-delay-${config.product_slug}`} className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <label htmlFor={`voice-delay-${config.product_slug}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       Call Delay After Escalation (seconds)
                     </label>
                     <input
@@ -516,9 +516,9 @@ function BotCard({ config, defaultPrompt }: { config: ResolvedConfig; defaultPro
                       max={300}
                       value={dispatchDelay}
                       onChange={(e) => setDispatchDelay(parseInt(e.target.value, 10) || 0)}
-                      className="w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      className="w-32 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-300"
                     />
-                    <p className="text-xs text-gray-400">0 = call immediately. Use a delay (e.g. 30s) to let the WhatsApp acknowledgment arrive first.</p>
+                    <p className="text-xs text-muted-foreground">0 = call immediately. Use a delay (e.g. 30s) to let the WhatsApp acknowledgment arrive first.</p>
                   </div>
                 )}
               </div>
@@ -554,7 +554,7 @@ export function BotConfigForm({
 }) {
   if (!configs.length) {
     return (
-      <p className="text-sm text-gray-400 px-5 py-4">No bot products activated.</p>
+      <p className="text-sm text-muted-foreground px-5 py-4">No bot products activated.</p>
     );
   }
 

@@ -37,7 +37,7 @@ export function InternalNumbersManager({
   }
 
   return (
-    <div className="divide-y divide-gray-50">
+    <div className="divide-y divide-line">
       {/* Explanation */}
       <div className="px-5 py-4 flex items-start gap-3 bg-amber-50">
         <ShieldOff size={14} className="text-amber-600 mt-0.5 shrink-0" />
@@ -48,20 +48,20 @@ export function InternalNumbersManager({
 
       {/* Existing numbers */}
       {numbers.length > 0 && (
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-line">
           {numbers.map(n => (
             <div key={n.id} className="flex items-center gap-3 px-5 py-3">
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                <Phone size={13} className="text-gray-500" />
+              <div className="w-8 h-8 rounded-full bg-sunken flex items-center justify-center shrink-0">
+                <Phone size={13} className="text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 font-mono">{n.phone}</p>
-                {n.label && <p className="text-xs text-gray-400 truncate">{n.label}</p>}
+                <p className="text-sm font-medium text-text font-mono">{n.phone}</p>
+                {n.label && <p className="text-xs text-muted-foreground truncate">{n.label}</p>}
               </div>
               <button
                 onClick={() => handleRemove(n.id)}
                 disabled={isPending}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-40"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-40"
                 title="Remove"
               >
                 <Trash2 size={13} />
@@ -73,7 +73,7 @@ export function InternalNumbersManager({
 
       {numbers.length === 0 && (
         <div className="px-5 py-6 text-center">
-          <p className="text-xs text-gray-400">No internal numbers added yet.</p>
+          <p className="text-xs text-muted-foreground">No internal numbers added yet.</p>
         </div>
       )}
 
@@ -85,14 +85,14 @@ export function InternalNumbersManager({
             value={phone}
             onChange={e => setPhone(e.target.value)}
             placeholder="+919876543210"
-            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand font-mono"
+            className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand font-mono"
           />
           <input
             type="text"
             value={label}
             onChange={e => setLabel(e.target.value)}
             placeholder="Label (e.g. CEO)"
-            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+            className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
           />
           <button
             onClick={handleAdd}

@@ -244,22 +244,22 @@ export function LlmConfigCard({
   const providerLabel = PROVIDERS.find(p => p.value === (config?.provider ?? provider))?.label ?? config?.provider;
 
   return (
-    <div className={`rounded-xl border ${accent === 'emerald' ? 'border-brand/20' : 'border-gray-200'} bg-white overflow-hidden`}>
+    <div className={`rounded-xl border ${accent === 'emerald' ? 'border-brand/20' : 'border-line'} bg-white overflow-hidden`}>
       {/* Header */}
-      <div className={`flex items-start justify-between gap-3 px-4 py-3.5 ${accent === 'emerald' ? 'border-b border-brand/10' : 'border-b border-gray-100'}`}>
+      <div className={`flex items-start justify-between gap-3 px-4 py-3.5 ${accent === 'emerald' ? 'border-b border-brand/10' : 'border-b border-line'}`}>
         <div>
           <div className="flex items-center gap-2">
             <Key size={13} className={accentText} />
-            <p className="text-sm font-semibold text-gray-800">{label}</p>
+            <p className="text-sm font-semibold text-text">{label}</p>
             {config ? (
               <StatusBadge status={config.validation_status} />
             ) : (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 font-medium ring-1 ring-gray-200">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-sunken text-muted-foreground font-medium ring-1 ring-line">
                 Not configured
               </span>
             )}
           </div>
-          {description && <p className="text-xs text-gray-400 mt-0.5 ml-5">{description}</p>}
+          {description && <p className="text-xs text-muted-foreground mt-0.5 ml-5">{description}</p>}
         </div>
 
         {!editing && (
@@ -268,12 +268,12 @@ export function LlmConfigCard({
               <>
                 <button type="button" onClick={handleValidate} disabled={isValidating || isSaving}
                   title="Re-validate API key"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-40 transition-colors">
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-sunken disabled:opacity-40 transition-colors">
                   <RefreshCw size={13} className={isValidating ? 'animate-spin' : ''} />
                 </button>
                 <button type="button" onClick={handleDelete} disabled={isDeleting}
                   title="Remove configuration"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
                   <Trash2 size={13} />
                 </button>
               </>
@@ -319,29 +319,29 @@ export function LlmConfigCard({
       {/* Edit form */}
       {editing && (
         <div className="px-4 py-4 space-y-4">
-          <p className="text-[11px] text-gray-400 leading-relaxed">
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
             This configuration is <span className="font-semibold">optional</span> — if left unconfigured, the system falls back to the next level in the hierarchy.
           </p>
 
           {/* Provider */}
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Provider</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Provider</label>
             <select
               value={provider}
               onChange={e => handleProviderChange(e.target.value)}
-              className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none ${ring} bg-white`}
+              className={`w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none ${ring} bg-white`}
             >
               {PROVIDERS.map(p => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>
-            <p className="text-[11px] text-gray-400">{PROVIDERS.find(p => p.value === provider)?.hint}</p>
+            <p className="text-[11px] text-muted-foreground">{PROVIDERS.find(p => p.value === provider)?.hint}</p>
           </div>
 
           {/* API Key */}
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              API Key{config ? <span className="font-normal text-gray-400 ml-1">(leave blank to keep current)</span> : ''}
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              API Key{config ? <span className="font-normal text-muted-foreground ml-1">(leave blank to keep current)</span> : ''}
             </label>
             <input
               type="password"
@@ -349,10 +349,10 @@ export function LlmConfigCard({
               onChange={e => setApiKey(e.target.value)}
               placeholder={config ? 'Leave blank to keep existing key' : 'Paste your API key…'}
               autoComplete="off"
-              className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
+              className={`w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
             />
             {PROVIDER_KEY_LINKS[provider] && (
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-muted-foreground">
                 Get your key at{' '}
                 <a href={PROVIDER_KEY_LINKS[provider]} target="_blank" rel="noopener noreferrer" className={`${accentText} underline`}>
                   {PROVIDER_KEY_LINKS[provider]}
@@ -363,8 +363,8 @@ export function LlmConfigCard({
 
           {/* Model — dropdown for known providers, text input for openrouter/custom */}
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Model {loadingModels && <span className="font-normal text-gray-400 ml-1">Loading…</span>}
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Model {loadingModels && <span className="font-normal text-muted-foreground ml-1">Loading…</span>}
             </label>
 
             {useDropdown ? (
@@ -373,7 +373,7 @@ export function LlmConfigCard({
                   value={selectModel}
                   onChange={e => setSelectModel(e.target.value)}
                   disabled={loadingModels}
-                  className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none ${ring} bg-white disabled:opacity-50`}
+                  className={`w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none ${ring} bg-white disabled:opacity-50`}
                 >
                   <option value="">— Select a model —</option>
                   {providerModels.map(m => (
@@ -390,10 +390,10 @@ export function LlmConfigCard({
                     value={customModelId}
                     onChange={e => setCustomModelId(e.target.value)}
                     placeholder="e.g. claude-3-opus-20240229"
-                    className={`w-full mt-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
+                    className={`w-full mt-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
                   />
                 )}
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-muted-foreground">
                   Models updated weekly. Select &quot;Custom model ID&quot; if yours isn&apos;t listed.
                 </p>
               </>
@@ -404,7 +404,7 @@ export function LlmConfigCard({
                   value={model}
                   onChange={e => setModel(e.target.value)}
                   placeholder={provider === 'openrouter' ? 'anthropic/claude-3.5-haiku' : 'Enter model identifier'}
-                  className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
+                  className={`w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
                 />
                 {provider === 'openrouter' && (
                   <datalist id={`model-list-${tenantId}-${productSlug}`}>
@@ -415,7 +415,7 @@ export function LlmConfigCard({
                     <option value="google/gemini-flash-1.5" />
                   </datalist>
                 )}
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-muted-foreground">
                   {provider === 'openrouter'
                     ? 'Format: provider/model-name. Browse at openrouter.ai/models'
                     : 'Enter the exact model identifier from your provider.'}
@@ -427,15 +427,15 @@ export function LlmConfigCard({
           {/* Base URL — Custom provider only */}
           {provider === 'custom' && (
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Base URL</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Base URL</label>
               <input
                 type="url"
                 value={baseUrl}
                 onChange={e => setBaseUrl(e.target.value)}
                 placeholder="https://your-server.com/v1"
-                className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
+                className={`w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none ${ring} font-mono`}
               />
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-muted-foreground">
                 Must expose a <code>/chat/completions</code> endpoint compatible with the OpenAI API.
                 Use this for self-hosted models (Ollama, LiteLLM, etc.).
               </p>
@@ -457,7 +457,7 @@ export function LlmConfigCard({
               type="button"
               onClick={cancelEdit}
               disabled={isSaving || isValidating}
-              className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="px-3 py-2 text-sm text-muted-foreground hover:text-text rounded-lg hover:bg-sunken transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
@@ -501,8 +501,8 @@ function StatusBadge({ status }: { status: 'pending' | 'valid' | 'invalid' }) {
 function Row({ label, value, mono, suppressHydration }: { label: string; value: string; mono?: boolean; suppressHydration?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-xs text-gray-400 shrink-0">{label}</span>
-      <span className={`text-right truncate max-w-[65%] ${mono ? 'font-mono text-xs text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded' : 'text-xs text-gray-700'}`} suppressHydrationWarning={suppressHydration}>
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className={`text-right truncate max-w-[65%] ${mono ? 'font-mono text-xs text-muted-foreground bg-sunken px-1.5 py-0.5 rounded' : 'text-xs text-text'}`} suppressHydrationWarning={suppressHydration}>
         {value}
       </span>
     </div>

@@ -66,8 +66,8 @@ export default async function PlatformNotificationsPage() {
 
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Notifications</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h2 className="text-xl font-bold text-text">Notifications</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Platform-wide email alerts — control which events trigger notifications and who receives them.
         </p>
       </div>

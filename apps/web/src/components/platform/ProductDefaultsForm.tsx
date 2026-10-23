@@ -59,7 +59,7 @@ export function ProductDefaultsForm({
       {/* Default Model */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Default AI Model
           </label>
           {model && (
@@ -68,7 +68,7 @@ export function ProductDefaultsForm({
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Used when no per-client or per-bot AI Model is configured. Type any{' '}
           <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-indigo-500 underline">
             OpenRouter model ID
@@ -80,7 +80,7 @@ export function ProductDefaultsForm({
           value={model}
           onChange={e => setModel(e.target.value)}
           placeholder="e.g. meta-llama/llama-3.1-8b-instruct:free"
-          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
+          className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 font-mono"
         />
         <datalist id={`models-${slug}`}>
           {MODEL_SUGGESTIONS.map(m => <option key={m} value={m} />)}
@@ -98,10 +98,10 @@ export function ProductDefaultsForm({
 
       {/* Default System Prompt */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Default System Prompt
         </label>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Clients who haven&apos;t set their own prompt use this. Guardrail rules are appended automatically.
         </p>
         <textarea
@@ -110,7 +110,7 @@ export function ProductDefaultsForm({
           rows={6}
           placeholder="You are a helpful assistant..."
           title="Default system prompt"
-          className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y font-mono"
+          className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y font-mono"
         />
       </div>
 

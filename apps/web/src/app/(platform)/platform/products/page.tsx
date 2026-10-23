@@ -64,8 +64,8 @@ export default async function ProductsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Products</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h2 className="text-xl font-bold text-text">Products</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Default system prompts and AI models for each bot type.
           </p>
         </div>

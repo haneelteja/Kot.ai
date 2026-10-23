@@ -67,8 +67,8 @@ export default async function PlatformGuardrailsPage() {
 
       {/* Page title */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Guardrails</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h2 className="text-xl font-bold text-text">Guardrails</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Platform-level rules that cascade down to every client and bot.
         </p>
       </div>

@@ -83,8 +83,8 @@ function ConvRow({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0 ${
-        selected ? 'bg-brand-wash' : 'hover:bg-gray-50/70'
+      className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-colors border-b border-line last:border-0 ${
+        selected ? 'bg-brand-wash' : 'hover:bg-sunken/70'
       }`}
     >
       <div className={`relative w-9 h-9 rounded-full ${AVATAR_COLORS[colorIdx]} flex items-center justify-center font-bold text-sm shrink-0`}>
@@ -94,9 +94,9 @@ function ConvRow({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold truncate ${selected ? 'text-brand-strong' : 'text-gray-800'}`}>{name}</p>
+        <p className={`text-sm font-semibold truncate ${selected ? 'text-brand-strong' : 'text-text'}`}>{name}</p>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <span className={`text-[10px] font-medium px-1.5 py-px rounded capitalize ${PRODUCT_COLORS[conv.product_type] ?? 'bg-gray-100 text-gray-500'}`}>
+          <span className={`text-[10px] font-medium px-1.5 py-px rounded capitalize ${PRODUCT_COLORS[conv.product_type] ?? 'bg-sunken text-muted-foreground'}`}>
             {PRODUCT_LABEL[conv.product_type] ?? conv.product_type}
           </span>
           {conv.status === 'escalated' ? (
@@ -110,8 +110,8 @@ function ConvRow({
         </div>
       </div>
       <div className="flex flex-col items-end gap-1 shrink-0">
-        <span className="text-[10px] text-gray-400 tabular-nums">{timeAgo(conv.updated_at)}</span>
-        <ChevronRight size={12} className={selected ? 'text-brand' : 'text-gray-200'} />
+        <span className="text-[10px] text-muted-foreground tabular-nums">{timeAgo(conv.updated_at)}</span>
+        <ChevronRight size={12} className={selected ? 'text-brand' : 'text-muted-foreground'} />
       </div>
     </button>
   );
@@ -129,7 +129,7 @@ function MsgBubble({ msg, productType }: { msg: InboxMessage; productType: strin
   if (msg.role === 'system') {
     return (
       <div className="flex justify-center my-2">
-        <span className="text-[10px] text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{msg.content}</span>
+        <span className="text-[10px] text-muted-foreground bg-sunken px-3 py-1 rounded-full">{msg.content}</span>
       </div>
     );
   }
@@ -137,8 +137,8 @@ function MsgBubble({ msg, productType }: { msg: InboxMessage; productType: strin
   return (
     <div className={`flex items-end gap-2 ${isUser ? 'flex-row' : 'flex-row-reverse'} mb-3`}>
       {isUser ? (
-        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mb-0.5">
-          <MessageSquare size={11} className="text-gray-500" />
+        <div className="w-6 h-6 rounded-full bg-sunken flex items-center justify-center shrink-0 mb-0.5">
+          <MessageSquare size={11} className="text-muted-foreground" />
         </div>
       ) : (
         <div className={`w-6 h-6 rounded-full ${botAv.bg} flex items-center justify-center shrink-0 mb-0.5`}>
@@ -148,12 +148,12 @@ function MsgBubble({ msg, productType }: { msg: InboxMessage; productType: strin
       <div className={`max-w-[72%] ${isUser ? 'items-start' : 'items-end'} flex flex-col gap-0.5`}>
         <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
           isUser
-            ? 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm shadow-sm'
+            ? 'bg-white border border-line text-text rounded-tl-sm shadow-sm'
             : 'bg-brand-strong text-white rounded-tr-sm'
         }`}>
           {msg.content}
         </div>
-        <span className="text-[10px] text-gray-400 px-1">{ts}</span>
+        <span className="text-[10px] text-muted-foreground px-1">{ts}</span>
       </div>
     </div>
   );
@@ -372,24 +372,24 @@ export default function InboxPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-white shrink-0">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-line bg-white shrink-0">
         <div className="w-8 h-8 rounded-xl bg-brand-wash flex items-center justify-center shrink-0">
           <Inbox size={16} className="text-brand-strong" />
         </div>
         <div className="flex-1">
-          <h2 className="text-base font-bold text-gray-900">Agent Inbox</h2>
-          <p className="text-xs text-gray-500 mt-px">
+          <h2 className="text-base font-bold text-text">Agent Inbox</h2>
+          <p className="text-xs text-muted-foreground mt-px">
             {loading ? 'Loading…' : `${escalatedCount} escalated · ${agentCount} with agent`}
           </p>
         </div>
         {numbers.length > 1 && (
           <div className="flex items-center gap-1.5 shrink-0">
-            <Phone size={12} className="text-gray-400" />
+            <Phone size={12} className="text-muted-foreground" />
             <select
               aria-label="Filter by WhatsApp number"
               value={selectedNumber}
               onChange={e => void handleNumberChange(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand cursor-pointer"
+              className="text-xs border border-line rounded-lg px-2.5 py-1.5 bg-white text-text focus:outline-none focus:ring-2 focus:ring-brand cursor-pointer"
             >
               <option value="">All numbers</option>
               {numbers.map(n => (
@@ -406,18 +406,18 @@ export default function InboxPage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ── Left panel ──────────────────────────────────────────────────── */}
-        <aside className="w-72 shrink-0 border-r border-gray-100 bg-white flex flex-col overflow-hidden">
+        <aside className="w-72 shrink-0 border-r border-line bg-white flex flex-col overflow-hidden">
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 size={20} className="text-gray-300 animate-spin" />
+              <Loader2 size={20} className="text-muted-foreground animate-spin" />
             </div>
           ) : convs.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
               <div className="w-12 h-12 rounded-2xl bg-done-bg flex items-center justify-center mb-3">
                 <CheckCircle2 size={22} className="text-done" />
               </div>
-              <p className="text-sm font-semibold text-gray-600">All clear</p>
-              <p className="text-xs text-gray-400 mt-1">No escalated conversations right now.</p>
+              <p className="text-sm font-semibold text-muted-foreground">All clear</p>
+              <p className="text-xs text-muted-foreground mt-1">No escalated conversations right now.</p>
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto">
@@ -451,19 +451,19 @@ export default function InboxPage() {
         </aside>
 
         {/* ── Right panel ─────────────────────────────────────────────────── */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-gray-50/40">
+        <main className="flex-1 flex flex-col overflow-hidden bg-sunken/40">
           {!selected ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-              <div className="w-16 h-16 rounded-3xl bg-white border border-gray-100 flex items-center justify-center mb-4 shadow-sm">
-                <MessageSquare size={26} className="text-gray-300" />
+              <div className="w-16 h-16 rounded-3xl bg-white border border-line flex items-center justify-center mb-4 shadow-sm">
+                <MessageSquare size={26} className="text-muted-foreground" />
               </div>
-              <p className="text-sm font-semibold text-gray-500">Select a conversation</p>
-              <p className="text-xs text-gray-400 mt-1">Choose from the left to start handling</p>
+              <p className="text-sm font-semibold text-muted-foreground">Select a conversation</p>
+              <p className="text-xs text-muted-foreground mt-1">Choose from the left to start handling</p>
             </div>
           ) : (
             <>
               {/* Conv header */}
-              <div className="px-5 py-3.5 bg-white border-b border-gray-100 flex items-center gap-3 shrink-0">
+              <div className="px-5 py-3.5 bg-white border-b border-line flex items-center gap-3 shrink-0">
                 {(() => {
                   const name = displayName(selected);
                   const idx  = name.charCodeAt(0) % AVATAR_COLORS.length;
@@ -474,13 +474,13 @@ export default function InboxPage() {
                   );
                 })()}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{displayName(selected)}</p>
+                  <p className="text-sm font-semibold text-text truncate">{displayName(selected)}</p>
                   {selected.contact_name && selected.contact_phone && (
-                    <p className="text-xs text-gray-400">{selected.contact_phone}</p>
+                    <p className="text-xs text-muted-foreground">{selected.contact_phone}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded capitalize ${PRODUCT_COLORS[selected.product_type] ?? 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded capitalize ${PRODUCT_COLORS[selected.product_type] ?? 'bg-sunken text-muted-foreground'}`}>
                     {PRODUCT_LABEL[selected.product_type] ?? selected.product_type}
                   </span>
                   {selected.status === 'escalated' ? (
@@ -498,10 +498,10 @@ export default function InboxPage() {
               <div className="flex-1 overflow-y-auto px-5 py-4">
                 {loadingMsgs ? (
                   <div className="flex items-center justify-center h-full">
-                    <Loader2 size={20} className="text-gray-300 animate-spin" />
+                    <Loader2 size={20} className="text-muted-foreground animate-spin" />
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-xs text-gray-400">No messages yet</div>
+                  <div className="flex items-center justify-center h-full text-xs text-muted-foreground">No messages yet</div>
                 ) : (
                   <>
                     {messages.map(m => <MsgBubble key={m.id} msg={m} productType={selected.product_type} />)}
@@ -511,7 +511,7 @@ export default function InboxPage() {
               </div>
 
               {/* Action bar */}
-              <div className="bg-white border-t border-gray-100 px-5 py-3 shrink-0 space-y-2.5">
+              <div className="bg-white border-t border-line px-5 py-3 shrink-0 space-y-2.5">
                 {/* Controls */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {selected.status === 'escalated' && (
@@ -531,7 +531,7 @@ export default function InboxPage() {
                         type="button"
                         onClick={handleRelease}
                         disabled={actioning}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-line text-muted-foreground hover:bg-sunken font-medium transition-colors disabled:opacity-50"
                       >
                         <RefreshCw size={13} />
                         {actioning ? '…' : 'Release to bot'}
@@ -561,7 +561,7 @@ export default function InboxPage() {
                         value={draft}
                         onChange={e => { setDraft(e.target.value); setSendError(null); }}
                         placeholder="Type a reply…"
-                        className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+                        className="flex-1 rounded-xl border border-line bg-sunken px-4 py-2.5 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                       />
                       <button
                         type="submit"
@@ -575,7 +575,7 @@ export default function InboxPage() {
                 )}
 
                 {selected.status === 'escalated' && (
-                  <p className="text-[11px] text-gray-400 text-center">Claim this conversation to start replying</p>
+                  <p className="text-[11px] text-muted-foreground text-center">Claim this conversation to start replying</p>
                 )}
               </div>
             </>

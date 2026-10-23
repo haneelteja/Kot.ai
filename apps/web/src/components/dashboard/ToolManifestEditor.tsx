@@ -82,7 +82,7 @@ interface ToolPanelProps {
 }
 
 function ToolPanel({ productSlug, initialTools }: ToolPanelProps) {
-  const meta = BOT_META[productSlug] ?? { label: productSlug, color: 'text-gray-700', bg: 'bg-gray-50' };
+  const meta = BOT_META[productSlug] ?? { label: productSlug, color: 'text-text', bg: 'bg-sunken' };
   const relevantTools = ALL_TOOLS.filter(t => t.botTypes.includes(productSlug));
 
   const [open, setOpen]     = useState(false);
@@ -114,25 +114,25 @@ function ToolPanel({ productSlug, initialTools }: ToolPanelProps) {
   const activeCount = relevantTools.filter(t => enabled.has(t.id)).length;
 
   return (
-    <div className="border border-gray-100 rounded-2xl overflow-hidden">
+    <div className="border border-line rounded-2xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors"
+        className="w-full flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-sunken/50 transition-colors"
       >
         <div className="flex items-center gap-2.5">
           <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${meta.bg} ${meta.color}`}>
             <Bot size={11} />
             {meta.label}
           </span>
-          <span className="text-[10px] text-gray-400">{activeCount}/{relevantTools.length} tools active</span>
+          <span className="text-[10px] text-muted-foreground">{activeCount}/{relevantTools.length} tools active</span>
         </div>
-        {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+        {open ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
       </button>
 
       {open && (
-        <div className="px-5 pb-5 space-y-3 border-t border-gray-50">
-          <p className="text-xs text-gray-400 pt-3">
+        <div className="px-5 pb-5 space-y-3 border-t border-line">
+          <p className="text-xs text-muted-foreground pt-3">
             Toggle capabilities for this bot. Disabled tools are not called and their prompt instructions are not injected — reducing token usage and controlling behaviour.
           </p>
 
@@ -141,7 +141,7 @@ function ToolPanel({ productSlug, initialTools }: ToolPanelProps) {
               const isOn = enabled.has(tool.id);
               return (
                 <label key={tool.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  isOn ? 'bg-ready-bg/60 border-ready/30' : 'bg-gray-50/50 border-gray-100 opacity-60'
+                  isOn ? 'bg-ready-bg/60 border-ready/30' : 'bg-sunken/50 border-line opacity-60'
                 }`}>
                   <div className="relative mt-0.5 shrink-0">
                     <input
@@ -151,19 +151,19 @@ function ToolPanel({ productSlug, initialTools }: ToolPanelProps) {
                       onChange={() => toggle(tool.id)}
                     />
                     <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
-                      isOn ? 'bg-ready border-ready' : 'border-gray-300 bg-white'
+                      isOn ? 'bg-ready border-ready' : 'border-line-strong bg-white'
                     }`}>
                       {isOn && <Check size={10} className="text-white" strokeWidth={3} />}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold text-gray-800">{tool.label}</p>
+                      <p className="text-xs font-semibold text-text">{tool.label}</p>
                       {!tool.default && (
                         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Advanced</span>
                       )}
                     </div>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{tool.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{tool.description}</p>
                   </div>
                 </label>
               );

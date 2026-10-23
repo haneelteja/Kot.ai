@@ -48,7 +48,7 @@ export function SendInvoiceButton({ orderId }: { orderId: string }) {
       onClick={() => void handleClick()}
       disabled={state === 'loading'}
       title="Generate and send invoice via WhatsApp"
-      className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-orange-600 transition-colors shrink-0 disabled:opacity-50"
+      className="p-1.5 rounded-md hover:bg-sunken text-muted-foreground hover:text-orange-600 transition-colors shrink-0 disabled:opacity-50"
     >
       {state === 'loading'
         ? <Loader2 size={13} className="animate-spin" />

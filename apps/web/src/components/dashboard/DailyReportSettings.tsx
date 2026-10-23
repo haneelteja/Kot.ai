@@ -65,10 +65,10 @@ export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) 
   }
 
   return (
-    <div className="divide-y divide-gray-100">
+    <div className="divide-y divide-line">
       {/* Hint */}
       <div className="px-5 py-4">
-        <p className="text-xs text-gray-400 leading-relaxed">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           The report is sent every day at <strong>8:00 AM UTC</strong> and includes new conversations,
           open/escalated/resolved counts, leads captured, and pending escalations. If no emails are
           configured, it falls back to the workspace admin.
@@ -77,17 +77,17 @@ export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) 
 
       {/* Emails */}
       <div className="px-5 py-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Report emails</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Report emails</p>
         <div className="flex flex-wrap gap-2">
           {emails.map(email => (
-            <span key={email} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
+            <span key={email} className="flex items-center gap-1.5 text-xs bg-sunken text-text px-2.5 py-1 rounded-full">
               {email}
-              <button type="button" onClick={() => removeEmail(email)} className="text-gray-400 hover:text-red-500 transition-colors">
+              <button type="button" onClick={() => removeEmail(email)} className="text-muted-foreground hover:text-red-500 transition-colors">
                 <X size={11} />
               </button>
             </span>
           ))}
-          {emails.length === 0 && <p className="text-xs text-gray-400 italic">Falls back to workspace admin</p>}
+          {emails.length === 0 && <p className="text-xs text-muted-foreground italic">Falls back to workspace admin</p>}
         </div>
         <div className="flex gap-2">
           <input
@@ -96,7 +96,7 @@ export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) 
             onChange={e => setEmailInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addEmail())}
             placeholder="manager@company.com"
-            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+            className="flex-1 rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
           <button
             type="button"
@@ -110,18 +110,18 @@ export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) 
 
       {/* WhatsApp numbers */}
       <div className="px-5 py-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Report WhatsApp numbers</p>
-        <p className="text-xs text-gray-400">Receives a compact daily summary. Include country code, e.g. +919XXXXXXXXX</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Report WhatsApp numbers</p>
+        <p className="text-xs text-muted-foreground">Receives a compact daily summary. Include country code, e.g. +919XXXXXXXXX</p>
         <div className="flex flex-wrap gap-2">
           {waNumbers.map(num => (
-            <span key={num} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-mono">
+            <span key={num} className="flex items-center gap-1.5 text-xs bg-sunken text-text px-2.5 py-1 rounded-full font-mono">
               {num}
-              <button type="button" onClick={() => removeWa(num)} className="text-gray-400 hover:text-red-500 transition-colors">
+              <button type="button" onClick={() => removeWa(num)} className="text-muted-foreground hover:text-red-500 transition-colors">
                 <X size={11} />
               </button>
             </span>
           ))}
-          {waNumbers.length === 0 && <p className="text-xs text-gray-400 italic">No WhatsApp numbers configured</p>}
+          {waNumbers.length === 0 && <p className="text-xs text-muted-foreground italic">No WhatsApp numbers configured</p>}
         </div>
         <div className="flex gap-2">
           <input
@@ -130,7 +130,7 @@ export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) 
             onChange={e => setWaInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWa())}
             placeholder="+919XXXXXXXXX"
-            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-mono"
+            className="flex-1 rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-mono"
           />
           <button
             type="button"

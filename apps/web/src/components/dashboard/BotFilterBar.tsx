@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 
 const BOTS = [
-  { slug: 'support_bot',   label: 'Support',   active: 'bg-sky-100 text-sky-700 border-sky-300',        inactive: 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' },
-  { slug: 'sales_bot',     label: 'Sales',     active: 'bg-violet-100 text-violet-700 border-violet-300', inactive: 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' },
-  { slug: 'lifecycle_bot', label: 'Lifecycle', active: 'bg-orange-100 text-orange-700 border-orange-300', inactive: 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' },
+  { slug: 'support_bot',   label: 'Support',   active: 'bg-sky-100 text-sky-700 border-sky-300',        inactive: 'bg-white text-muted-foreground border-line hover:bg-sunken' },
+  { slug: 'sales_bot',     label: 'Sales',     active: 'bg-violet-100 text-violet-700 border-violet-300', inactive: 'bg-white text-muted-foreground border-line hover:bg-sunken' },
+  { slug: 'lifecycle_bot', label: 'Lifecycle', active: 'bg-orange-100 text-orange-700 border-orange-300', inactive: 'bg-white text-muted-foreground border-line hover:bg-sunken' },
 ];
 
 export function BotFilterBar({
@@ -32,7 +32,7 @@ export function BotFilterBar({
       <button
         type="button"
         onClick={() => select(null)}
-        className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${!current ? 'bg-brand-wash text-brand-strong border-brand/30' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
+        className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${!current ? 'bg-brand-wash text-brand-strong border-brand/30' : 'bg-white text-muted-foreground border-line hover:bg-sunken'}`}
       >
         All
       </button>

@@ -65,20 +65,20 @@ export function LeadNotificationSettings({ initialEmails, initialWaNumbers }: Pr
   }
 
   return (
-    <div className="divide-y divide-gray-100">
+    <div className="divide-y divide-line">
       {/* Emails */}
       <div className="px-5 py-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Alert emails</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Alert emails</p>
         <div className="flex flex-wrap gap-2">
           {emails.map(email => (
-            <span key={email} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
+            <span key={email} className="flex items-center gap-1.5 text-xs bg-sunken text-text px-2.5 py-1 rounded-full">
               {email}
-              <button type="button" onClick={() => removeEmail(email)} className="text-gray-400 hover:text-red-500 transition-colors">
+              <button type="button" onClick={() => removeEmail(email)} className="text-muted-foreground hover:text-red-500 transition-colors">
                 <X size={11} />
               </button>
             </span>
           ))}
-          {emails.length === 0 && <p className="text-xs text-gray-400 italic">No emails configured</p>}
+          {emails.length === 0 && <p className="text-xs text-muted-foreground italic">No emails configured</p>}
         </div>
         <div className="flex gap-2">
           <input
@@ -87,7 +87,7 @@ export function LeadNotificationSettings({ initialEmails, initialWaNumbers }: Pr
             onChange={e => setEmailInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addEmail())}
             placeholder="sales@company.com"
-            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+            className="flex-1 rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
           <button
             type="button"
@@ -101,18 +101,18 @@ export function LeadNotificationSettings({ initialEmails, initialWaNumbers }: Pr
 
       {/* WhatsApp numbers */}
       <div className="px-5 py-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Alert WhatsApp numbers</p>
-        <p className="text-xs text-gray-400">Include country code, e.g. +919XXXXXXXXX</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Alert WhatsApp numbers</p>
+        <p className="text-xs text-muted-foreground">Include country code, e.g. +919XXXXXXXXX</p>
         <div className="flex flex-wrap gap-2">
           {waNumbers.map(num => (
-            <span key={num} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-mono">
+            <span key={num} className="flex items-center gap-1.5 text-xs bg-sunken text-text px-2.5 py-1 rounded-full font-mono">
               {num}
-              <button type="button" onClick={() => removeWa(num)} className="text-gray-400 hover:text-red-500 transition-colors">
+              <button type="button" onClick={() => removeWa(num)} className="text-muted-foreground hover:text-red-500 transition-colors">
                 <X size={11} />
               </button>
             </span>
           ))}
-          {waNumbers.length === 0 && <p className="text-xs text-gray-400 italic">No numbers configured</p>}
+          {waNumbers.length === 0 && <p className="text-xs text-muted-foreground italic">No numbers configured</p>}
         </div>
         <div className="flex gap-2">
           <input
@@ -121,7 +121,7 @@ export function LeadNotificationSettings({ initialEmails, initialWaNumbers }: Pr
             onChange={e => setWaInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWa())}
             placeholder="+919XXXXXXXXX"
-            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-mono"
+            className="flex-1 rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-mono"
           />
           <button
             type="button"

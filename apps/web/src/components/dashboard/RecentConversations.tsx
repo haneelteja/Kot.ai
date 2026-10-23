@@ -8,7 +8,7 @@ import { getRecentConversationsAction, type RecentConv } from '@/app/actions/rec
 const STATUS_STYLES: Record<string, { dot: string; badge: string }> = {
   open:       { dot: 'bg-done',    badge: 'bg-done-bg text-done ring-transparent' },
   escalated:  { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 ring-red-100' },
-  resolved:   { dot: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-500 ring-gray-200' },
+  resolved:   { dot: 'bg-sunken',    badge: 'bg-sunken text-muted-foreground ring-line' },
   bot_paused: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-700 ring-amber-100' },
 };
 
@@ -45,7 +45,7 @@ function ConvRow({ conv }: { conv: RecentConv }) {
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors text-left cursor-pointer"
+        className="w-full flex items-center gap-3 px-5 py-3 hover:bg-sunken/60 transition-colors text-left cursor-pointer"
       >
         {/* Avatar */}
         <div className={`w-8 h-8 rounded-full ${AVATAR_COLORS[colorIdx]} flex items-center justify-center font-bold text-xs shrink-0`}>
@@ -54,7 +54,7 @@ function ConvRow({ conv }: { conv: RecentConv }) {
 
         {/* Name + bot badges */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">{conv.displayName}</p>
+          <p className="text-sm font-semibold text-text truncate">{conv.displayName}</p>
           <div className="flex items-center gap-1 mt-0.5 flex-wrap">
             {conv.bots.map(bot => {
               const meta = PRODUCT_LABELS[bot.product_type];
@@ -72,17 +72,17 @@ function ConvRow({ conv }: { conv: RecentConv }) {
 
         {/* Most-recent time + chevron */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] text-gray-400 tabular-nums" suppressHydrationWarning>{timeAgo(conv.updated_at)}</span>
-          {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+          <span className="text-[11px] text-muted-foreground tabular-nums" suppressHydrationWarning>{timeAgo(conv.updated_at)}</span>
+          {open ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
         </div>
       </button>
 
       {/* Expanded message preview */}
       {open && (
-        <div className="px-5 py-3 bg-gray-50/60 space-y-2">
+        <div className="px-5 py-3 bg-sunken/60 space-y-2">
           {/* If contact has multiple bots, show links to each */}
           {conv.bots.length > 1 && (
-            <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-100">
+            <div className="flex flex-wrap gap-2 pb-2 border-b border-line">
               {conv.bots.map(bot => {
                 const meta = PRODUCT_LABELS[bot.product_type];
                 const st = STATUS_STYLES[bot.status] ?? STATUS_STYLES.resolved;
@@ -90,7 +90,7 @@ function ConvRow({ conv }: { conv: RecentConv }) {
                   <Link
                     key={bot.id}
                     href={`/conversations/${bot.id}`}
-                    className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-1 rounded-lg ${meta?.color ?? 'bg-gray-100 text-gray-600'} hover:opacity-80 transition-opacity`}
+                    className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-1 rounded-lg ${meta?.color ?? 'bg-sunken text-muted-foreground'} hover:opacity-80 transition-opacity`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                     {meta?.label ?? bot.product_type} conversation
@@ -103,7 +103,7 @@ function ConvRow({ conv }: { conv: RecentConv }) {
 
           {/* Messages from most-recent conversation */}
           {conv.messages.length === 0 ? (
-            <p className="text-[11px] text-gray-400 italic">No messages yet.</p>
+            <p className="text-[11px] text-muted-foreground italic">No messages yet.</p>
           ) : (
             conv.messages.map(msg => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? '' : 'flex-row-reverse'}`}>
@@ -111,13 +111,13 @@ function ConvRow({ conv }: { conv: RecentConv }) {
                   msg.role === 'user' ? 'bg-sunken' : 'bg-brand-wash'
                 }`}>
                   {msg.role === 'user'
-                    ? <User size={10} className="text-gray-500" />
+                    ? <User size={10} className="text-muted-foreground" />
                     : <Bot  size={10} className="text-brand-strong" />
                   }
                 </div>
                 <div className={`max-w-[75%] rounded-xl px-3 py-1.5 text-[11px] leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-white border border-gray-200 text-gray-700 rounded-tl-none'
+                    ? 'bg-white border border-line text-text rounded-tl-none'
                     : 'bg-brand-wash border border-transparent text-text rounded-tr-none'
                 }`}>
                   {msg.content}
@@ -160,8 +160,8 @@ export function RecentConversations({ initial }: { initial: RecentConv[] }) {
         <div className="w-12 h-12 rounded-2xl bg-sunken flex items-center justify-center mb-3 border border-line">
           <MessageSquare size={20} className="text-muted-foreground" />
         </div>
-        <p className="text-sm font-semibold text-gray-600">No conversations yet</p>
-        <p className="text-xs text-gray-400 mt-1 max-w-xs">
+        <p className="text-sm font-semibold text-muted-foreground">No conversations yet</p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-xs">
           Send a WhatsApp message to your bot number to see conversations appear here.
         </p>
       </div>
@@ -170,12 +170,12 @@ export function RecentConversations({ initial }: { initial: RecentConv[] }) {
 
   return (
     <div>
-      <div className="divide-y divide-gray-50">
+      <div className="divide-y divide-line">
         {convs.map(conv => <ConvRow key={conv.contactId} conv={conv} />)}
       </div>
 
       {hasMore && (
-        <div className="px-5 py-3 border-t border-gray-50">
+        <div className="px-5 py-3 border-t border-line">
           <button
             type="button"
             onClick={loadMore}

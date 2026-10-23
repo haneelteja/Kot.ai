@@ -15,7 +15,7 @@ const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; bg
   bot_config:     { icon: Zap,               color: 'text-sky-600',     bg: 'bg-sky-50',       label: 'Bot Config'     },
   campaigns:      { icon: Megaphone,         color: 'text-orange-600',  bg: 'bg-orange-50',   label: 'Campaigns'      },
   buttons:        { icon: MessageSquareMore, color: 'text-pink-600',    bg: 'bg-pink-50',      label: 'Buttons'        },
-  general:        { icon: BarChart2,         color: 'text-gray-500',    bg: 'bg-gray-50',      label: 'General'        },
+  general:        { icon: BarChart2,         color: 'text-muted-foreground',    bg: 'bg-sunken',      label: 'General'        },
 };
 
 const PRIORITY_META = {

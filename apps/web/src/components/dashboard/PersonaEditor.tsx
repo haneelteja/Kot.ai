@@ -16,7 +16,7 @@ interface PersonaPanelProps {
 }
 
 function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
-  const meta = BOT_META[productSlug] ?? { label: productSlug, color: 'text-gray-700', bg: 'bg-gray-50' };
+  const meta = BOT_META[productSlug] ?? { label: productSlug, color: 'text-text', bg: 'bg-sunken' };
 
   const [open, setOpen]   = useState(false);
   const [saved, setSaved] = useState(false);
@@ -58,11 +58,11 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
   const hasData = Object.values(form).some(v => v.trim());
 
   return (
-    <div className="border border-gray-100 rounded-2xl overflow-hidden">
+    <div className="border border-line rounded-2xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors"
+        className="w-full flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-sunken/50 transition-colors"
       >
         <div className="flex items-center gap-2.5">
           <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${meta.bg} ${meta.color}`}>
@@ -73,29 +73,29 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
             <span className="text-[10px] text-done bg-done-bg px-1.5 py-0.5 rounded-full font-medium">Persona set</span>
           )}
         </div>
-        {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+        {open ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
       </button>
 
       {open && (
-        <div className="px-5 pb-5 space-y-4 border-t border-gray-50">
-          <p className="text-xs text-gray-400 pt-3">
+        <div className="px-5 pb-5 space-y-4 border-t border-line">
+          <p className="text-xs text-muted-foreground pt-3">
             These fields inject a structured identity preamble before the system prompt. All fields are optional — the bot works without them.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Bot Name</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Bot Name</label>
               <input
-                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-gray-300"
+                className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-muted-foreground"
                 placeholder="e.g. Aria"
                 {...field('persona_name')}
               />
-              <p className="text-[10px] text-gray-400 mt-1">Becomes &ldquo;You are Aria, …&rdquo; in the prompt</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Becomes &ldquo;You are Aria, …&rdquo; in the prompt</p>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Role / Title</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Role / Title</label>
               <input
-                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-gray-300"
+                className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-muted-foreground"
                 placeholder="e.g. Customer Success Specialist at Acme"
                 {...field('persona_role')}
               />
@@ -103,30 +103,30 @@ function PersonaPanel({ productSlug, initial }: PersonaPanelProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Company Description</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Company Description</label>
             <textarea
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-gray-300"
+              className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-muted-foreground"
               placeholder="e.g. Acme Corp is a B2B SaaS platform helping logistics companies automate dispatch."
               {...field('company_description')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Company Values / Tone</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Company Values / Tone</label>
             <textarea
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-gray-300"
+              className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-muted-foreground"
               placeholder="e.g. Be concise, transparent, and customer-first. Never over-promise."
               {...field('company_values')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Conversation Purpose</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Conversation Purpose</label>
             <textarea
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-gray-300"
+              className="w-full text-sm border border-line rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand resize-none placeholder:text-muted-foreground"
               placeholder="e.g. Help customers resolve billing issues quickly and escalate to a human when the issue is complex."
               {...field('conversation_purpose')}
             />

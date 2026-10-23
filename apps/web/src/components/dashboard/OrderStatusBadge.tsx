@@ -7,7 +7,7 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
   pending:    'bg-amber-50 text-amber-700 ring-amber-200',
   confirmed:  'bg-progress-bg text-progress ring-progress/30',
   dispatched: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
-  delivered:  'bg-gray-100 text-gray-600 ring-gray-200',
+  delivered:  'bg-sunken text-muted-foreground ring-line',
   cancelled:  'bg-red-50 text-red-600 ring-red-200',
 };
 

@@ -78,8 +78,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-5">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Orders</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Manage customer orders and payment links</p>
+          <h2 className="text-xl font-bold text-text">Orders</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage customer orders and payment links</p>
         </div>
         <Link
           href="/orders/new"

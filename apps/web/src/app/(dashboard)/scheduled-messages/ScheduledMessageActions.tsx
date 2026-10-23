@@ -26,7 +26,7 @@ export function ScheduledMessageActions({ id, status }: { id: string; status: st
       {canEdit && (
         <Link
           href={`/scheduled-messages/${id}/edit`}
-          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-sunken text-muted-foreground hover:text-muted-foreground transition-colors"
           title="Edit"
         >
           <Pencil size={13} />
@@ -37,7 +37,7 @@ export function ScheduledMessageActions({ id, status }: { id: string; status: st
           type="button"
           onClick={() => void handleCancel()}
           disabled={cancelling}
-          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+          className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-50"
           title="Cancel"
         >
           <X size={13} />

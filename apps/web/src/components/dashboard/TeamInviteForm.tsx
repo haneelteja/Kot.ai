@@ -22,7 +22,7 @@ export function TeamInviteForm() {
 
   return (
     <div className="bg-white rounded-2xl border border-line shadow-sm p-5">
-      <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+      <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
         <UserPlus size={14} />
         Invite a team member
       </h3>
@@ -33,12 +33,12 @@ export function TeamInviteForm() {
           type="email"
           required
           placeholder="colleague@email.com"
-          className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+          className="flex-1 rounded-xl border border-line bg-sunken px-4 py-2.5 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
         />
         <select
           name="role"
           defaultValue="agent"
-          className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand transition-all"
+          className="rounded-xl border border-line bg-sunken px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand transition-all"
         >
           <option value="agent">Agent</option>
           <option value="supervisor">Supervisor</option>

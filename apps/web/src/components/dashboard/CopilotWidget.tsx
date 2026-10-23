@@ -66,7 +66,7 @@ function ActionCard({ msg, onAction }: { msg: CopilotMessage; onAction: (m: Copi
         </button>
         <button
           onClick={() => onAction(msg, false)}
-          className="flex-1 bg-white hover:bg-gray-50 text-gray-600 text-xs font-medium py-1.5 rounded-lg border border-gray-200 transition-colors"
+          className="flex-1 bg-white hover:bg-sunken text-muted-foreground text-xs font-medium py-1.5 rounded-lg border border-line transition-colors"
         >
           ✗ Cancel
         </button>
@@ -97,7 +97,7 @@ function MessageBubble({ msg, onAction }: { msg: CopilotMessage; onAction: (m: C
       </div>
       <div className="flex-1 min-w-0 space-y-1.5">
         {textParts && (
-          <div className="bg-gray-50 border border-gray-100 text-gray-800 rounded-2xl rounded-tl-sm px-3.5 py-2 max-w-[90%] text-sm leading-relaxed whitespace-pre-wrap break-words">
+          <div className="bg-sunken border border-line text-text rounded-2xl rounded-tl-sm px-3.5 py-2 max-w-[90%] text-sm leading-relaxed whitespace-pre-wrap break-words">
             {textParts}
           </div>
         )}
@@ -118,7 +118,7 @@ function MessageBubble({ msg, onAction }: { msg: CopilotMessage; onAction: (m: C
           <ActionCard msg={msg} onAction={onAction} />
         )}
         {msg.actionStatus === 'approved'  && <p className="text-[11px] text-done">✓ Executing…</p>}
-        {msg.actionStatus === 'cancelled' && <p className="text-[11px] text-gray-400">✗ Cancelled</p>}
+        {msg.actionStatus === 'cancelled' && <p className="text-[11px] text-muted-foreground">✗ Cancelled</p>}
       </div>
     </div>
   );
@@ -353,7 +353,7 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
           style={panelBelow
             ? { position: 'absolute', top: BTN_HEIGHT + 8, right: 0 }
             : { position: 'absolute', bottom: BTN_HEIGHT + 8, right: 0 }}
-          className="w-[380px] h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-200"
+          className="w-[380px] h-[520px] bg-white rounded-2xl shadow-2xl border border-line/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-200"
         >
           {/* Header */}
           <div className="bg-brand-strong px-4 py-3 flex items-center justify-between flex-shrink-0">
@@ -376,7 +376,7 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.length === 0 && (
-              <div className="text-center text-gray-400 text-sm mt-10 px-4">
+              <div className="text-center text-muted-foreground text-sm mt-10 px-4">
                 <p className="text-3xl mb-3">✨</p>
                 <p className="leading-relaxed">
                   Hi! Ask me anything about your bot config — I can answer questions, guide you to the right page, and make changes with your approval.
@@ -388,16 +388,16 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
             ))}
             {loading && (
               <div className="flex items-center gap-1 pl-8">
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:300ms]" />
+                <span className="w-2 h-2 bg-sunken rounded-full animate-bounce [animation-delay:0ms]" />
+                <span className="w-2 h-2 bg-sunken rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-2 h-2 bg-sunken rounded-full animate-bounce [animation-delay:300ms]" />
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
           {/* Input */}
-          <div className="border-t border-gray-100 p-3 flex flex-col gap-2 flex-shrink-0">
+          <div className="border-t border-line p-3 flex flex-col gap-2 flex-shrink-0">
             {/* Attached file chip */}
             {attachedFile && (
               <div className="flex items-center gap-2 bg-brand-wash border border-brand/20 rounded-lg px-2.5 py-1.5">
@@ -430,7 +430,7 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
                 disabled={loading || fileLoading}
                 aria-label="Attach file"
                 title="Attach a file (CSV, PDF, TXT…)"
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:text-brand-strong hover:border-brand/40 hover:bg-brand-wash transition-colors disabled:opacity-40 shrink-0"
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-line text-muted-foreground hover:text-brand-strong hover:border-brand/40 hover:bg-brand-wash transition-colors disabled:opacity-40 shrink-0"
               >
                 {fileLoading
                   ? <span className="w-3 h-3 border-2 border-brand border-t-transparent rounded-full animate-spin" />
@@ -448,7 +448,7 @@ export function CopilotWidget({ initialMessages }: CopilotWidgetProps) {
                 placeholder="Ask anything… (Enter to send)"
                 rows={1}
                 disabled={loading}
-                className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent disabled:opacity-50 leading-relaxed"
+                className="flex-1 resize-none rounded-xl border border-line px-3 py-2 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent disabled:opacity-50 leading-relaxed"
               />
               <button
                 onClick={() => sendMessage(input)}

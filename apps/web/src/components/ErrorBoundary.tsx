@@ -48,12 +48,12 @@ export class ErrorBoundary extends React.Component<Props, State> {
             <path d="M10 6v4m0 4h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h2 className="text-sm font-semibold text-gray-800 mb-1">Something went wrong</h2>
-        <p className="text-sm text-gray-500 mb-4 max-w-xs">
+        <h2 className="text-sm font-semibold text-text mb-1">Something went wrong</h2>
+        <p className="text-sm text-muted-foreground mb-4 max-w-xs">
           An unexpected error occurred. Please refresh the page or contact support if the problem persists.
         </p>
         {this.state.errorId && (
-          <p className="text-[11px] text-gray-300 font-mono mb-4">
+          <p className="text-[11px] text-muted-foreground font-mono mb-4">
             Error ID: {this.state.errorId}
           </p>
         )}

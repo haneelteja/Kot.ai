@@ -273,7 +273,7 @@ export function Topbar({
                         key={n.id}
                         type="button"
                         onClick={() => handleNotificationClick(n)}
-                        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50/80 ${isUnread ? 'bg-brand-wash/40' : ''}`}
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken/80 ${isUnread ? 'bg-brand-wash/40' : ''}`}
                       >
                         {/* Avatar */}
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${

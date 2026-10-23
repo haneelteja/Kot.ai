@@ -24,12 +24,12 @@ export function DashboardCollapsibleSection({ icon, title, hint, children, defau
       >
         <span className="text-brand-strong mt-0.5 shrink-0">{icon}</span>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
-          {hint && <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{hint}</p>}
+          <h2 className="text-sm font-semibold text-text">{title}</h2>
+          {hint && <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{hint}</p>}
         </div>
         <ChevronDown
           size={14}
-          className={`text-gray-400 mt-1 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-muted-foreground mt-1 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && <div>{children}</div>}

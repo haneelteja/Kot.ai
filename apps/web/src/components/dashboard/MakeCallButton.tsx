@@ -138,9 +138,9 @@ export function MakeCallButton({
                 <div className="w-8 h-8 rounded-lg bg-brand-wash flex items-center justify-center">
                   <Phone size={15} className="text-brand-strong" />
                 </div>
-                <h3 className="text-sm font-bold text-gray-900">Dispatch a Call</h3>
+                <h3 className="text-sm font-bold text-text">Dispatch a Call</h3>
               </div>
-              <button type="button" onClick={handleClose} className="text-gray-400 hover:text-gray-600">
+              <button type="button" onClick={handleClose} className="text-muted-foreground hover:text-muted-foreground">
                 <X size={16} />
               </button>
             </div>
@@ -148,11 +148,11 @@ export function MakeCallButton({
             {/* From number — Option A */}
             {voiceNumbers.length > 1 && (
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">From (Caller ID)</label>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">From (Caller ID)</label>
                 <select
                   value={fromNumber}
                   onChange={e => setFromNumber(e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand font-mono"
+                  className="w-full text-sm border border-line rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand font-mono"
                 >
                   {voiceNumbers.map(n => (
                     <option key={n.id} value={n.number}>
@@ -163,16 +163,16 @@ export function MakeCallButton({
               </div>
             )}
             {voiceNumbers.length === 1 && (
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
-                <Phone size={12} className="text-gray-400 shrink-0" />
-                <span className="text-xs text-gray-500">Calling from <span className="font-mono font-medium text-gray-700">{voiceNumbers[0]!.number}</span></span>
+              <div className="flex items-center gap-2 bg-sunken border border-line rounded-xl px-3 py-2">
+                <Phone size={12} className="text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground">Calling from <span className="font-mono font-medium text-text">{voiceNumbers[0]!.number}</span></span>
               </div>
             )}
 
             {/* Customer phone + name */}
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">
+                <label className="text-xs font-medium text-muted-foreground block mb-1">
                   Customer phone <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -180,21 +180,21 @@ export function MakeCallButton({
                   value={toPhone}
                   onChange={e => setToPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 font-mono focus:outline-none focus:ring-2 focus:ring-brand"
+                  className="w-full text-sm border border-line rounded-xl px-3 py-2.5 font-mono focus:outline-none focus:ring-2 focus:ring-brand"
                   onKeyDown={e => e.key === 'Enter' && handleDispatch()}
                 />
-                <p className="text-[11px] text-gray-400 mt-1">Include country code, e.g. +91 for India</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Include country code, e.g. +91 for India</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">
-                  Customer name <span className="text-gray-300">(optional)</span>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">
+                  Customer name <span className="text-muted-foreground">(optional)</span>
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Rahul"
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand"
+                  className="w-full text-sm border border-line rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand"
                   onKeyDown={e => e.key === 'Enter' && handleDispatch()}
                 />
               </div>
@@ -202,31 +202,31 @@ export function MakeCallButton({
 
             {/* Bridge mode toggle — Option B */}
             {bridgeModeEnabled && (
-              <div className="border-t border-gray-100 pt-3 space-y-3">
+              <div className="border-t border-line pt-3 space-y-3">
                 <button
                   type="button"
                   onClick={() => setBridgeMode(v => !v)}
                   className={`flex items-center gap-2.5 w-full text-left px-3 py-2.5 rounded-xl border transition-colors ${
                     bridgeMode
                       ? 'bg-violet-50 border-violet-200 text-violet-800'
-                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'
+                      : 'bg-sunken border-line text-muted-foreground hover:border-line-strong'
                   }`}
                 >
-                  <ArrowLeftRight size={14} className={bridgeMode ? 'text-violet-600' : 'text-gray-400'} />
+                  <ArrowLeftRight size={14} className={bridgeMode ? 'text-violet-600' : 'text-muted-foreground'} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold">Bridge call (call me first)</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       System calls your phone → you answer → customer is connected
                     </p>
                   </div>
-                  <div className={`w-8 h-4 rounded-full transition-colors shrink-0 ${bridgeMode ? 'bg-violet-500' : 'bg-gray-300'}`}>
+                  <div className={`w-8 h-4 rounded-full transition-colors shrink-0 ${bridgeMode ? 'bg-violet-500' : 'bg-sunken'}`}>
                     <div className={`w-3 h-3 mt-0.5 rounded-full bg-white shadow transition-transform ${bridgeMode ? 'translate-x-4 ml-0.5' : 'ml-0.5'}`} />
                   </div>
                 </button>
 
                 {bridgeMode && (
                   <div>
-                    <label className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
                       <User size={11} /> Your personal number <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -237,7 +237,7 @@ export function MakeCallButton({
                       className="w-full text-sm border border-violet-200 rounded-xl px-3 py-2.5 font-mono focus:outline-none focus:ring-2 focus:ring-violet-300 bg-violet-50/40"
                       onKeyDown={e => e.key === 'Enter' && handleDispatch()}
                     />
-                    <p className="text-[11px] text-gray-400 mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       We will call this number first. When you pick up, you will hear the customer.
                     </p>
                   </div>
@@ -261,7 +261,7 @@ export function MakeCallButton({
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 text-sm font-medium text-gray-500 border border-gray-200 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+                className="flex-1 text-sm font-medium text-muted-foreground border border-line px-4 py-2.5 rounded-xl hover:bg-sunken transition-colors"
               >
                 Cancel
               </button>

@@ -21,7 +21,7 @@ function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50 ${
-        checked ? 'bg-ready' : 'bg-gray-200'
+        checked ? 'bg-ready' : 'bg-sunken'
       }`}
     >
       <span
@@ -72,12 +72,12 @@ export function NotificationPreferences({
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+    <div className="bg-white rounded-2xl border border-line shadow-sm divide-y divide-line">
       {PREF_ROWS.map(row => (
         <div key={row.key} className="flex items-center justify-between gap-4 px-5 py-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-800">{row.label}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{row.description}</p>
+            <p className="text-sm font-medium text-text">{row.label}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{row.description}</p>
           </div>
           <Toggle
             checked={prefs[row.key]}
@@ -86,7 +86,7 @@ export function NotificationPreferences({
           />
         </div>
       ))}
-      <div className="flex items-center justify-between gap-3 px-5 py-3 bg-gray-50/60">
+      <div className="flex items-center justify-between gap-3 px-5 py-3 bg-sunken/60">
         {error && <p className="text-xs text-red-500 flex-1">{error}</p>}
         {saved && !error && (
           <p className="text-xs text-done flex items-center gap-1 flex-1">

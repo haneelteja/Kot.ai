@@ -30,7 +30,7 @@ function TagInput({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
           placeholder={placeholder}
-          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
         <button
           type="button"
@@ -110,7 +110,7 @@ export function PlatformGuardrailsForm({ initial }: { initial: PlatformGuardrail
         <button
           type="button"
           onClick={() => setKbOnlyGlobal((v) => !v)}
-          className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${kbOnlyGlobal ? 'bg-amber-500' : 'bg-gray-200'}`}
+          className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${kbOnlyGlobal ? 'bg-amber-500' : 'bg-sunken'}`}
         >
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${kbOnlyGlobal ? 'translate-x-5' : ''}`} />
         </button>
@@ -118,41 +118,41 @@ export function PlatformGuardrailsForm({ initial }: { initial: PlatformGuardrail
 
       {/* Global blocked topics */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Global Blocked Topics
         </label>
-        <p className="text-xs text-gray-400">All bots will refuse to discuss these topics regardless of client settings.</p>
+        <p className="text-xs text-muted-foreground">All bots will refuse to discuss these topics regardless of client settings.</p>
         <TagInput value={blockedTopics} onChange={setBlockedTopics} placeholder="e.g. politics" />
       </div>
 
       {/* Global blocked keywords */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Global Blocked Keywords
         </label>
-        <p className="text-xs text-gray-400">Messages containing these keywords are blocked before reaching any AI model.</p>
+        <p className="text-xs text-muted-foreground">Messages containing these keywords are blocked before reaching any AI model.</p>
         <TagInput value={blockedKeywords} onChange={setBlockedKeywords} placeholder="e.g. inappropriate word" />
       </div>
 
       {/* Max response length */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Max Response Length (characters)
         </label>
-        <p className="text-xs text-gray-400">Platform-wide ceiling. Per-tenant limits cannot exceed this value.</p>
+        <p className="text-xs text-muted-foreground">Platform-wide ceiling. Per-tenant limits cannot exceed this value.</p>
         <input
           type="number"
           min={200}
           max={8000}
           value={maxLength}
           onChange={(e) => setMaxLength(parseInt(e.target.value, 10))}
-          className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="w-40 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
       </div>
 
       {/* Content filters */}
       <div className="space-y-2">
-        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Global Content Filters</label>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Global Content Filters</label>
         {[
           { label: 'No personal data in any response',  value: noPersonalData,  set: setNoPersonalData  },
           { label: 'No external links in any response', value: noExternalLinks, set: setNoExternalLinks },
@@ -164,7 +164,7 @@ export function PlatformGuardrailsForm({ initial }: { initial: PlatformGuardrail
               onChange={(e) => set(e.target.checked)}
               className="w-4 h-4 accent-indigo-500"
             />
-            <span className="text-sm text-gray-700">{label}</span>
+            <span className="text-sm text-text">{label}</span>
           </label>
         ))}
       </div>

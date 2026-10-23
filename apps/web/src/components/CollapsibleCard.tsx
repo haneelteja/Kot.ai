@@ -17,7 +17,7 @@ export function CollapsibleCard({
   header,
   children,
   defaultOpen = false,
-  borderClass = 'border-gray-200',
+  borderClass = 'border-line',
   headerBgClass = '',
 }: CollapsibleCardProps) {
   const [open, setOpen] = useState(defaultOpen);
@@ -27,18 +27,18 @@ export function CollapsibleCard({
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className={`w-full text-left transition-colors hover:bg-gray-50/60 ${headerBgClass}`}
+        className={`w-full text-left transition-colors hover:bg-sunken/60 ${headerBgClass}`}
       >
         <div className="flex items-center gap-3 px-5 py-4">
           <div className="flex-1 min-w-0">{header}</div>
-          <div className="shrink-0 text-gray-400">
+          <div className="shrink-0 text-muted-foreground">
             {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </div>
         </div>
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 px-5 py-5">
+        <div className="border-t border-line px-5 py-5">
           {children}
         </div>
       )}

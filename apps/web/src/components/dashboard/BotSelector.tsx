@@ -78,27 +78,27 @@ export function BotSelector({ bots }: { bots: ActiveBot[] }) {
         className={`flex items-center gap-2 h-8 px-3 text-xs font-semibold rounded-lg border transition-all ${
           activeBot
             ? 'bg-brand-wash border-brand/30 text-brand-strong hover:opacity-90'
-            : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+            : 'bg-white border-line text-muted-foreground hover:bg-sunken'
         }`}
       >
-        <Bot size={13} className={activeBot ? 'text-brand-strong' : 'text-gray-400'} />
+        <Bot size={13} className={activeBot ? 'text-brand-strong' : 'text-muted-foreground'} />
         <span>{activeBot?.name ?? 'All Bots'}</span>
         {isDefaultingToPrimary && <Star size={9} className="text-amber-400" />}
         <ChevronDown size={11} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 w-44 bg-white border border-gray-100 rounded-xl shadow-lg shadow-gray-200/60 z-50 overflow-hidden">
+        <div className="absolute top-full left-0 mt-1.5 w-44 bg-white border border-line rounded-xl shadow-lg shadow-gray-200/60 z-50 overflow-hidden">
           <div className="p-1">
             <button
               type="button"
               onClick={() => selectBot(null)}
               className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors text-left ${
-                !activeBot ? 'bg-brand-wash text-brand-strong font-semibold' : 'text-gray-600 hover:bg-gray-50'
+                !activeBot ? 'bg-brand-wash text-brand-strong font-semibold' : 'text-muted-foreground hover:bg-sunken'
               }`}
             >
-              <div className="w-5 h-5 rounded-md bg-gray-100 flex items-center justify-center shrink-0">
-                <Bot size={10} className="text-gray-400" />
+              <div className="w-5 h-5 rounded-md bg-sunken flex items-center justify-center shrink-0">
+                <Bot size={10} className="text-muted-foreground" />
               </div>
               All Bots
             </button>
@@ -115,7 +115,7 @@ export function BotSelector({ bots }: { bots: ActiveBot[] }) {
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors text-left ${
                     isActive
                       ? 'bg-brand-wash text-brand-strong font-semibold'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      : 'text-muted-foreground hover:bg-sunken'
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${colors.bg}`}>

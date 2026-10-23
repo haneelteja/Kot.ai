@@ -24,8 +24,8 @@ export function AnalyticsCharts({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Daily activity — 2/3 */}
       <div className="lg:col-span-2 bg-white rounded-2xl border border-line shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-gray-800">Activity — Last 7 Days</h3>
-        <p className="text-xs text-gray-400 mt-0.5">Conversations started and messages sent</p>
+        <h3 className="text-sm font-semibold text-text">Activity — Last 7 Days</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Conversations started and messages sent</p>
         {hasDaily ? (
           <ResponsiveContainer width="100%" height={240} className="mt-4">
             <BarChart data={dailyData} barGap={4}>
@@ -40,15 +40,15 @@ export function AnalyticsCharts({
           </ResponsiveContainer>
         ) : (
           <div className="flex items-center justify-center h-[240px] mt-4 rounded-xl bg-sunken/50">
-            <p className="text-sm text-gray-400">No activity in the last 7 days</p>
+            <p className="text-sm text-muted-foreground">No activity in the last 7 days</p>
           </div>
         )}
       </div>
 
       {/* Product breakdown — 1/3 */}
       <div className="bg-white rounded-2xl border border-line shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-gray-800">Messages by Bot</h3>
-        <p className="text-xs text-gray-400 mt-0.5">Last 30 days</p>
+        <h3 className="text-sm font-semibold text-text">Messages by Bot</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Last 30 days</p>
         {hasProduct ? (
           <>
             <ResponsiveContainer width="100%" height={160} className="mt-4">
@@ -72,16 +72,16 @@ export function AnalyticsCharts({
                 <div key={p.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PRODUCT_COLORS[i % PRODUCT_COLORS.length] }} />
-                    <span className="text-gray-600 capitalize">{p.name} bot</span>
+                    <span className="text-muted-foreground capitalize">{p.name} bot</span>
                   </div>
-                  <span className="font-semibold text-gray-700 tabular-nums">{p.value}</span>
+                  <span className="font-semibold text-text tabular-nums">{p.value}</span>
                 </div>
               ))}
             </div>
           </>
         ) : (
           <div className="flex items-center justify-center h-[160px] mt-4 rounded-xl bg-sunken/50">
-            <p className="text-sm text-gray-400">No data yet</p>
+            <p className="text-sm text-muted-foreground">No data yet</p>
           </div>
         )}
       </div>

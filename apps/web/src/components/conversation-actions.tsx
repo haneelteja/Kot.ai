@@ -110,12 +110,12 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
   const assignedAgent = teamMembers.find(m => m.id === assignedAgentId);
 
   return (
-    <div className="bg-white border-t border-gray-200 shrink-0">
+    <div className="bg-white border-t border-line shrink-0">
       {/* Status bar */}
-      <div className="flex items-center gap-2.5 px-5 py-2.5 border-b border-gray-100 flex-wrap">
+      <div className="flex items-center gap-2.5 px-5 py-2.5 border-b border-line flex-wrap">
         {status === 'open' && (
           <>
-            <p className="text-xs text-gray-400 flex-1">
+            <p className="text-xs text-muted-foreground flex-1">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-ready mr-1.5 mb-px" />
               Bot is handling this conversation
             </p>
@@ -123,7 +123,7 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
               type="button"
               onClick={handleTakeOver}
               disabled={actioning}
-              className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 disabled:opacity-50 transition-colors font-medium"
+              className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border border-line text-muted-foreground hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 disabled:opacity-50 transition-colors font-medium"
             >
               <UserPlus size={13} />
               {actioning ? 'Taking over…' : 'Take over'}
@@ -147,7 +147,7 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
               type="button"
               onClick={handleRelease}
               disabled={actioning}
-              className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors font-medium"
+              className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border border-line text-muted-foreground hover:bg-sunken disabled:opacity-50 transition-colors font-medium"
             >
               <RefreshCw size={13} />
               {actioning ? 'Releasing…' : 'Release to bot'}
@@ -159,20 +159,20 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
                 <button
                   type="button"
                   onClick={() => setShowAssign(v => !v)}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-line text-muted-foreground hover:bg-sunken transition-colors font-medium"
                 >
                   <UserCheck size={13} />
                   {assignedAgent ? assignedAgent.name : 'Assign to…'}
                   <ChevronDown size={11} />
                 </button>
                 {showAssign && (
-                  <div className="absolute bottom-full left-0 mb-1 w-48 bg-white rounded-xl border border-gray-200 shadow-lg z-10 overflow-hidden">
+                  <div className="absolute bottom-full left-0 mb-1 w-48 bg-white rounded-xl border border-line shadow-lg z-10 overflow-hidden">
                     {teamMembers.map(m => (
                       <button
                         key={m.id}
                         type="button"
                         onClick={() => handleAssign(m.id)}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${assignedAgentId === m.id ? 'text-brand-strong font-semibold' : 'text-gray-700'}`}
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-sunken transition-colors ${assignedAgentId === m.id ? 'text-brand-strong font-semibold' : 'text-text'}`}
                       >
                         {m.name}
                       </button>
@@ -181,7 +181,7 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
                       <button
                         type="button"
                         onClick={() => handleAssign(null)}
-                        className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors border-t border-gray-100"
+                        className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors border-t border-line"
                       >
                         Unassign
                       </button>
@@ -193,7 +193,7 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
           </div>
         )}
         {status === 'resolved' && (
-          <p className="text-xs text-gray-400">Conversation resolved</p>
+          <p className="text-xs text-muted-foreground">Conversation resolved</p>
         )}
 
         {/* DEV-ONLY — remove before production (see production checklist §5) */}
@@ -202,7 +202,7 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
             <button
               type="button"
               onClick={() => setClearConfirm(false)}
-              className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[11px] text-muted-foreground hover:text-muted-foreground transition-colors"
             >
               Cancel
             </button>
@@ -238,7 +238,7 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
               value={message}
               onChange={(e) => { setMessage(e.target.value); setSendError(null); }}
               placeholder="Type a message as agent…"
-              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+              className="flex-1 rounded-xl border border-line bg-sunken px-4 py-2.5 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             />
             <button
               type="submit"

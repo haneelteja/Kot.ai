@@ -45,7 +45,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
     <>
       {numbers.length === 0 ? (
         <div className="px-5 py-4 space-y-3">
-          <p className="text-sm text-gray-400">No numbers configured yet.</p>
+          <p className="text-sm text-muted-foreground">No numbers configured yet.</p>
           {activeBots.length > 0 && (
             <button
               type="button"
@@ -63,11 +63,11 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
             {numbers.map((num) => (
               <div key={num.id} className="flex items-center justify-between gap-4 px-5 py-3.5">
                 <div>
-                  <p className="text-sm font-mono text-gray-700">{num.phone_number}</p>
-                  {num.label && <p className="text-xs text-gray-400 mt-0.5">{num.label}</p>}
+                  <p className="text-sm font-mono text-text">{num.phone_number}</p>
+                  {num.label && <p className="text-xs text-muted-foreground mt-0.5">{num.label}</p>}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-gray-400 capitalize">{num.provider.replace(/_/g, ' ')}</span>
+                  <span className="text-xs text-muted-foreground capitalize">{num.provider.replace(/_/g, ' ')}</span>
                   {num.routing_mode === 'multi' ? (
                     <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-brand-wash text-brand-strong">
                       Multi-bot
@@ -79,7 +79,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
                         : num.product_slug === 'sales_bot'       ? 'bg-violet-50 text-violet-600'
                         : num.product_slug === 'lifecycle_bot'   ? 'bg-orange-50 text-orange-600'
                         : num.product_slug === 'appointment_bot' ? 'bg-pink-50 text-pink-600'
-                        : 'bg-gray-100 text-gray-500'
+                        : 'bg-sunken text-muted-foreground'
                         : 'bg-amber-50 text-amber-600'
                     }`}>
                       {botLabel(num.product_slug)}
@@ -89,7 +89,7 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
                     type="button"
                     aria-label={`Edit ${num.phone_number}`}
                     onClick={() => setEditTarget(num)}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-brand-strong hover:bg-brand-wash transition-colors"
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-brand-strong hover:bg-brand-wash transition-colors"
                   >
                     <Pencil size={13} />
                   </button>

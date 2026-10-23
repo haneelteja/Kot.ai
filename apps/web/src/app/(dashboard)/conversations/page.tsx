@@ -30,7 +30,7 @@ const AVATAR_COLORS = [
 const CONV_STATUS_STYLES: Record<string, { dot: string; badge: string }> = {
   open:       { dot: 'bg-done',    badge: 'bg-done-bg text-done ring-transparent' },
   escalated:  { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 ring-red-100' },
-  resolved:   { dot: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-500 ring-gray-200' },
+  resolved:   { dot: 'bg-sunken',    badge: 'bg-sunken text-muted-foreground ring-line' },
   bot_paused: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-700 ring-amber-100' },
 };
 
@@ -185,10 +185,10 @@ export default async function ConversationsPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-text">
             {activeTab === 'chats' ? 'Conversations' : 'Contacts'}
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {activeTab === 'chats'
               ? (statusFilter === 'escalated'
                   ? 'Conversations requiring immediate human attention'
@@ -201,7 +201,7 @@ export default async function ConversationsPage({
         {activeTab === 'chats' && conversations.length > 0 && (() => {
           const uniqueContacts = new Set((conversations as { contact_id?: string; id: string }[]).map(c => c.contact_id ?? c.id)).size;
           return (
-            <span className="text-xs font-semibold text-gray-500 bg-white border border-line px-3 py-1.5 rounded-full shadow-sm self-start">
+            <span className="text-xs font-semibold text-muted-foreground bg-white border border-line px-3 py-1.5 rounded-full shadow-sm self-start">
               {uniqueContacts} contact{uniqueContacts !== 1 ? 's' : ''}
             </span>
           );
@@ -222,7 +222,7 @@ export default async function ConversationsPage({
             aria-selected={activeTab === key}
             aria-controls={`tabpanel-${key}`}
             className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === key ? 'bg-brand-strong text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              activeTab === key ? 'bg-brand-strong text-white shadow-sm' : 'text-muted-foreground hover:text-text'
             }`}
           >
             <Icon size={14} aria-hidden="true" /> {label}
@@ -238,7 +238,7 @@ export default async function ConversationsPage({
             {([
               { key: null,         label: 'All',        cls: !statusFilter ? 'bg-brand-strong text-white border-brand-strong shadow-sm' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
               { key: 'open',       label: 'Open',       cls: statusFilter === 'open'       ? 'bg-done-bg text-done border-done font-bold' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
-              { key: 'resolved',   label: 'Resolved',   cls: statusFilter === 'resolved'   ? 'bg-gray-200 text-gray-700 border-gray-300 font-bold' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
+              { key: 'resolved',   label: 'Resolved',   cls: statusFilter === 'resolved'   ? 'bg-sunken text-text border-line-strong font-bold' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
               { key: 'bot_paused', label: 'Bot Paused', cls: statusFilter === 'bot_paused' ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold' : 'bg-white text-muted-foreground border-line hover:bg-sunken' },
             ] as const).map(tab => (
               <Link key={tab.key ?? 'all'} href={statusHref(tab.key)}
@@ -291,16 +291,16 @@ export default async function ConversationsPage({
                     <div className="w-16 h-16 rounded-2xl bg-done-bg flex items-center justify-center mb-4">
                       <AlertCircle size={28} className="text-done" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-600">All clear — no escalations</p>
-                    <p className="text-xs text-gray-400 mt-1 max-w-xs">No conversations are currently waiting for human attention.</p>
+                    <p className="text-sm font-semibold text-muted-foreground">All clear — no escalations</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs">No conversations are currently waiting for human attention.</p>
                   </>
                 ) : (
                   <>
                     <div className="w-16 h-16 rounded-2xl bg-sunken flex items-center justify-center mb-4 border border-line">
                       <MessageSquare size={28} className="text-muted-foreground" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-600">No conversations yet</p>
-                    <p className="text-xs text-gray-400 mt-1 max-w-xs">
+                    <p className="text-sm font-semibold text-muted-foreground">No conversations yet</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs">
                       {botFilter ? 'No conversations for this bot. Switch to All or try another bot.' : 'Send a WhatsApp message to your bot number to start.'}
                     </p>
                   </>
@@ -326,8 +326,8 @@ export default async function ConversationsPage({
                           {displayName[0]?.toUpperCase() ?? '?'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-done transition-colors">{displayName}</p>
-                          {contact?.name && <p className="text-xs text-gray-400 truncate">{contact.phone}</p>}
+                          <p className="text-sm font-semibold text-text truncate group-hover:text-done transition-colors">{displayName}</p>
+                          {contact?.name && <p className="text-xs text-muted-foreground truncate">{contact.phone}</p>}
                           {/* Bot badges — one per conversation this contact has */}
                           <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                             {convs.map(c => {
@@ -353,7 +353,7 @@ export default async function ConversationsPage({
                             <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
                             {humanizeStatus(primary.status)}
                           </span>
-                          <span className="text-xs text-gray-400 w-8 text-right tabular-nums">{timeAgo}</span>
+                          <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">{timeAgo}</span>
                         </div>
                       </Link>
                     );

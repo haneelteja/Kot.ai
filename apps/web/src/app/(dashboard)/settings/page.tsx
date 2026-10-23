@@ -194,6 +194,7 @@ export default async function SettingsPage({
                 phone_number_id: ((n['config_json'] as Record<string, string>)?.['phone_number_id'] ?? null),
                 routing_mode:    (n['routing_mode'] ?? 'single') as 'single' | 'multi',
                 routing_config:  (n['routing_config'] ?? undefined) as Record<string, unknown> | undefined,
+                role:            (n['role'] ?? 'customer') as 'customer' | 'kitchen' | 'ops',
               }))}
               activeBots={activeBots.map(p => p['product_type'] as string)}
               webhookBase={`${apiBase}/api/webhook/${tenant?.['id'] ?? ''}`}
@@ -603,11 +604,14 @@ export default async function SettingsPage({
   }
 
   // ── Notifications data ──────────────────────────────────────────────────────
-  const [{ data: notifSettings }, { data: userNotifPrefs }] = await Promise.all([
+  const [{ data: notifSettings }, { data: userNotifPrefs }, { data: restaurantProductRow }] = await Promise.all([
     admin.from('tenant_notification_settings').select('*').eq('tenant_id', tenantId).single(),
     admin.from('user_notification_preferences').select('escalation_email, assignment_email')
       .eq('user_id', user.id).eq('tenant_id', tenantId).maybeSingle(),
+    admin.from('tenant_products').select('id')
+      .eq('tenant_id', tenantId).eq('product_type', 'restaurant_bot').eq('active', true).maybeSingle(),
   ]);
+  const hasRestaurantBot = !!restaurantProductRow;
 
   return (
     <SettingsShell activeTab={activeTab}>
@@ -647,10 +651,12 @@ export default async function SettingsPage({
           />
         </Section>
 
-        <Section icon={<Bell size={16} />} title="Daily Report" hint="Sent every day at 8:00 AM UTC — conversations, leads, open/escalated/resolved counts, and pending escalations. Configure who receives the email and WhatsApp summary.">
+        <Section icon={<Bell size={16} />} title="Daily Report" hint="A daily summary — conversations, leads, open/escalated/resolved counts, pending escalations, and (for restaurants) orders, revenue and bookings. Configure who receives it and when.">
           <DailyReportSettings
             initialEmails={(notifSettings as { daily_report_emails?: string[] | null } | null)?.daily_report_emails ?? []}
             initialWaNumbers={(notifSettings as { daily_report_wa_numbers?: string[] | null } | null)?.daily_report_wa_numbers ?? []}
+            initialHourUtc={(notifSettings as { daily_report_hour_utc?: number | null } | null)?.daily_report_hour_utc ?? null}
+            showTimeField={hasRestaurantBot}
           />
         </Section>
 

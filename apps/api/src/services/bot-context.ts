@@ -75,6 +75,7 @@ export async function getBotContext(
     .eq('product_slug', productSlug)
     .eq('provider', provider)
     .eq('active', true)
+    .eq('role', 'customer')
     .single();
 
   let resolvedWn: { config_json: Record<string, string>; provider: string } | null =
@@ -103,7 +104,7 @@ export async function getBotContext(
   const [tenantRes, botConfigRes, platformGRes, botTypeGRes, tenantGRes, llmRes] = await Promise.all([
     db.from('tenants').select('plan, status').eq('id', tenantId).single(),
     db.from('bot_configs')
-      .select('id, system_prompt, ai_model, confidence_threshold, escalation_triggers, guardrails_json, escalation_policy, voice_config')
+      .select('id, system_prompt, ai_model, confidence_threshold, escalation_triggers, guardrails_json, escalation_policy, voice_config, order_mode')
       .eq('tenant_id', tenantId)
       .eq('product_slug', productSlug)
       .single(),

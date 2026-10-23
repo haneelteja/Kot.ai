@@ -17,7 +17,10 @@ interface WhatsAppNumber {
   phone_number_id: string | null;
   routing_mode?:   'single' | 'multi';
   routing_config?: Record<string, unknown>;
+  role?:           'customer' | 'kitchen' | 'ops';
 }
+
+const ROLE_LABELS: Record<string, string> = { customer: 'Customer', kitchen: 'Kitchen', ops: 'Ops' };
 
 interface Props {
   numbers:    WhatsAppNumber[];
@@ -68,6 +71,11 @@ export function WhatsAppNumbersManager({ numbers, activeBots, webhookBase }: Pro
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground capitalize">{num.provider.replace(/_/g, ' ')}</span>
+                  {num.product_slug === 'restaurant_bot' && num.role && num.role !== 'customer' && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700">
+                      {ROLE_LABELS[num.role]}
+                    </span>
+                  )}
                   {num.routing_mode === 'multi' ? (
                     <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-brand-wash text-brand-strong">
                       Multi-bot

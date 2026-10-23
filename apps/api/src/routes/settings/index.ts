@@ -8,7 +8,7 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
     const db = getServerClient();
     const { data } = await db
       .from('tenant_notification_settings')
-      .select('escalation_emails, escalation_wa_numbers, escalation_customer_message, from_email, resend_api_key, lead_notification_emails, lead_notification_wa_numbers, daily_report_emails, daily_report_wa_numbers')
+      .select('escalation_emails, escalation_wa_numbers, escalation_customer_message, from_email, resend_api_key, lead_notification_emails, lead_notification_wa_numbers, daily_report_emails, daily_report_wa_numbers, daily_report_hour_utc')
       .eq('tenant_id', request.tenantId)
       .single();
 
@@ -22,6 +22,7 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
       lead_notification_wa_numbers: string[] | null;
       daily_report_emails: string[] | null;
       daily_report_wa_numbers: string[] | null;
+      daily_report_hour_utc: number | null;
     } | null;
 
     return {
@@ -37,6 +38,7 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
         lead_notification_wa_numbers: row?.lead_notification_wa_numbers ?? [],
         daily_report_emails:          row?.daily_report_emails ?? [],
         daily_report_wa_numbers:      row?.daily_report_wa_numbers ?? [],
+        daily_report_hour_utc:        row?.daily_report_hour_utc ?? null,
       },
     };
   });
@@ -118,13 +120,14 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
       lead_notification_wa_numbers?: string[];
       daily_report_emails?: string[];
       daily_report_wa_numbers?: string[];
+      daily_report_hour_utc?: number | null;
     };
   }>('/notifications', { preHandler: [requireAuth] }, async (request, reply) => {
     const db = getServerClient();
     const {
       escalation_emails, escalation_wa_numbers, escalation_customer_message, from_email, resend_api_key,
       lead_notification_emails, lead_notification_wa_numbers,
-      daily_report_emails, daily_report_wa_numbers,
+      daily_report_emails, daily_report_wa_numbers, daily_report_hour_utc,
     } = request.body;
 
     const { data, error } = await db
@@ -140,9 +143,10 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
         ...(lead_notification_wa_numbers !== undefined && { lead_notification_wa_numbers }),
         ...(daily_report_emails !== undefined && { daily_report_emails }),
         ...(daily_report_wa_numbers !== undefined && { daily_report_wa_numbers }),
+        ...(daily_report_hour_utc !== undefined && { daily_report_hour_utc }),
         updated_at: new Date().toISOString(),
       }, { onConflict: 'tenant_id' })
-      .select('escalation_emails, escalation_wa_numbers, escalation_customer_message, from_email, resend_api_key, lead_notification_emails, lead_notification_wa_numbers, daily_report_emails, daily_report_wa_numbers')
+      .select('escalation_emails, escalation_wa_numbers, escalation_customer_message, from_email, resend_api_key, lead_notification_emails, lead_notification_wa_numbers, daily_report_emails, daily_report_wa_numbers, daily_report_hour_utc')
       .single();
 
     if (error) return reply.status(500).send({ success: false, error: error.message });

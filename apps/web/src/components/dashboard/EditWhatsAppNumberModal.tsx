@@ -39,6 +39,7 @@ interface EditableNumber {
   phone_number_id: string | null;
   routing_mode?:   'single' | 'multi';
   routing_config?: RoutingConfig;
+  role?:           'customer' | 'kitchen' | 'ops';
 }
 
 interface Props {
@@ -63,6 +64,7 @@ const smallInputCls = 'w-full rounded-lg border border-line bg-sunken px-3 py-2 
 export function EditWhatsAppNumberModal({ number, activeBots, onClose }: Props) {
   const [label, setLabel]           = useState(number.label ?? '');
   const [bot, setBot]               = useState<string>(number.product_slug ?? '');
+  const [role, setRole]             = useState<'customer' | 'kitchen' | 'ops'>(number.role ?? 'customer');
   const [phoneNumberId, setPhoneId] = useState(number.phone_number_id ?? '');
   const [accessToken, setToken]     = useState('');
   const [contentSid, setContentSid] = useState('');
@@ -109,6 +111,7 @@ export function EditWhatsAppNumberModal({ number, activeBots, onClose }: Props) 
       product_slug:  bot   || undefined,
       phoneNumberId: number.provider === 'meta_cloud' ? phoneNumberId || undefined : undefined,
       accessToken:   finalToken,
+      role:          bot === 'restaurant_bot' ? role : undefined,
     });
 
     if ('error' in result) {
@@ -185,6 +188,21 @@ export function EditWhatsAppNumberModal({ number, activeBots, onClose }: Props) 
               ))}
             </select>
           </Field>
+
+          {bot === 'restaurant_bot' && (
+            <Field label="Number role" hint="Customer-facing by default. Use Kitchen/Ops only for a dedicated second or third WhatsApp Business number — most restaurants just need Customer.">
+              <select
+                aria-label="Number role"
+                value={role}
+                onChange={e => setRole(e.target.value as 'customer' | 'kitchen' | 'ops')}
+                className={inputCls}
+              >
+                <option value="customer">Customer-facing (orders, booking, questions)</option>
+                <option value="kitchen">Kitchen (order tickets, Ready / Problem)</option>
+                <option value="ops">Ops / owner (alerts, daily summary, commands)</option>
+              </select>
+            </Field>
+          )}
 
           {number.provider === 'meta_cloud' && (
             <Field label="Phone Number ID">

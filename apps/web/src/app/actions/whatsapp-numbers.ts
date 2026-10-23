@@ -13,11 +13,14 @@ export interface WhatsAppNumberData {
   config_json:  Record<string, string>;
 }
 
+export type NumberRole = 'customer' | 'kitchen' | 'ops';
+
 export interface UpdateWhatsAppNumberInput {
   label?:         string;
   product_slug?:  string;
   phoneNumberId?: string;
   accessToken?:   string;
+  role?:          NumberRole;
 }
 
 export async function updateWhatsAppNumberAction(
@@ -40,6 +43,7 @@ export async function updateWhatsAppNumberAction(
   const updates: Record<string, unknown> = {};
   if (input.label        !== undefined) updates['label']        = input.label;
   if (input.product_slug !== undefined) updates['product_slug'] = input.product_slug;
+  if (input.role         !== undefined) updates['role']         = input.role;
 
   if (input.phoneNumberId !== undefined || input.accessToken !== undefined) {
     const current = (existing.config_json ?? {}) as Record<string, string>;

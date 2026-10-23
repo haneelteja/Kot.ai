@@ -2,6 +2,10 @@ import { Resend } from 'resend';
 import { getServerClient } from '@alphabot/database';
 import { WhatsAppGateway } from '../../services/whatsapp/gateway.js';
 import type { WhatsAppProvider } from '@alphabot/shared';
+import { resolveNumberForRole } from '../number-roles.js';
+
+const DEFAULT_REPORT_HOUR_UTC            = 8;  // pre-existing fixed time, kept as the default for non-restaurant tenants
+const DEFAULT_RESTAURANT_REPORT_HOUR_UTC = 17; // ≈ 10:30 PM IST — closest hour to the flow map's "11 PM" default at this job's hour-only granularity
 
 const resend = new Resend(process.env['RESEND_API_KEY'] || 're_placeholder');
 
@@ -20,6 +24,15 @@ interface PendingEscalation {
   ageMinutes: number;
 }
 
+interface RestaurantStat {
+  ordersToday:       number;
+  revenueTodayPaise: number;
+  topDish:           string | null;
+  bookingsToday:     number;
+  unpaidCountToday:  number;
+  unpaidPaiseToday:  number;
+}
+
 interface ReportData {
   tenantName: string;
   date: string;
@@ -31,6 +44,11 @@ interface ReportData {
   bots: BotStat[];
   pendingEscalations: PendingEscalation[];
   dashboardUrl: string;
+  restaurant?: RestaurantStat;
+}
+
+function formatRupees(paise: number): string {
+  return `₹${(paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
 function botLabel(type: string): string {
@@ -148,6 +166,39 @@ function buildHtml(d: ReportData): string {
         </table>
       </td></tr>
 
+      ${d.restaurant ? `
+      <!-- Restaurant business summary -->
+      <tr><td style="background:white;padding:0 28px 24px;border-top:1px solid #f0fdf4;">
+        <p style="margin:16px 0 12px;font-size:13px;font-weight:600;color:#374151;">Restaurant — Today</p>
+        <table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td width="25%" style="padding:4px;">
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;text-align:center;">
+              <div style="font-size:24px;font-weight:700;color:#059669;">${d.restaurant.ordersToday}</div>
+              <div style="font-size:11px;color:#6b7280;margin-top:4px;">Orders</div>
+            </div>
+          </td>
+          <td width="25%" style="padding:4px;">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;text-align:center;">
+              <div style="font-size:24px;font-weight:700;color:#2563eb;">${formatRupees(d.restaurant.revenueTodayPaise)}</div>
+              <div style="font-size:11px;color:#6b7280;margin-top:4px;">Revenue</div>
+            </div>
+          </td>
+          <td width="25%" style="padding:4px;">
+            <div style="background:#fefce8;border:1px solid #fef08a;border-radius:12px;padding:14px;text-align:center;">
+              <div style="font-size:24px;font-weight:700;color:#ca8a04;">${d.restaurant.bookingsToday}</div>
+              <div style="font-size:11px;color:#6b7280;margin-top:4px;">Bookings</div>
+            </div>
+          </td>
+          <td width="25%" style="padding:4px;">
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:14px;text-align:center;">
+              <div style="font-size:24px;font-weight:700;color:#dc2626;">${d.restaurant.unpaidCountToday}</div>
+              <div style="font-size:11px;color:#6b7280;margin-top:4px;">Unpaid (${formatRupees(d.restaurant.unpaidPaiseToday)})</div>
+            </div>
+          </td>
+        </tr></table>
+        ${d.restaurant.topDish ? `<p style="margin:12px 0 0;font-size:13px;color:#374151;">🏆 Top dish today: <strong>${d.restaurant.topDish}</strong></p>` : ''}
+      </td></tr>` : ''}
+
       <!-- CTA -->
       <tr><td style="background:white;padding:0 28px 28px;text-align:center;">
         <a href="${d.dashboardUrl}" style="display:inline-block;background:#059669;color:white;font-size:13px;font-weight:600;padding:12px 28px;border-radius:10px;text-decoration:none;">Open Dashboard</a>
@@ -187,11 +238,29 @@ function buildWhatsAppText(d: ReportData): string {
     }
   }
 
+  if (d.restaurant) {
+    const r = d.restaurant;
+    lines.push(
+      ``,
+      `🍽️ *Restaurant — Today*`,
+      `${r.ordersToday} orders · ${formatRupees(r.revenueTodayPaise)}`,
+      ...(r.topDish ? [`Top dish: ${r.topDish}`] : []),
+      `${r.bookingsToday} bookings`,
+      ...(r.unpaidCountToday > 0 ? [`${r.unpaidCountToday} unpaid (${formatRupees(r.unpaidPaiseToday)})`] : []),
+    );
+  }
+
   lines.push(``, `🔗 ${d.dashboardUrl}`);
   return lines.join('\n');
 }
 
-export async function runDailyReports(): Promise<void> {
+/**
+ * @param currentHourUtc only tenants whose effective daily_report_hour_utc
+ * (tenant override, defaulting to DEFAULT_REPORT_HOUR_UTC) matches this hour
+ * are sent — the caller (jobs/scheduler.ts) runs this every hour on the hour,
+ * so each tenant is sent exactly once per day, at their configured time.
+ */
+export async function runDailyReports(currentHourUtc: number): Promise<void> {
   const db = getServerClient();
   const fromEmail  = process.env['RESEND_FROM_EMAIL'] ?? 'onboarding@resend.dev';
   const dashboardUrl = process.env['WEB_BASE_URL'] ?? 'https://whats-app-agent-web.vercel.app';
@@ -204,12 +273,35 @@ export async function runDailyReports(): Promise<void> {
 
   for (const tenant of tenants) {
     try {
-      // Parallel: notification settings + admin user + stats
-      const [settingsRes, adminUserRes, newRes, openRes, escalatedRes, resolvedRes, escRes, botRes, leadsRes, wnRes] = await Promise.all([
+      // Checked alone first (cheap, just 2 queries) so a tenant not due this
+      // hour costs that, not the full fan-out below. The restaurant check
+      // has to happen before the hour-gate decision since restaurant
+      // tenants default to a different hour (DEFAULT_RESTAURANT_REPORT_HOUR_UTC).
+      const [{ data: settingsRow }, { data: restaurantCheckRow }] = await Promise.all([
         db.from('tenant_notification_settings')
-          .select('daily_report_emails, daily_report_wa_numbers, from_email, resend_api_key')
+          .select('daily_report_emails, daily_report_wa_numbers, daily_report_hour_utc, from_email, resend_api_key')
           .eq('tenant_id', tenant.id)
           .maybeSingle(),
+        db.from('tenant_products').select('product_slug')
+          .eq('tenant_id', tenant.id).eq('product_type', 'restaurant_bot').eq('active', true)
+          .limit(1).maybeSingle(),
+      ]);
+
+      const settings = settingsRow as {
+        daily_report_emails: string[] | null;
+        daily_report_wa_numbers: string[] | null;
+        daily_report_hour_utc: number | null;
+        from_email: string | null;
+        resend_api_key: string | null;
+      } | null;
+
+      const restaurantProductSlug = restaurantCheckRow?.product_slug as string | undefined;
+      const defaultHour = restaurantProductSlug ? DEFAULT_RESTAURANT_REPORT_HOUR_UTC : DEFAULT_REPORT_HOUR_UTC;
+      const effectiveHour = settings?.daily_report_hour_utc ?? defaultHour;
+      if (effectiveHour !== currentHourUtc) continue;
+
+      // Parallel: admin user + stats
+      const [adminUserRes, newRes, openRes, escalatedRes, resolvedRes, escRes, botRes, leadsRes] = await Promise.all([
         db.from('tenant_users')
           .select('user_id')
           .eq('tenant_id', tenant.id)
@@ -240,20 +332,10 @@ export async function runDailyReports(): Promise<void> {
           .eq('tenant_id', tenant.id)
           .ilike('trigger_reason', '%sales lead%')
           .gte('created_at', todayStart.toISOString()),
-        db.from('whatsapp_numbers')
-          .select('config_json, provider')
-          .eq('tenant_id', tenant.id)
-          .eq('active', true)
-          .limit(1)
-          .maybeSingle(),
+        db.from('tenant_products').select('product_slug')
+          .eq('tenant_id', tenant.id).eq('product_type', 'restaurant_bot').eq('active', true)
+          .limit(1).maybeSingle(),
       ]);
-
-      const settings = settingsRes.data as {
-        daily_report_emails: string[] | null;
-        daily_report_wa_numbers: string[] | null;
-        from_email: string | null;
-        resend_api_key: string | null;
-      } | null;
 
       // Resolve report recipients
       const reportEmails = (settings?.daily_report_emails as string[] | null) ?? [];
@@ -293,6 +375,54 @@ export async function runDailyReports(): Promise<void> {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
       });
 
+      // ── Restaurant business metrics (OWN-02) ───────────────────────────────
+      // Only computed for tenants with an active restaurant_bot instance.
+      // "Unpaid today" is the closest available proxy for the flow map's
+      // "left before paying" figure — a real checkout_drafts-based figure is
+      // blocked on ORD-02's draft-order architecture, which this pass
+      // deliberately deferred (see docs/BACKLOG.md's flow-map update note).
+      let restaurant: RestaurantStat | undefined;
+      if (restaurantProductSlug) {
+        const [ordersRes, bookingsRes, unpaidRes] = await Promise.all([
+          db.from('orders')
+            .select('total_paise, order_items(name, quantity)')
+            .eq('tenant_id', tenant.id)
+            .in('source', ['whatsapp_bot', 'weblink'])
+            .gte('created_at', todayStart.toISOString()),
+          db.from('bookings').select('id', { count: 'exact', head: true })
+            .eq('tenant_id', tenant.id).gte('created_at', todayStart.toISOString()),
+          db.from('orders').select('total_paise')
+            .eq('tenant_id', tenant.id).eq('status', 'pending')
+            .in('source', ['whatsapp_bot', 'weblink'])
+            .gte('created_at', todayStart.toISOString()),
+        ]);
+
+        const orders = ordersRes.data ?? [];
+        const dishQty = new Map<string, number>();
+        for (const order of orders) {
+          const items = (order as unknown as { order_items: { name: string; quantity: number }[] | null }).order_items ?? [];
+          for (const item of items) {
+            dishQty.set(item.name, (dishQty.get(item.name) ?? 0) + item.quantity);
+          }
+        }
+        let topDish: string | null = null;
+        let topQty = 0;
+        for (const [name, qty] of dishQty) {
+          if (qty > topQty) { topDish = name; topQty = qty; }
+        }
+
+        const unpaid = unpaidRes.data ?? [];
+
+        restaurant = {
+          ordersToday:       orders.length,
+          revenueTodayPaise: orders.reduce((sum, o) => sum + ((o as { total_paise: number | null }).total_paise ?? 0), 0),
+          topDish,
+          bookingsToday:     bookingsRes.count ?? 0,
+          unpaidCountToday:  unpaid.length,
+          unpaidPaiseToday:  unpaid.reduce((sum, o) => sum + ((o as { total_paise: number | null }).total_paise ?? 0), 0),
+        };
+      }
+
       const reportData: ReportData = {
         tenantName:    tenant.name,
         date:          dateStr,
@@ -304,6 +434,7 @@ export async function runDailyReports(): Promise<void> {
         bots,
         pendingEscalations,
         dashboardUrl,
+        restaurant,
       };
 
       // ── Send email ─────────────────────────────────────────────────────────
@@ -321,21 +452,37 @@ export async function runDailyReports(): Promise<void> {
       }
 
       // ── Send WhatsApp ──────────────────────────────────────────────────────
-      if (reportWaNumbers.length > 0 && wnRes.data) {
-        const wn       = wnRes.data;
-        const wnConfig = wn.config_json as { phone_number_id: string; access_token: string };
-        const gateway  = new WhatsAppGateway(wn.provider as WhatsAppProvider);
-        const text     = buildWhatsAppText(reportData);
+      if (reportWaNumbers.length > 0) {
+        // WAB-06: prefer the restaurant's dedicated "ops" number when one is
+        // configured; otherwise this falls back to any active number, same
+        // as before this change.
+        const wn = restaurantProductSlug
+          ? await resolveNumberForRole(db, tenant.id, restaurantProductSlug, 'ops')
+          : await (async () => {
+              const { data } = await db.from('whatsapp_numbers')
+                .select('config_json, provider')
+                .eq('tenant_id', tenant.id).eq('active', true).limit(1).maybeSingle();
+              if (!data) return null;
+              const cfg = data.config_json as { phone_number_id?: string; access_token?: string };
+              return cfg.phone_number_id && cfg.access_token
+                ? { phone_number_id: cfg.phone_number_id, access_token: cfg.access_token, provider: data.provider as string }
+                : null;
+            })();
 
-        await Promise.allSettled(
-          reportWaNumbers.map(number =>
-            gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
-              type: 'text',
-              to:   number,
-              text,
-            }).catch(err => console.error(`[DailyReport] WA to ${number} failed:`, err))
-          )
-        );
+        if (wn) {
+          const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+          const text    = buildWhatsAppText(reportData);
+
+          await Promise.allSettled(
+            reportWaNumbers.map(number =>
+              gateway.sendMessage(wn.phone_number_id, wn.access_token, {
+                type: 'text',
+                to:   number,
+                text,
+              }).catch(err => console.error(`[DailyReport] WA to ${number} failed:`, err))
+            )
+          );
+        }
       }
     } catch (err) {
       console.error(`[DailyReport] Failed for tenant ${tenant.id}:`, err);

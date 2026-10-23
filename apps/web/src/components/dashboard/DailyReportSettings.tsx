@@ -5,15 +5,25 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { X, Plus } from 'lucide-react';
 
 interface Props {
-  initialEmails: string[];
+  initialEmails:    string[];
   initialWaNumbers: string[];
+  /** UTC hour (0-23) the report sends at; null = platform default (8 AM UTC). */
+  initialHourUtc?:  number | null;
+  /** Show the send-time picker — only meaningful for restaurant tenants (OWN-02); others keep the fixed default. */
+  showTimeField?:   boolean;
 }
 
-export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) {
+const DEFAULT_HOUR_UTC            = 8;  // platform default (non-restaurant tenants)
+const DEFAULT_RESTAURANT_HOUR_UTC = 17; // ≈ 10:30 PM IST, close to the flow map's "11 PM" at this job's hour-only granularity
+
+export function DailyReportSettings({ initialEmails, initialWaNumbers, initialHourUtc, showTimeField }: Props) {
   const [emails, setEmails]       = useState<string[]>(initialEmails);
   const [waNumbers, setWaNumbers] = useState<string[]>(initialWaNumbers);
   const [emailInput, setEmailInput] = useState('');
   const [waInput, setWaInput]       = useState('');
+  const [hourUtc, setHourUtc]       = useState<number>(
+    initialHourUtc ?? (showTimeField ? DEFAULT_RESTAURANT_HOUR_UTC : DEFAULT_HOUR_UTC),
+  );
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
 
@@ -55,6 +65,7 @@ export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) 
         body: JSON.stringify({
           daily_report_emails:     emails,
           daily_report_wa_numbers: waNumbers,
+          ...(showTimeField ? { daily_report_hour_utc: hourUtc } : {}),
         }),
       }
     );
@@ -64,16 +75,43 @@ export function DailyReportSettings({ initialEmails, initialWaNumbers }: Props) 
     setTimeout(() => setSaved(false), 3000);
   }
 
+  // Label each UTC hour with its approximate IST equivalent (UTC+5:30, shown
+  // on the half-hour since the job runs on the UTC hour) — this audience is
+  // India-based restaurants, so IST is the useful frame of reference even
+  // though the value stored/sent is plain UTC.
+  const hourOptions = Array.from({ length: 24 }, (_, utcHour) => {
+    const istHour = (utcHour + 5) % 24;
+    const istLabel = `${((istHour % 12) || 12)}:30 ${istHour < 12 ? 'AM' : 'PM'} IST`;
+    return { utcHour, label: istLabel };
+  });
+
   return (
     <div className="divide-y divide-line">
       {/* Hint */}
       <div className="px-5 py-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          The report is sent every day at <strong>8:00 AM UTC</strong> and includes new conversations,
-          open/escalated/resolved counts, leads captured, and pending escalations. If no emails are
-          configured, it falls back to the workspace admin.
+          The report includes new conversations, open/escalated/resolved counts, leads captured, and
+          pending escalations{showTimeField ? ' — plus, for restaurants, orders, revenue, top dish, and bookings' : ''}.
+          If no emails are configured, it falls back to the workspace admin.
         </p>
       </div>
+
+      {showTimeField && (
+        <div className="px-5 py-4 space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Send time</p>
+          <select
+            aria-label="Daily report send time"
+            value={hourUtc}
+            onChange={e => setHourUtc(Number(e.target.value))}
+            className="w-full max-w-xs rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand"
+          >
+            {hourOptions.map(o => (
+              <option key={o.utcHour} value={o.utcHour}>{o.label}</option>
+            ))}
+          </select>
+          <p className="text-[11px] text-muted-foreground">Default is close to end-of-service (11 PM IST).</p>
+        </div>
+      )}
 
       {/* Emails */}
       <div className="px-5 py-4 space-y-3">

@@ -21,6 +21,7 @@ import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
 import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
+import { handleOwnerCommand } from '../../services/restaurant-bot/owner-commands.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
 import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
@@ -1899,7 +1900,7 @@ Which branch works best for you?
     const db = getServerClient();
     const { data: wnRow } = await db
       .from('whatsapp_numbers')
-      .select('id, product_slug, routing_mode, routing_config, config_json, provider')
+      .select('id, product_slug, role, routing_mode, routing_config, config_json, provider')
       .eq('tenant_id', tenantId)
       .eq('active', true)
       .filter('config_json->>phone_number_id', 'eq', phoneNumberId)
@@ -1907,6 +1908,17 @@ Which branch works best for you?
 
     if (!wnRow) {
       fastify.log.warn({ tenantId, phoneNumberId }, '[Webhook] no active bot mapped to this phone_number_id');
+      return;
+    }
+
+    // OWN-03: ops-role number — route to the command parser, skip the AI pipeline.
+    if (wnRow.role === 'ops') {
+      const gateway = new WhatsAppGateway(wnRow.provider as WhatsAppProvider);
+      const config  = wnRow.config_json as { phone_number_id: string; access_token: string };
+      const incoming = gateway.parseIncoming(body);
+      if (incoming && incoming.type !== 'unsupported') {
+        await handleOwnerCommand({ db, gateway, config, incoming, tenantId, log: fastify.log });
+      }
       return;
     }
 

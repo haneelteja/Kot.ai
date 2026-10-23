@@ -3,6 +3,7 @@ import type { Conversation } from '@alphabot/shared';
 import { WhatsAppGateway } from '../whatsapp/gateway.js';
 import type { WhatsAppProvider } from '@alphabot/shared';
 import { classifyAndPersistOutcome } from '../../lib/outcome-classifier.js';
+import { resolveNumberForRole } from '../../lib/number-roles.js';
 
 export interface EscalationResult {
   escalationId: string;
@@ -294,7 +295,7 @@ export async function sendLeadNotifications(
 ): Promise<void> {
   const db = getServerClient();
 
-  const [settingsRes, contactRes, wnRes] = await Promise.all([
+  const [settingsRes, contactRes, wn] = await Promise.all([
     db.from('tenant_notification_settings')
       .select('lead_notification_emails, lead_notification_wa_numbers, from_email, resend_api_key')
       .eq('tenant_id', conversation.tenant_id)
@@ -303,13 +304,9 @@ export async function sendLeadNotifications(
       .select('phone, name')
       .eq('id', conversation.contact_id)
       .single(),
-    db.from('whatsapp_numbers')
-      .select('config_json, provider')
-      .eq('tenant_id', conversation.tenant_id)
-      .eq('product_slug', conversation.product_type)
-      .eq('active', true)
-      .limit(1)
-      .single(),
+    // WAB-06: send from the tenant's dedicated "ops" number if one is
+    // configured, falling back to the default number otherwise.
+    resolveNumberForRole(db, conversation.tenant_id, conversation.product_type, 'ops'),
   ]);
 
   const settings = settingsRes.data as {
@@ -320,7 +317,6 @@ export async function sendLeadNotifications(
   } | null;
 
   const contact = contactRes.data;
-  const wn      = wnRes.data;
 
   const customerName  = contact?.name ?? contact?.phone ?? 'Unknown';
   const customerPhone = contact?.phone ?? '—';
@@ -366,8 +362,7 @@ export async function sendLeadNotifications(
   // ── WhatsApp alerts ─────────────────────────────────────────────────────────
   const leadWaNumbers = (settings?.lead_notification_wa_numbers as string[] | null) ?? [];
   if (leadWaNumbers.length > 0 && wn) {
-    const wnConfig = wn.config_json as { phone_number_id: string; access_token: string };
-    const gateway  = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+    const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
 
     const waMessage = [
       `🎯 *New Lead Captured*`,
@@ -381,7 +376,7 @@ export async function sendLeadNotifications(
 
     await Promise.allSettled(
       leadWaNumbers.map(number =>
-        gateway.sendMessage(wnConfig.phone_number_id, wnConfig.access_token, {
+        gateway.sendMessage(wn.phone_number_id, wn.access_token, {
           type: 'text',
           to:   number,
           text: waMessage,

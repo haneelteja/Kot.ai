@@ -361,9 +361,15 @@ export function startScheduler(): void {
   void pingSupabase();
   setInterval(() => void pingSupabase(), KEEP_ALIVE_INTERVAL_MS);
 
-  // Daily report — 08:00 UTC every day  [TTL: 82800s = 23h, prevents duplicate on restart]
-  cron.schedule('0 8 * * *', () => {
-    void withJobLock('daily_reports', 82800, () => runDailyReports()).catch(err =>
+  // Daily report — every hour on the hour. Each tenant is sent exactly once
+  // per day, at their configured UTC hour (tenant_notification_settings.
+  // daily_report_hour_utc, default 8 — the pre-existing fixed time) — OWN-02
+  // needs this to be per-tenant-configurable (default ~11pm IST for
+  // restaurants), which a single fixed cron time can't do.
+  // [TTL: 3540s = 59min, prevents duplicate within the same hour on restart]
+  cron.schedule('0 * * * *', () => {
+    const hour = new Date().getUTCHours();
+    void withJobLock(`daily_reports_${hour}`, 3540, () => runDailyReports(hour)).catch(err =>
       alertJobFailure('daily_reports', err)
     );
   }, { timezone: 'UTC' });

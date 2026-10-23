@@ -1,5 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { getServerClient } from '@alphabot/database';
+import { routedChatCompletion } from '../../lib/llm-router.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -21,7 +21,6 @@ interface FailureBatchResult {
 const MINIBATCH_SIZE = 8;
 
 async function analyzeFailureBatch(
-  anthropic: Anthropic,
   transcripts: string[],
   tenantId: string,
   batchIdx: number,
@@ -47,12 +46,12 @@ Rules:
 - Reply with valid JSON only, no markdown`;
 
   try {
-    const resp = await anthropic.messages.create({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 600,
+    const resp = await routedChatCompletion({
       messages:   [{ role: 'user', content: prompt }],
+      max_tokens: 600,
+      logContext: { tenantId, productSlug: 'insights' },
     });
-    const raw   = resp.content[0]?.type === 'text' ? resp.content[0].text.trim() : '{}';
+    const raw   = resp.content.trim();
     const clean = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/, '').trim();
     const parsed = JSON.parse(clean) as FailureBatchResult;
     return Array.isArray(parsed.failure_summary) ? parsed.failure_summary : [];
@@ -78,7 +77,6 @@ function mergeFailurePatterns(batches: FailurePattern[][]): FailurePattern[] {
 }
 
 async function runFailureAnalysis(
-  anthropic: Anthropic,
   tenantId: string,
 ): Promise<FailurePattern[]> {
   const db = getServerClient();
@@ -130,7 +128,7 @@ async function runFailureAnalysis(
   }
 
   const batchResults = await Promise.allSettled(
-    batches.map((batch, idx) => analyzeFailureBatch(anthropic, batch, tenantId, idx)),
+    batches.map((batch, idx) => analyzeFailureBatch(batch, tenantId, idx)),
   );
 
   const successfulResults = batchResults
@@ -139,10 +137,6 @@ async function runFailureAnalysis(
 
   return mergeFailurePatterns(successfulResults);
 }
-
-// Module-level singleton — previously instantiated inside generateInsightsForTenant
-// which created a new SDK client object on every call (one per tenant per run).
-const _anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
 
 // Minimal concurrency limiter — avoids adding a new package dependency.
 function pLimit(concurrency: number) {
@@ -195,7 +189,7 @@ export async function generateInsightsForTenant(tenantId: string): Promise<void>
     db.from('conversations').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('outcome_hard', 1).gte('created_at', sevenDaysAgo),
     db.from('interactive_button_templates').select('id').eq('tenant_id', tenantId).eq('is_active', true),
     db.from('campaigns').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    runFailureAnalysis(_anthropic, tenantId),
+    runFailureAnalysis(tenantId),
   ]);
 
   const totalConvsN    = totalConvs ?? 0;
@@ -258,9 +252,9 @@ export async function generateInsightsForTenant(tenantId: string): Promise<void>
 
   const context = contextLines.join('\n');
 
-  const response = await _anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+  const response = await routedChatCompletion({
     max_tokens: 1200,
+    logContext: { tenantId, productSlug: 'insights' },
     messages: [{
       role: 'user',
       content: `You are an expert WhatsApp AI bot consultant. Analyze this client's bot configuration and recent conversation failure patterns. Generate 3-6 specific, actionable recommendations to improve their bot's performance and conversion rate.
@@ -292,7 +286,7 @@ Rules:
     }],
   });
 
-  const rawText = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '[]';
+  const rawText = response.content.trim() || '[]';
   let suggestions: Suggestion[] = [];
   try {
     // Strip possible markdown code fences

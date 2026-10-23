@@ -2,7 +2,6 @@ import cron from 'node-cron';
 import { getServerClient } from '@alphabot/database';
 import { runDailyReports } from '../lib/email/daily-report.js';
 import { WhatsAppGateway } from '../services/whatsapp/gateway.js';
-import { processScheduledMessages } from '../services/scheduled-messages/sender.js';
 import { runInsightsForAllTenants } from '../services/insights/generator.js';
 import { withJobLock } from '../lib/redis.js';
 import { businessDaysCutoff } from '../lib/business-days.js';
@@ -380,13 +379,6 @@ export function startScheduler(): void {
   cron.schedule('0 * * * *', () => {
     void withJobLock('auto_escalate', 3540, () => processAutoEscalate()).catch(err =>
       alertJobFailure('auto_escalate', err)
-    );
-  });
-
-  // Scheduled messages — every minute  [TTL: 55s]
-  cron.schedule('* * * * *', () => {
-    void withJobLock('scheduled_messages_dispatch', 55, () => processScheduledMessages()).catch(err =>
-      alertJobFailure('scheduled_messages_dispatch', err)
     );
   });
 

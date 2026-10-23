@@ -15,7 +15,6 @@ import { orderRoutes, easebuzzCallbackRoute } from './routes/orders/index.js';
 import { subscriptionRoutes } from './routes/subscriptions/index.js';
 import { settingsRoutes } from './routes/settings/index.js';
 import { buttonTemplateRoutes } from './routes/button-templates/index.js';
-import { scheduledMessageRoutes } from './routes/scheduled-messages/index.js';
 import { metricsRoutes } from './routes/metrics/index.js';
 import { startScheduler } from './jobs/scheduler.js';
 import { runInsightsForAllTenants } from './services/insights/generator.js';
@@ -118,7 +117,6 @@ await server.register(easebuzzCallbackRoute,  { prefix: '/api/payments' });
 await server.register(subscriptionRoutes,   { prefix: '/api/subscriptions' });
 await server.register(settingsRoutes,       { prefix: '/api/settings' });
 await server.register(buttonTemplateRoutes,   { prefix: '/api/button-templates' });
-await server.register(scheduledMessageRoutes, { prefix: '/api/scheduled-messages' });
 await server.register(metricsRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────

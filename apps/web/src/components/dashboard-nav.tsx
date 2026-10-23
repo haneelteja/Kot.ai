@@ -15,7 +15,6 @@ import {
   ShoppingCart,
   MessageSquareMore,
   Plug,
-  CalendarClock,
   ClipboardList,
   RotateCcw,
   UtensilsCrossed,
@@ -29,7 +28,6 @@ const BASE_NAV = [
   { href: '/knowledge-base',   label: 'Knowledge Base', icon: BookOpen         },
   { href: '/guardrails',       label: 'Guardrails',     icon: ShieldCheck      },
   { href: '/button-templates', label: 'Buttons',        icon: MessageSquareMore },
-  { href: '/scheduled-messages',  label: 'Scheduled',  icon: CalendarClock },
   { href: '/billing',          label: 'Billing',        icon: CreditCard       },
   { href: '/settings',         label: 'Settings',       icon: Settings         },
 ];

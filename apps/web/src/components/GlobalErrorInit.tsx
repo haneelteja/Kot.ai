@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react';
 import { logError } from '@/lib/logger';
+import { initSentry } from '@/lib/sentry';
 
 export function GlobalErrorInit() {
   useEffect(() => {
+    initSentry();
     // Catch synchronous runtime errors not caught by React (e.g. outside render)
     const onError = (event: ErrorEvent) => {
       const msg = event.error?.message ?? event.message ?? '';

@@ -1,3 +1,5 @@
+import { captureException } from './sentry';
+
 const APP_TAG = '[ALPHABOT]';
 
 export type ErrorLayer = 'UI' | 'API' | 'Network' | 'Component' | 'Runtime';
@@ -50,6 +52,11 @@ export function logError(error: unknown, context: ErrorContext): void {
     ...context.meta,
   });
   console.groupEnd();
+
+  captureException(err, {
+    layer: context.layer, source: context.source, component: context.component,
+    fn: context.fn, endpoint: context.endpoint, ...sanitize(context.meta),
+  });
 }
 
 export function logWarn(message: string, context: Omit<ErrorContext, 'layer'>): void {

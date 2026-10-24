@@ -166,7 +166,7 @@ async function sendCsatSurvey(conversationId: string): Promise<void> {
 
 // ─── Internal notification dispatcher ────────────────────────────────────────
 
-async function sendEscalationNotifications(
+export async function sendEscalationNotifications(
   conversation: Conversation,
   triggerReason: string
 ): Promise<void> {

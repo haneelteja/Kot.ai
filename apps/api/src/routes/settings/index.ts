@@ -3,6 +3,27 @@ import { getServerClient } from '@alphabot/database';
 import { requireAuth } from '../../middleware/auth.js';
 
 export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
+  // ─── GET/PATCH /api/settings/escalation-reminder ─────────────────────────
+  // CONV-06: minutes before an unclaimed escalation gets a one-time re-alert.
+  fastify.get('/escalation-reminder', { preHandler: [requireAuth] }, async (request, reply) => {
+    const db = getServerClient();
+    const { data } = await db.from('tenants').select('escalation_reminder_minutes').eq('id', request.tenantId).single();
+    return { success: true, data: { escalation_reminder_minutes: (data as { escalation_reminder_minutes: number | null } | null)?.escalation_reminder_minutes ?? 5 } };
+  });
+
+  fastify.patch<{ Body: { escalation_reminder_minutes: number } }>(
+    '/escalation-reminder', { preHandler: [requireAuth] }, async (request, reply) => {
+      const { escalation_reminder_minutes } = request.body;
+      if (!Number.isInteger(escalation_reminder_minutes) || escalation_reminder_minutes <= 0) {
+        return reply.status(400).send({ success: false, error: 'escalation_reminder_minutes must be a positive integer' });
+      }
+      const db = getServerClient();
+      const { error } = await db.from('tenants').update({ escalation_reminder_minutes }).eq('id', request.tenantId);
+      if (error) return reply.status(500).send({ success: false, error: error.message });
+      return { success: true, data: { escalation_reminder_minutes } };
+    },
+  );
+
   // ─── GET/PATCH /api/settings/takeover ────────────────────────────────────
   // HND-03: minutes of staff inactivity before a bot_paused conversation
   // auto-releases back to the bot (lib/idle-takeover-check.ts). Lives on

@@ -15,6 +15,7 @@ import { PrivacyNoticeSettings } from '@/components/dashboard/PrivacyNoticeSetti
 import { DataRetentionSettings } from '@/components/dashboard/DataRetentionSettings';
 import { BillingRulesSettings } from '@/components/dashboard/BillingRulesSettings';
 import { TakeoverSettings } from '@/components/dashboard/TakeoverSettings';
+import { EscalationReminderSettings } from '@/components/dashboard/EscalationReminderSettings';
 import { QuickRepliesSettings } from '@/components/dashboard/QuickRepliesSettings';
 import { DailyReportSettings } from '@/components/dashboard/DailyReportSettings';
 import { NotificationPreferences } from '@/components/dashboard/NotificationPreferences';
@@ -616,7 +617,7 @@ export default async function SettingsPage({
       .eq('user_id', user.id).eq('tenant_id', tenantId).maybeSingle(),
     admin.from('tenant_products').select('id')
       .eq('tenant_id', tenantId).eq('product_type', 'restaurant_bot').eq('active', true).maybeSingle(),
-    admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise, bot_takeover_idle_minutes').eq('id', tenantId).single(),
+    admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise, bot_takeover_idle_minutes, escalation_reminder_minutes').eq('id', tenantId).single(),
     admin.from('quick_replies').select('id, label, message').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
   ]);
   const hasRestaurantBot = !!restaurantProductRow;
@@ -649,6 +650,12 @@ export default async function SettingsPage({
             initialResendKeyMasked={(notifSettings as { resend_api_key?: string | null } | null)?.resend_api_key
               ? '••••' + ((notifSettings as { resend_api_key: string }).resend_api_key).slice(-4)
               : ''}
+          />
+        </Section>
+
+        <Section icon={<Bell size={16} />} title="Escalation Reminder" hint="CONV-06: if no staff member claims an escalated conversation in time, a second alert fires once.">
+          <EscalationReminderSettings
+            initialMinutes={(tenantRow as { escalation_reminder_minutes?: number | null } | null)?.escalation_reminder_minutes ?? 5}
           />
         </Section>
 

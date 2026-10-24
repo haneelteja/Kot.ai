@@ -15,6 +15,7 @@ import { sendDueOrderFeedbackPrompts } from '../lib/order-feedback.js';
 import { checkStuckOrders, checkUncollectedOrders } from '../lib/stuck-order-check.js';
 import { purgeExpiredMessages } from '../lib/retention.js';
 import { checkIdleTakeovers } from '../lib/idle-takeover-check.js';
+import { checkUnclaimedEscalations } from '../lib/escalation-reminder-check.js';
 import { processCheckoutDraftReminders } from '../lib/checkout-draft-expiry.js';
 
 function alertJobFailure(jobName: string, err: unknown): void {
@@ -479,6 +480,13 @@ export function startScheduler(): void {
   cron.schedule('*/10 * * * *', () => {
     void withJobLock('idle_takeover_check', 590, () => checkIdleTakeovers(getServerClient(), console)).catch(err =>
       alertJobFailure('idle_takeover_check', err)
+    );
+  });
+
+  // CONV-06: re-alert once on an unclaimed escalation past its window (default 5 min) — tighter interval so the default window isn't missed by much  [TTL: 110s]
+  cron.schedule('*/2 * * * *', () => {
+    void withJobLock('escalation_reminder_check', 110, () => checkUnclaimedEscalations(getServerClient(), console)).catch(err =>
+      alertJobFailure('escalation_reminder_check', err)
     );
   });
 

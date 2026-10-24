@@ -15,6 +15,7 @@ import { PrivacyNoticeSettings } from '@/components/dashboard/PrivacyNoticeSetti
 import { DataRetentionSettings } from '@/components/dashboard/DataRetentionSettings';
 import { BillingRulesSettings } from '@/components/dashboard/BillingRulesSettings';
 import { TakeoverSettings } from '@/components/dashboard/TakeoverSettings';
+import { QuickRepliesSettings } from '@/components/dashboard/QuickRepliesSettings';
 import { DailyReportSettings } from '@/components/dashboard/DailyReportSettings';
 import { NotificationPreferences } from '@/components/dashboard/NotificationPreferences';
 import { WhatsAppNumbersManager} from '@/components/dashboard/WhatsAppNumbersManager';
@@ -609,13 +610,14 @@ export default async function SettingsPage({
   }
 
   // ── Notifications data ──────────────────────────────────────────────────────
-  const [{ data: notifSettings }, { data: userNotifPrefs }, { data: restaurantProductRow }, { data: tenantRow }] = await Promise.all([
+  const [{ data: notifSettings }, { data: userNotifPrefs }, { data: restaurantProductRow }, { data: tenantRow }, { data: quickReplies }] = await Promise.all([
     admin.from('tenant_notification_settings').select('*').eq('tenant_id', tenantId).single(),
     admin.from('user_notification_preferences').select('escalation_email, assignment_email')
       .eq('user_id', user.id).eq('tenant_id', tenantId).maybeSingle(),
     admin.from('tenant_products').select('id')
       .eq('tenant_id', tenantId).eq('product_type', 'restaurant_bot').eq('active', true).maybeSingle(),
     admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise, bot_takeover_idle_minutes').eq('id', tenantId).single(),
+    admin.from('quick_replies').select('id, label, message').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
   ]);
   const hasRestaurantBot = !!restaurantProductRow;
 
@@ -654,6 +656,10 @@ export default async function SettingsPage({
           <TakeoverSettings
             initialMinutes={(tenantRow as { bot_takeover_idle_minutes?: number | null } | null)?.bot_takeover_idle_minutes ?? 120}
           />
+        </Section>
+
+        <Section icon={<Bell size={16} />} title="Quick Replies" hint="HND-04: canned responses available in the reply box when a staff member is handling a conversation.">
+          <QuickRepliesSettings initialReplies={quickReplies ?? []} />
         </Section>
 
         <Section icon={<Bell size={16} />} title={hasRestaurantBot ? 'Owner Alerts' : 'Lead Notifications'} hint={hasRestaurantBot ? 'The owner/manager WhatsApp numbers that get instant alerts — new table bookings, a kitchen-reported order problem, a low rating, or a stuck order — in addition to lead alerts.' : 'Notify your sales team the moment a lead is captured — when the bot detects buying intent. Configure email addresses and WhatsApp numbers to receive instant lead alerts.'}>

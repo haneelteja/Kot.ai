@@ -31,6 +31,7 @@ export interface ConversationDetail {
   contact: { phone: string | null; name: string | null } | null;
   messages: Array<{ id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: string; confidence_score: number | null }>;
   teamMembers: Array<{ id: string; name: string }>;
+  quickReplies: Array<{ id: string; label: string; message: string }>;
   /** HND-02: the most recent order/booking linked to this conversation, restaurant_bot only. */
   linkedOrder?:   LinkedOrderSummary | null;
   linkedBooking?: LinkedBookingSummary | null;
@@ -79,10 +80,10 @@ export async function getConversationDetailAction(conversationId: string): Promi
     .order('timestamp', { ascending: false })
     .limit(50);
 
-  const { data: tenantUsersData } = await admin
-    .from('tenant_users')
-    .select('user_id, role')
-    .eq('tenant_id', tenantId);
+  const [{ data: tenantUsersData }, { data: quickRepliesData }] = await Promise.all([
+    admin.from('tenant_users').select('user_id, role').eq('tenant_id', tenantId),
+    admin.from('quick_replies').select('id, label, message').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
+  ]);
 
   const memberIds   = new Set((tenantUsersData ?? []).map(tu => tu.user_id));
   const authUsers   = await getAuthUsersCached(tenantId);
@@ -119,6 +120,7 @@ export async function getConversationDetailAction(conversationId: string): Promi
     contact:           (conversation.contacts as unknown as { phone: string | null; name: string | null } | null) ?? null,
     messages:          ((messagesDesc ?? []) as ConversationDetail['messages']).reverse(),
     teamMembers,
+    quickReplies:      (quickRepliesData ?? []) as ConversationDetail['quickReplies'],
     linkedOrder,
     linkedBooking,
   };

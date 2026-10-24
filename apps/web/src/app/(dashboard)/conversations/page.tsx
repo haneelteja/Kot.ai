@@ -472,6 +472,7 @@ export default async function ConversationsPage({
                       status={detail.status}
                       teamMembers={detail.teamMembers}
                       assignedAgentId={detail.assigned_agent_id}
+                      quickReplies={detail.quickReplies}
                     />
                   </>
                 );

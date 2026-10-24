@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Send, UserCheck, RefreshCw, UserPlus, ChevronDown, Trash2 } from 'lucide-react';
+import { Send, UserCheck, RefreshCw, UserPlus, ChevronDown, Trash2, MessageSquareText } from 'lucide-react';
 import { clearConversationAction } from '@/app/actions/conversation';
 
 interface TeamMember {
@@ -11,19 +11,27 @@ interface TeamMember {
   name: string;
 }
 
+interface QuickReply {
+  id:      string;
+  label:   string;
+  message: string;
+}
+
 interface Props {
   conversationId: string;
   status: string;
   teamMembers: TeamMember[];
   assignedAgentId: string | null;
+  quickReplies?: QuickReply[];
 }
 
-export function ConversationActions({ conversationId, status, teamMembers, assignedAgentId }: Props) {
+export function ConversationActions({ conversationId, status, teamMembers, assignedAgentId, quickReplies = [] }: Props) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [actioning, setActioning] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [clearConfirm, setClearConfirm] = useState(false);
   const [clearPending, startClearTransition] = useTransition();
   const router = useRouter();
@@ -233,6 +241,33 @@ export function ConversationActions({ conversationId, status, teamMembers, assig
             </p>
           )}
           <form onSubmit={handleSend} className="flex items-center gap-3">
+            {quickReplies.length > 0 && (
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowQuickReplies(v => !v)}
+                  aria-label="Insert a quick reply"
+                  className="w-10 h-10 rounded-xl border border-line text-muted-foreground hover:bg-sunken flex items-center justify-center transition-colors"
+                >
+                  <MessageSquareText size={16} />
+                </button>
+                {showQuickReplies && (
+                  <div className="absolute bottom-full left-0 mb-1 w-64 max-h-64 overflow-y-auto bg-white rounded-xl border border-line shadow-lg z-10 overflow-hidden">
+                    {quickReplies.map(qr => (
+                      <button
+                        key={qr.id}
+                        type="button"
+                        onClick={() => { setMessage(qr.message); setShowQuickReplies(false); }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-sunken transition-colors border-b border-line last:border-b-0"
+                      >
+                        <p className="font-semibold text-text">{qr.label}</p>
+                        <p className="text-muted-foreground truncate">{qr.message}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <input
               type="text"
               value={message}

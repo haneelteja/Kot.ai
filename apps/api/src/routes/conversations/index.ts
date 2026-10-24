@@ -203,7 +203,7 @@ export async function conversationRoutes(fastify: FastifyInstance): Promise<void
   fastify.patch<{
     Params: { id: string };
     Body: { status?: string; assigned_agent_id?: string | null };
-  }>('/:id', { preHandler: [requireAuth, requireRole('admin', 'supervisor', 'agent')] }, async (request, reply) => {
+  }>('/:id', { preHandler: [requireAuth, requireRole('admin', 'client_manager', 'client_admin', 'agent')] }, async (request, reply) => {
     const db = getServerClient();
     const allowed = ['open', 'escalated', 'resolved', 'bot_paused'];
 

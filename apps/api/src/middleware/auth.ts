@@ -8,7 +8,12 @@ declare module 'fastify' {
   interface FastifyRequest {
     tenantId: string;
     userId: string;
-    userRole: 'admin' | 'supervisor' | 'agent';
+    // 'admin' is a synthetic value only ever set by the platform_users
+    // fallback below — tenant_users.role itself is constrained to
+    // 'client_manager' | 'client_admin' | 'agent' (the pre-rename names
+    // 'admin'/'supervisor' were migrated away in
+    // 20250101000002_platform_and_bot_configs.sql and never persist here).
+    userRole: 'admin' | 'client_manager' | 'client_admin' | 'agent';
     apiKeyScopes?: string[];
   }
 }
@@ -30,7 +35,7 @@ function getAnonClient() {
 interface AuthContext {
   tenantId: string;
   userId:   string;
-  userRole: 'admin' | 'supervisor' | 'agent';
+  userRole: 'admin' | 'client_manager' | 'client_admin' | 'agent';
 }
 
 // Cache auth results for 30s — safe since JWTs are valid for 1h and the
@@ -59,7 +64,7 @@ async function resolveAuthContext(token: string): Promise<AuthContext | null> {
     const ctx: AuthContext = {
       tenantId: membership.tenant_id as string,
       userId:   user.id,
-      userRole: membership.role as 'admin' | 'supervisor' | 'agent',
+      userRole: membership.role as 'client_manager' | 'client_admin' | 'agent',
     };
     await cacheSet(cacheKey, ctx, AUTH_CACHE_TTL);
     return ctx;
@@ -190,7 +195,7 @@ export function requireScope(scope: string) {
   };
 }
 
-export function requireRole(...roles: Array<'admin' | 'supervisor' | 'agent'>) {
+export function requireRole(...roles: Array<'admin' | 'client_manager' | 'client_admin' | 'agent'>) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (!roles.includes(request.userRole)) {
       await reply.status(403).send({ success: false, error: 'Insufficient permissions' });

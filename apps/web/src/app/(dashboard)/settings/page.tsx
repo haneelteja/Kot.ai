@@ -13,6 +13,7 @@ import { LeadNotificationSettings } from '@/components/dashboard/LeadNotificatio
 import { KitchenNotificationSettings } from '@/components/dashboard/KitchenNotificationSettings';
 import { PrivacyNoticeSettings } from '@/components/dashboard/PrivacyNoticeSettings';
 import { DataRetentionSettings } from '@/components/dashboard/DataRetentionSettings';
+import { BillingRulesSettings } from '@/components/dashboard/BillingRulesSettings';
 import { DailyReportSettings } from '@/components/dashboard/DailyReportSettings';
 import { NotificationPreferences } from '@/components/dashboard/NotificationPreferences';
 import { WhatsAppNumbersManager} from '@/components/dashboard/WhatsAppNumbersManager';
@@ -613,7 +614,7 @@ export default async function SettingsPage({
       .eq('user_id', user.id).eq('tenant_id', tenantId).maybeSingle(),
     admin.from('tenant_products').select('id')
       .eq('tenant_id', tenantId).eq('product_type', 'restaurant_bot').eq('active', true).maybeSingle(),
-    admin.from('tenants').select('chat_retention_days').eq('id', tenantId).single(),
+    admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise').eq('id', tenantId).single(),
   ]);
   const hasRestaurantBot = !!restaurantProductRow;
 
@@ -668,6 +669,15 @@ export default async function SettingsPage({
           <Section icon={<Bell size={16} />} title="Kitchen Notifications" hint="Where new order tickets go (FUL-01). Separate from Owner Alerts above — this is the kitchen staff's own phone(s), not the owner's.">
             <KitchenNotificationSettings
               initialWaNumbers={(notifSettings as { kitchen_notification_wa_numbers?: string[] | null } | null)?.kitchen_notification_wa_numbers ?? []}
+            />
+          </Section>
+        )}
+
+        {hasRestaurantBot && (
+          <Section icon={<Bell size={16} />} title="Billing Rules" hint="PRC-01: tax rate and packing charge, computed server-side on every order — never client-trusted.">
+            <BillingRulesSettings
+              initialTaxRateBp={(tenantRow as { tax_rate_bp?: number | null } | null)?.tax_rate_bp ?? 0}
+              initialPackingChargePaise={(tenantRow as { packing_charge_paise?: number | null } | null)?.packing_charge_paise ?? 0}
             />
           </Section>
         )}

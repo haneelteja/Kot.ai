@@ -20,6 +20,7 @@ import { getProductCatalogue } from '../../lib/product-cache.js';
 import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
 import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
+import { calculateBill, getTenantBillingConfig } from '../../lib/bill-calculator.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
 import { handleConfirmComplaint, COMPLAINT_PROMPT_BLOCK } from '../../services/restaurant-bot/complaint-flow.js';
@@ -1037,9 +1038,10 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
     // separate SHOW_MENU/VIEW_CART marker round-trip needed. Code always
     // recomputes prices from live menu_items — the model never sets a price.
     if (productType === 'restaurant_bot' && toolEnabled(allowedTools, TOOL_IDS.MENU_ORDERING)) {
-      const [menu, cart] = await Promise.all([
+      const [menu, cart, billingConfig] = await Promise.all([
         getMenu(tenantId),
         getCartSummary(db, tenantId, contactData.id),
+        getTenantBillingConfig(db, tenantId),
       ]);
       if (menu.length > 0) {
         // Note: item ids are shown as "id: <uuid>" (NOT "[uuid]") deliberately —
@@ -1052,9 +1054,19 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
           `${m.category_name ? ` (${m.category_name})` : ''}${!m.in_stock ? ' [OUT OF STOCK]' : ''}` +
           (m.description ? `\n  ${m.description}` : '')
         ).join('\n');
+        // PRC-01: bill readback always includes tax/packing when the tenant
+        // has either configured — kept as a bare "Total" line (unchanged)
+        // for tenants who haven't, so there's no copy regression for them.
+        const bill = calculateBill(cart.totalPaise, billingConfig);
+        const hasSurcharge = bill.taxPaise > 0 || bill.packingPaise > 0;
         const cartText = cart.items.length > 0
           ? cart.items.map(i => `  ${i.quantity}× ${i.name} — ₹${(i.lineTotalPaise / 100).toFixed(2)}`).join('\n') +
-            `\n  Total: ₹${(cart.totalPaise / 100).toFixed(2)}`
+            (hasSurcharge
+              ? `\n  Subtotal: ₹${(bill.subtotalPaise / 100).toFixed(2)}` +
+                (bill.taxPaise > 0 ? `\n  Tax: ₹${(bill.taxPaise / 100).toFixed(2)}` : '') +
+                (bill.packingPaise > 0 ? `\n  Packing charge: ₹${(bill.packingPaise / 100).toFixed(2)}` : '') +
+                `\n  Total: ₹${(bill.totalPaise / 100).toFixed(2)}`
+              : `\n  Total: ₹${(bill.totalPaise / 100).toFixed(2)}`)
           : '  (empty)';
         systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nCRITICAL: if you tell the customer you added, removed, or changed something in their order, you MUST include the matching tag in that same reply — the tag is what actually performs the action; saying it in words does nothing by itself. Never say "I've added X" or similar without also appending [ADD_ITEM:...] in the same message. Since a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself in addition to the tag — never the tag alone, and never the words alone. Never quote a price or item you did not see in the MENU list above.`;
       }
@@ -1723,7 +1735,14 @@ Which branch works best for you?
         // exists only once Easebuzz confirms payment (routes/orders/index.ts).
         const result = await confirmOrderFromCart(db, tenantId, contactData.id, conversation.id);
         if (result.ok && result.linkUrl) {
-          const msg = `Please pay ₹${(result.totalPaise / 100).toFixed(2)} to confirm your order. This link is valid for 30 minutes.\n\n💳 ${result.linkUrl}`;
+          const hasSurcharge = result.bill.taxPaise > 0 || result.bill.packingPaise > 0;
+          const billLines = hasSurcharge
+            ? `Subtotal: ₹${(result.bill.subtotalPaise / 100).toFixed(2)}\n` +
+              (result.bill.taxPaise > 0 ? `Tax: ₹${(result.bill.taxPaise / 100).toFixed(2)}\n` : '') +
+              (result.bill.packingPaise > 0 ? `Packing charge: ₹${(result.bill.packingPaise / 100).toFixed(2)}\n` : '') +
+              `Total: ₹${(result.totalPaise / 100).toFixed(2)}\n\n`
+            : '';
+          const msg = `${billLines}Please pay ₹${(result.totalPaise / 100).toFixed(2)} to confirm your order. This link is valid for 30 minutes.\n\n💳 ${result.linkUrl}`;
           fireForget(
             gateway.sendMessage(config.phone_number_id, config.access_token, { type: 'text', to: incoming.from, text: msg }),
             'send-order-confirmation',

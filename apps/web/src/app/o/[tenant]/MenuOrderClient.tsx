@@ -13,9 +13,21 @@ export interface PublicMenuItem {
   in_stock:      boolean;
 }
 
+export interface TenantBilling {
+  taxRateBp:          number;
+  packingChargePaise: number;
+}
+
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
 
-export function MenuOrderClient({ tenantId, menu }: { tenantId: string; menu: PublicMenuItem[] }) {
+/** PRC-01: mirrors apps/api/src/lib/bill-calculator.ts's math exactly, so the preview shown here always matches what createWebOrder will actually charge. The server remains authoritative — this is display-only. */
+function calculateBillPreview(subtotalPaise: number, billing: TenantBilling) {
+  const taxPaise     = Math.round(subtotalPaise * billing.taxRateBp / 10000);
+  const packingPaise = subtotalPaise > 0 ? billing.packingChargePaise : 0;
+  return { subtotalPaise, taxPaise, packingPaise, totalPaise: subtotalPaise + taxPaise + packingPaise };
+}
+
+export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string; menu: PublicMenuItem[]; billing: TenantBilling }) {
   const [qty, setQty]           = useState<Record<string, number>>({});
   const [phone, setPhone]       = useState('');
   const [name, setName]         = useState('');
@@ -36,7 +48,9 @@ export function MenuOrderClient({ tenantId, menu }: { tenantId: string; menu: Pu
     () => menu.filter(m => (qty[m.id] ?? 0) > 0).map(m => ({ item: m, quantity: qty[m.id]! })),
     [menu, qty],
   );
-  const totalPaise = cartLines.reduce((sum, l) => sum + l.item.price_paise * l.quantity, 0);
+  const subtotalPaise = cartLines.reduce((sum, l) => sum + l.item.price_paise * l.quantity, 0);
+  const bill = calculateBillPreview(subtotalPaise, billing);
+  const totalPaise = bill.totalPaise;
 
   function setItemQty(id: string, next: number) {
     setQty(prev => ({ ...prev, [id]: Math.max(0, Math.min(20, next)) }));
@@ -139,9 +153,31 @@ export function MenuOrderClient({ tenantId, menu }: { tenantId: string; menu: Pu
               </div>
             ))}
           </div>
-          <div className="flex justify-between text-sm font-semibold text-text border-t border-line pt-3">
-            <span>Total</span>
-            <span>₹{(totalPaise / 100).toFixed(2)}</span>
+          <div className="border-t border-line pt-3 space-y-1">
+            {(bill.taxPaise > 0 || bill.packingPaise > 0) && (
+              <>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span>₹{(bill.subtotalPaise / 100).toFixed(2)}</span>
+                </div>
+                {bill.taxPaise > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Tax</span>
+                    <span>₹{(bill.taxPaise / 100).toFixed(2)}</span>
+                  </div>
+                )}
+                {bill.packingPaise > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Packing charge</span>
+                    <span>₹{(bill.packingPaise / 100).toFixed(2)}</span>
+                  </div>
+                )}
+              </>
+            )}
+            <div className="flex justify-between text-sm font-semibold text-text">
+              <span>Total</span>
+              <span>₹{(totalPaise / 100).toFixed(2)}</span>
+            </div>
           </div>
 
           <div className="space-y-2">

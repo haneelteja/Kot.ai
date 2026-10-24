@@ -1,5 +1,6 @@
 import type { getServerClient } from '@alphabot/database';
 import { allocateOrderRef } from './order-ref.js';
+import type { BillBreakdown } from './bill-calculator.js';
 
 type Db = ReturnType<typeof getServerClient>;
 
@@ -31,20 +32,23 @@ export async function createCheckoutDraft(
   conversationId: string,
   source:         'whatsapp_bot' | 'weblink',
   items:          DraftLineItem[],
-  totalPaise:     number,
+  bill:           BillBreakdown,
 ): Promise<CheckoutDraft | null> {
   const expiresAt = new Date(Date.now() + DRAFT_EXPIRY_MS).toISOString();
 
   const { data, error } = await db
     .from('checkout_drafts')
     .insert({
-      tenant_id:       tenantId,
-      contact_id:      contactId,
-      conversation_id: conversationId,
+      tenant_id:            tenantId,
+      contact_id:           contactId,
+      conversation_id:      conversationId,
       source,
-      items_json:      items,
-      total_paise:     totalPaise,
-      expires_at:      expiresAt,
+      items_json:           items,
+      subtotal_paise:       bill.subtotalPaise,
+      tax_paise:            bill.taxPaise,
+      packing_charge_paise: bill.packingPaise,
+      total_paise:          bill.totalPaise,
+      expires_at:           expiresAt,
     })
     .select('id, expires_at')
     .single();
@@ -58,7 +62,7 @@ export async function attachDraftPaymentLink(db: Db, draftId: string, linkUrl: s
 }
 
 export type ConvertDraftResult =
-  | { ok: true; orderId: string; orderRef: string; totalPaise: number; tenantId: string; contactId: string; conversationId: string; source: string }
+  | { ok: true; orderId: string; orderRef: string; totalPaise: number; subtotalPaise: number; taxPaise: number; packingPaise: number; tenantId: string; contactId: string; conversationId: string; source: string }
   | { ok: false; error: 'draft_not_found' | 'already_converted' | 'create_failed' };
 
 /**
@@ -70,7 +74,7 @@ export type ConvertDraftResult =
 export async function convertDraftToOrder(db: Db, draftId: string): Promise<ConvertDraftResult> {
   const { data: draft } = await db
     .from('checkout_drafts')
-    .select('id, tenant_id, contact_id, conversation_id, source, items_json, total_paise, status, order_id')
+    .select('id, tenant_id, contact_id, conversation_id, source, items_json, subtotal_paise, tax_paise, packing_charge_paise, total_paise, status, order_id')
     .eq('id', draftId)
     .single();
 
@@ -84,6 +88,9 @@ export async function convertDraftToOrder(db: Db, draftId: string): Promise<Conv
         orderId: draft.order_id as string,
         orderRef: '', // caller already sent the confirmation on first conversion; not needed on replay
         totalPaise: draft.total_paise as number,
+        subtotalPaise: draft.subtotal_paise as number,
+        taxPaise: draft.tax_paise as number,
+        packingPaise: draft.packing_charge_paise as number,
         tenantId: draft.tenant_id as string,
         contactId: draft.contact_id as string,
         conversationId: draft.conversation_id as string,
@@ -103,12 +110,15 @@ export async function convertDraftToOrder(db: Db, draftId: string): Promise<Conv
       tenant_id:       tenantId,
       contact_id:      draft.contact_id,
       conversation_id: draft.conversation_id,
-      items_json:      items.map(i => ({ name: i.name, quantity: i.quantity, price: i.unitPricePaise / 100 })),
-      total:           (draft.total_paise as number) / 100,
-      total_paise:     draft.total_paise,
-      order_ref:       orderRef,
-      source:          draft.source,
-      status:          'confirmed',
+      items_json:           items.map(i => ({ name: i.name, quantity: i.quantity, price: i.unitPricePaise / 100 })),
+      total:                (draft.total_paise as number) / 100,
+      total_paise:          draft.total_paise,
+      subtotal_paise:       draft.subtotal_paise,
+      tax_paise:            draft.tax_paise,
+      packing_charge_paise: draft.packing_charge_paise,
+      order_ref:            orderRef,
+      source:               draft.source,
+      status:               'confirmed',
     })
     .select('id')
     .single();
@@ -145,6 +155,9 @@ export async function convertDraftToOrder(db: Db, draftId: string): Promise<Conv
     orderId,
     orderRef,
     totalPaise: draft.total_paise as number,
+    subtotalPaise: draft.subtotal_paise as number,
+    taxPaise: draft.tax_paise as number,
+    packingPaise: draft.packing_charge_paise as number,
     tenantId,
     contactId: draft.contact_id as string,
     conversationId: draft.conversation_id as string,

@@ -3,11 +3,12 @@ import { createEasebuzzPaymentLink } from '../services/payment/easebuzz.js';
 import { getCartSummary, clearCart } from './cart.js';
 import { getMenu } from './menu-cache.js';
 import { createCheckoutDraft, attachDraftPaymentLink, type DraftLineItem } from './checkout-draft.js';
+import { calculateBill, getTenantBillingConfig, type BillBreakdown } from './bill-calculator.js';
 
 type Db = ReturnType<typeof getServerClient>;
 
 export type ConfirmOrderResult =
-  | { ok: true; draftId: string; totalPaise: number; linkUrl: string | null }
+  | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
   | { ok: false; error: 'empty_cart' | 'draft_create_failed' };
 
 /**
@@ -35,7 +36,10 @@ export async function confirmOrderFromCart(
     quantity: i.quantity, lineTotalPaise: i.lineTotalPaise,
   }));
 
-  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'whatsapp_bot', items, cart.totalPaise);
+  const billingConfig = await getTenantBillingConfig(db, tenantId);
+  const bill = calculateBill(cart.totalPaise, billingConfig);
+
+  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'whatsapp_bot', items, bill);
   if (!draft) return { ok: false, error: 'draft_create_failed' };
 
   let linkUrl: string | null = null;
@@ -45,7 +49,7 @@ export async function confirmOrderFromCart(
       paymentId:    draft.id, // Easebuzz txnid — the draft's id until conversion, matching the callback's lookup
       contactPhone: contact.phone,
       contactName:  (contact as { name: string | null }).name,
-      amountRupees: cart.totalPaise / 100,
+      amountRupees: bill.totalPaise / 100,
       description:  'Restaurant order',
     });
     if (result.success && result.linkUrl) {
@@ -56,11 +60,11 @@ export async function confirmOrderFromCart(
 
   await clearCart(db, tenantId, contactId);
 
-  return { ok: true, draftId: draft.id, totalPaise: cart.totalPaise, linkUrl };
+  return { ok: true, draftId: draft.id, totalPaise: bill.totalPaise, bill, linkUrl };
 }
 
 export type WebOrderResult =
-  | { ok: true; draftId: string; totalPaise: number; linkUrl: string | null }
+  | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
   | { ok: false; error: 'empty_order' | 'draft_create_failed' };
 
 /**
@@ -94,7 +98,9 @@ export async function createWebOrder(
 
   if (lines.length === 0) return { ok: false, error: 'empty_order' };
 
-  const totalPaise = lines.reduce((s, l) => s + l.lineTotalPaise, 0);
+  const subtotalPaise = lines.reduce((s, l) => s + l.lineTotalPaise, 0);
+  const billingConfig = await getTenantBillingConfig(db, tenantId);
+  const bill = calculateBill(subtotalPaise, billingConfig);
 
   const contactUpsert: Record<string, unknown> = { tenant_id: tenantId, phone };
   if (name) contactUpsert['name'] = name;
@@ -114,7 +120,7 @@ export async function createWebOrder(
   if (convError || !conv) return { ok: false, error: 'draft_create_failed' };
   const conversationId = (conv as { id: string }).id;
 
-  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'weblink', lines, totalPaise);
+  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'weblink', lines, bill);
   if (!draft) return { ok: false, error: 'draft_create_failed' };
 
   let linkUrl: string | null = null;
@@ -122,7 +128,7 @@ export async function createWebOrder(
     paymentId:    draft.id,
     contactPhone: phone,
     contactName:  name,
-    amountRupees: totalPaise / 100,
+    amountRupees: bill.totalPaise / 100,
     description:  'Restaurant order',
   });
   if (result.success && result.linkUrl) {
@@ -130,7 +136,7 @@ export async function createWebOrder(
     await attachDraftPaymentLink(db, draft.id, result.linkUrl);
   }
 
-  return { ok: true, draftId: draft.id, totalPaise, linkUrl };
+  return { ok: true, draftId: draft.id, totalPaise: bill.totalPaise, bill, linkUrl };
 }
 
 export type CreateOrderFeedbackResult =

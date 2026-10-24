@@ -1,17 +1,18 @@
 import { verifyOrderingLink } from '@/lib/ordering-link';
-import { MenuOrderClient, type PublicMenuItem } from './MenuOrderClient';
+import { MenuOrderClient, type PublicMenuItem, type TenantBilling } from './MenuOrderClient';
 
 export const dynamic = 'force-dynamic';
 
-async function fetchMenu(tenantId: string): Promise<PublicMenuItem[]> {
+async function fetchMenu(tenantId: string): Promise<{ menu: PublicMenuItem[]; billing: TenantBilling }> {
   const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
+  const fallback = { menu: [], billing: { taxRateBp: 0, packingChargePaise: 0 } };
   try {
     const res = await fetch(`${apiUrl}/api/public/orders/menu/${tenantId}`, { cache: 'no-store' });
-    if (!res.ok) return [];
-    const data = (await res.json()) as { menu?: PublicMenuItem[] };
-    return data.menu ?? [];
+    if (!res.ok) return fallback;
+    const data = (await res.json()) as { menu?: PublicMenuItem[]; billing?: TenantBilling };
+    return { menu: data.menu ?? [], billing: data.billing ?? fallback.billing };
   } catch {
-    return [];
+    return fallback;
   }
 }
 
@@ -47,7 +48,7 @@ export default async function PublicOrderPage({
     return <ErrorCard message={verified.error === 'expired' ? 'This ordering link has expired — please ask the restaurant to send you a fresh one.' : 'This ordering link isn’t valid.'} />;
   }
 
-  const menu = await fetchMenu(tenantId);
+  const { menu, billing } = await fetchMenu(tenantId);
 
   return (
     <main className="min-h-screen bg-sunken">
@@ -60,7 +61,7 @@ export default async function PublicOrderPage({
             <p className="text-sm text-muted-foreground">The menu isn&apos;t available right now. Please try again later.</p>
           </div>
         ) : (
-          <MenuOrderClient tenantId={tenantId} menu={menu} />
+          <MenuOrderClient tenantId={tenantId} menu={menu} billing={billing} />
         )}
       </div>
     </main>

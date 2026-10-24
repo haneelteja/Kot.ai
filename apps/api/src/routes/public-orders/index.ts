@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getServerClient } from '@alphabot/database';
 import { getMenu } from '../../lib/menu-cache.js';
 import { createWebOrder } from '../../lib/restaurant-order.js';
+import { getTenantBillingConfig } from '../../lib/bill-calculator.js';
 
 const PHONE_RE = /^\+?[0-9]{8,15}$/;
 const MAX_LINES = 50;
@@ -22,8 +23,11 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
     if (!/^[0-9a-f-]{36}$/i.test(tenantId)) {
       return reply.status(400).send({ error: 'Invalid tenant id' });
     }
-    const menu = await getMenu(tenantId);
-    return reply.send({ menu });
+    const [menu, billing] = await Promise.all([
+      getMenu(tenantId),
+      getTenantBillingConfig(db, tenantId),
+    ]);
+    return reply.send({ menu, billing });
   });
 
   fastify.post<{
@@ -83,6 +87,7 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
     return reply.send({
       draftId:    result.draftId,
       totalPaise: result.totalPaise,
+      bill:       result.bill,
       linkUrl:    result.linkUrl,
     });
   });

@@ -3,6 +3,47 @@ import { getServerClient } from '@alphabot/database';
 import { requireAuth } from '../../middleware/auth.js';
 
 export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
+  // ─── GET/PATCH /api/settings/billing ─────────────────────────────────────
+  // PRC-01: tax rate (basis points) + flat packing charge, applied server-
+  // side to every checkout (lib/bill-calculator.ts). Lives on `tenants`.
+  fastify.get('/billing', { preHandler: [requireAuth] }, async (request, reply) => {
+    const db = getServerClient();
+    const { data } = await db.from('tenants').select('tax_rate_bp, packing_charge_paise').eq('id', request.tenantId).single();
+    const row = data as { tax_rate_bp: number | null; packing_charge_paise: number | null } | null;
+    return {
+      success: true,
+      data: {
+        tax_rate_bp:          row?.tax_rate_bp ?? 0,
+        packing_charge_paise: row?.packing_charge_paise ?? 0,
+      },
+    };
+  });
+
+  fastify.patch<{ Body: { tax_rate_bp?: number; packing_charge_paise?: number } }>(
+    '/billing', { preHandler: [requireAuth] }, async (request, reply) => {
+      const { tax_rate_bp, packing_charge_paise } = request.body;
+
+      if (tax_rate_bp !== undefined && (!Number.isInteger(tax_rate_bp) || tax_rate_bp < 0 || tax_rate_bp > 10000)) {
+        return reply.status(400).send({ success: false, error: 'tax_rate_bp must be an integer between 0 and 10000' });
+      }
+      if (packing_charge_paise !== undefined && (!Number.isInteger(packing_charge_paise) || packing_charge_paise < 0)) {
+        return reply.status(400).send({ success: false, error: 'packing_charge_paise must be a non-negative integer' });
+      }
+
+      const db = getServerClient();
+      const { error } = await db
+        .from('tenants')
+        .update({
+          ...(tax_rate_bp !== undefined && { tax_rate_bp }),
+          ...(packing_charge_paise !== undefined && { packing_charge_paise }),
+        })
+        .eq('id', request.tenantId);
+
+      if (error) return reply.status(500).send({ success: false, error: error.message });
+      return { success: true, data: { tax_rate_bp, packing_charge_paise } };
+    },
+  );
+
   // ─── GET/PATCH /api/settings/retention ───────────────────────────────────
   // PRV-02: lives on `tenants` (not tenant_notification_settings) — retention
   // is a data-governance setting, not a notification preference.

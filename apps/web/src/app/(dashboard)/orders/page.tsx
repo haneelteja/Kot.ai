@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShoppingCart, Plus, ExternalLink, CheckCircle, Clock, Truck, XCircle, Package, ChefHat, BellRing, Printer } from 'lucide-react';
 import { OrderStatusBadge }   from '@/components/dashboard/OrderStatusBadge';
 import { SendInvoiceButton } from '@/components/dashboard/SendInvoiceButton';
+import { MarkNoShowButton }  from '@/components/dashboard/MarkNoShowButton';
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   pending:    <Clock size={13} className="text-amber-500" />,
@@ -193,6 +194,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                     )}
 
                     <OrderStatusBadge orderId={order.id} currentStatus={order.status as 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled'} isPickup={isPickup} />
+
+                    {isPickup && order.status === 'ready' && <MarkNoShowButton orderId={order.id} />}
 
                     <SendInvoiceButton orderId={order.id} />
 

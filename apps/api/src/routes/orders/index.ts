@@ -15,6 +15,19 @@ import { convertDraftToOrder } from '../../lib/checkout-draft.js';
 type Db = ReturnType<typeof getServerClient>;
 
 /**
+ * PAY-03: the hash check proves the callback is genuinely from Easebuzz,
+ * not that the amount it's confirming actually matches what this order/
+ * draft was created for — a webhook is a separate trust boundary from the
+ * link-creation step, so the amount gets verified independently rather
+ * than assumed. ±1 paise tolerance absorbs the amount round-trip through
+ * Easebuzz's rupee-decimal string format.
+ */
+function amountMatchesExpected(amountStr: string, expectedPaise: number): boolean {
+  const receivedPaise = Math.round(Number(amountStr) * 100);
+  return Number.isFinite(receivedPaise) && Math.abs(receivedPaise - expectedPaise) <= 1;
+}
+
+/**
  * Resolves which WhatsApp number to send an order-related message from.
  * Prefers a number configured for the given product slug (e.g. the bot that
  * actually created the order), falling back to any active number for the
@@ -341,20 +354,50 @@ export async function easebuzzCallbackRoute(fastify: FastifyInstance): Promise<v
     fastify.log.info({ txnid, status }, '[Easebuzz] Callback received');
 
     if (status === 'success') {
+      const { data: existingPayment } = await db
+        .from('payments')
+        .select('order_id')
+        .eq('id', txnid)
+        .maybeSingle();
+
+      if (!existingPayment) {
+        // ORD-02 (revised): txnid may be a checkout_drafts id rather than a
+        // payments id — a restaurant order (WhatsApp or weblink) has no
+        // payments row until payment is confirmed. See lib/checkout-draft.ts.
+        await handleRestaurantDraftPaid(db, fastify, txnid, body['amount'] ?? '');
+        return;
+      }
+
+      const { data: expectedOrder } = await db
+        .from('orders')
+        .select('total_paise, total')
+        .eq('id', existingPayment.order_id)
+        .single();
+      const expectedPaise = expectedOrder
+        ? (expectedOrder as { total_paise: number | null; total: number }).total_paise
+          ?? Math.round((expectedOrder as { total: number }).total * 100)
+        : null;
+
+      if (expectedPaise === null || !amountMatchesExpected(body['amount'] ?? '', expectedPaise)) {
+        fastify.log.error(
+          { txnid, orderId: existingPayment.order_id, receivedAmount: body['amount'], expectedPaise },
+          '[PAY-03] Easebuzz callback amount does not match the order\'s expected total — rejecting, not marking paid',
+        );
+        return;
+      }
+
+      // PAY-04: guard on status='pending' so a duplicate callback delivery
+      // for an already-paid payment is a no-op — without this, a retried
+      // webhook would re-send the "Payment Received" confirmation to the
+      // customer a second time.
       const { data: payment } = await db
         .from('payments')
         .update({ status: 'paid', webhook_received_at: new Date().toISOString() })
         .eq('id', txnid)
+        .eq('status', 'pending')
         .select('order_id')
         .single();
-
-      if (!payment) {
-        // ORD-02 (revised): txnid may be a checkout_drafts id rather than a
-        // payments id — a restaurant order (WhatsApp or weblink) has no
-        // payments row until payment is confirmed. See lib/checkout-draft.ts.
-        await handleRestaurantDraftPaid(db, fastify, txnid);
-        return;
-      }
+      if (!payment) return;
 
       await db.from('orders')
         .update({ status: 'confirmed', updated_at: new Date().toISOString() })
@@ -414,7 +457,29 @@ export async function easebuzzCallbackRoute(fastify: FastifyInstance): Promise<v
  * number is configured (WAB-06; falls back to the customer number), and
  * schedules the FUL-02 auto-accept transition.
  */
-async function handleRestaurantDraftPaid(db: Db, fastify: FastifyInstance, draftId: string): Promise<void> {
+async function handleRestaurantDraftPaid(db: Db, fastify: FastifyInstance, draftId: string, receivedAmount: string): Promise<void> {
+  const { data: draft } = await db
+    .from('checkout_drafts')
+    .select('total_paise, status')
+    .eq('id', draftId)
+    .maybeSingle();
+
+  // PAY-03: verify before converting — once converted, the order is real
+  // and visible in the kitchen/dashboard, so this must happen first.
+  // Skipped for an already-converted draft (replay) since there's no
+  // "expected total" check left to do that convertDraftToOrder's own
+  // idempotency handling doesn't already cover.
+  if (draft && (draft as { status: string }).status === 'awaiting_payment') {
+    const expectedPaise = (draft as { total_paise: number }).total_paise;
+    if (!amountMatchesExpected(receivedAmount, expectedPaise)) {
+      fastify.log.error(
+        { draftId, receivedAmount, expectedPaise },
+        '[PAY-03] Easebuzz callback amount does not match the checkout draft\'s expected total — rejecting, not converting to an order',
+      );
+      return;
+    }
+  }
+
   const result = await convertDraftToOrder(db, draftId);
   if (!result.ok) {
     if (result.error !== 'already_converted') {

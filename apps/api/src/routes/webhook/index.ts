@@ -24,10 +24,12 @@ import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackR
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
 import { handleConfirmComplaint, COMPLAINT_PROMPT_BLOCK } from '../../services/restaurant-bot/complaint-flow.js';
 import { handleReturnRequest } from '../../services/lifecycle-bot/return-request.js';
+import { sendPostBookingDirections } from '../../services/lifecycle-bot/post-booking.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
 import { isOptOutMessage, isOptInMessage, isSuppressed, writeSuppression, removeSuppression } from '../../lib/suppression.js';
 import { writeConsent } from '../../lib/consent.js';
+import { maybeSendPrivacyNotice } from '../../lib/privacy-notice.js';
 import { classifyMessageKind, KIND_CLASSIFIER_VERSION } from '../../lib/message-kind.js';
 import { maybeUpdateChatSummary } from '../../lib/chat-summary.js';
 import { isNumberBlocked } from '../../lib/blocked-numbers.js';
@@ -492,6 +494,9 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
 
     fastify.log.info({ contact: contact ? (contact as Contact).id : null, contactError, isBsuid }, '[Webhook] contact upsert');
     if (!contact) return;
+
+    // PRV-01: fire-and-forget — never block the reply path on this.
+    void maybeSendPrivacyNotice(db, gateway, config, tenantId, (contact as Contact).id, incoming.from, fastify.log);
 
     // ── Opt-out / suppression guard ────────────────────────────────────────────
     // Checked immediately after contact identification.
@@ -1779,63 +1784,13 @@ Which branch works best for you?
     }
 
     // ── Post-booking: directions to customer + notification to branch manager ──
-    // When the AI transitions to [STAGE:booked], fires two messages:
-    // 1. Directions to the customer (branch address, access, hours)
-    // 2. Booking summary to the branch manager's WhatsApp (if manager_phone is set)
+    // When the AI transitions to [STAGE:booked] — see services/lifecycle-bot/post-booking.ts.
     if (stageMatch?.[1] === 'booked' && whatsappNumberId) {
-      fireForget(
-        (async () => {
-          const { data: wnForDirs } = await db
-            .from('whatsapp_numbers')
-            .select('routing_config')
-            .eq('id', whatsappNumberId)
-            .maybeSingle();
-          const branches = ((wnForDirs?.routing_config ?? {}) as RoutingConfig).branches;
-          if (!branches?.length) return;
-
-          // Merge any new entity captures from this turn
-          const latestVars = entityMatches.length > 0
-            ? { ...convAiVars, ...Object.fromEntries(entityMatches.map(m => [m[1]!, m[2]!])) }
-            : convAiVars;
-          const branchName = latestVars['branch'] ?? latestVars['location'] ?? '';
-          const branch = branches.find(b =>
-            branchName && b.name.toLowerCase().includes(branchName.toLowerCase()),
-          ) ?? branches[0]!;
-
-          // 1. Directions to customer
-          const dirLines: string[] = [`Here's how to find us! 📍`];
-          if (branch.address) dirLines.push(`*${branch.name}*\n${branch.address}`);
-          else                 dirLines.push(`*${branch.name}*`);
-          if (branch.access)   dirLines.push(`🏢 ${branch.access}`);
-          if (branch.hours)    dirLines.push(`🕐 Open ${branch.hours}`);
-          if (branch.phone)    dirLines.push(`📞 ${branch.phone}`);
-          dirLines.push(`\nSee you soon! 🙏`);
-
-          await gateway.sendMessage(config.phone_number_id, config.access_token, {
-            type: 'text', to: incoming.from, text: dirLines.join('\n'),
-          });
-          fastify.log.info({ tenantId, branch: branch.name }, '[Webhook] post-booking directions sent');
-
-          // 2. Notification to branch manager (if configured)
-          if (branch.manager_phone) {
-            const contactName = (contact as Contact).name ?? 'Guest';
-            const summaryParts = [`📋 *New Booking — ${branch.name}*`, `👤 ${contactName}`];
-            if (latestVars['date'])       summaryParts.push(`📅 ${latestVars['date']}`);
-            if (latestVars['time'])       summaryParts.push(`🕐 ${latestVars['time']}`);
-            if (latestVars['party_size']) summaryParts.push(`👥 ${latestVars['party_size']} guests`);
-            if (latestVars['occasion'])   summaryParts.push(`🎉 ${latestVars['occasion']}`);
-            if (latestVars['dietary'])    summaryParts.push(`🥗 Dietary: ${latestVars['dietary']}`);
-            summaryParts.push(`\n📱 Customer: ${phoneValue}`);
-
-            await gateway.sendMessage(config.phone_number_id, config.access_token, {
-              type: 'text', to: branch.manager_phone, text: summaryParts.join('\n'),
-            });
-            fastify.log.info({ tenantId, branch: branch.name, manager: branch.manager_phone }, '[Webhook] branch manager notified');
-          }
-        })(),
-        'post-booking-directions',
-        fastify.log,
-      );
+      sendPostBookingDirections({
+        db, gateway, config, incoming, tenantId, whatsappNumberId,
+        convAiVars, entityMatches, contactName: (contact as Contact).name ?? null, phoneValue,
+        log: fastify.log,
+      });
     }
 
     // ── Escalate on booking — moves conversation to team Inbox for manual confirmation ──

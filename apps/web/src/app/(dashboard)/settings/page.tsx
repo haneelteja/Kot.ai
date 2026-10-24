@@ -11,6 +11,7 @@ import { WhatsAppSetupSection }  from '@/components/dashboard/WhatsAppSetupSecti
 import { NotificationSettings }  from '@/components/dashboard/NotificationSettings';
 import { LeadNotificationSettings } from '@/components/dashboard/LeadNotificationSettings';
 import { KitchenNotificationSettings } from '@/components/dashboard/KitchenNotificationSettings';
+import { PrivacyNoticeSettings } from '@/components/dashboard/PrivacyNoticeSettings';
 import { DailyReportSettings } from '@/components/dashboard/DailyReportSettings';
 import { NotificationPreferences } from '@/components/dashboard/NotificationPreferences';
 import { WhatsAppNumbersManager} from '@/components/dashboard/WhatsAppNumbersManager';
@@ -668,6 +669,12 @@ export default async function SettingsPage({
             />
           </Section>
         )}
+
+        <Section icon={<Bell size={16} />} title="Privacy Notice" hint="PRV-01: a one-line privacy notice is sent automatically on a customer's first-ever message. Set the link it points to here.">
+          <PrivacyNoticeSettings
+            initialUrl={(notifSettings as { privacy_notice_url?: string | null } | null)?.privacy_notice_url ?? ''}
+          />
+        </Section>
 
         <Section icon={<Bell size={16} />} title="My Alert Preferences" hint="Control which notification emails you personally receive. These settings only affect your account.">
           <NotificationPreferences

@@ -1751,6 +1751,10 @@ Which branch works best for you?
         } else {
           const msg = !result.ok && result.error === 'empty_cart'
             ? "Your cart is empty — add a few items first! 🍽️"
+            : !result.ok && result.error === 'below_minimum'
+            ? `The minimum order value is ₹${(result.limitPaise / 100).toFixed(2)}. Please add a bit more to your order.`
+            : !result.ok && result.error === 'above_maximum'
+            ? `This order exceeds our maximum order value of ₹${(result.limitPaise / 100).toFixed(2)}. Please split it into smaller orders or contact us directly.`
             : "Sorry, I couldn't set up payment for that order right now. Please try again in a moment.";
           fireForget(
             gateway.sendMessage(config.phone_number_id, config.access_token, { type: 'text', to: incoming.from, text: msg }),

@@ -8,26 +8,37 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
   // side to every checkout (lib/bill-calculator.ts). Lives on `tenants`.
   fastify.get('/billing', { preHandler: [requireAuth] }, async (request, reply) => {
     const db = getServerClient();
-    const { data } = await db.from('tenants').select('tax_rate_bp, packing_charge_paise').eq('id', request.tenantId).single();
-    const row = data as { tax_rate_bp: number | null; packing_charge_paise: number | null } | null;
+    const { data } = await db.from('tenants').select('tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise').eq('id', request.tenantId).single();
+    const row = data as {
+      tax_rate_bp: number | null; packing_charge_paise: number | null;
+      min_order_value_paise: number | null; max_order_value_paise: number | null;
+    } | null;
     return {
       success: true,
       data: {
-        tax_rate_bp:          row?.tax_rate_bp ?? 0,
-        packing_charge_paise: row?.packing_charge_paise ?? 0,
+        tax_rate_bp:            row?.tax_rate_bp ?? 0,
+        packing_charge_paise:   row?.packing_charge_paise ?? 0,
+        min_order_value_paise:  row?.min_order_value_paise ?? 0,
+        max_order_value_paise:  row?.max_order_value_paise ?? null,
       },
     };
   });
 
-  fastify.patch<{ Body: { tax_rate_bp?: number; packing_charge_paise?: number } }>(
+  fastify.patch<{ Body: { tax_rate_bp?: number; packing_charge_paise?: number; min_order_value_paise?: number; max_order_value_paise?: number | null } }>(
     '/billing', { preHandler: [requireAuth] }, async (request, reply) => {
-      const { tax_rate_bp, packing_charge_paise } = request.body;
+      const { tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise } = request.body;
 
       if (tax_rate_bp !== undefined && (!Number.isInteger(tax_rate_bp) || tax_rate_bp < 0 || tax_rate_bp > 10000)) {
         return reply.status(400).send({ success: false, error: 'tax_rate_bp must be an integer between 0 and 10000' });
       }
       if (packing_charge_paise !== undefined && (!Number.isInteger(packing_charge_paise) || packing_charge_paise < 0)) {
         return reply.status(400).send({ success: false, error: 'packing_charge_paise must be a non-negative integer' });
+      }
+      if (min_order_value_paise !== undefined && (!Number.isInteger(min_order_value_paise) || min_order_value_paise < 0)) {
+        return reply.status(400).send({ success: false, error: 'min_order_value_paise must be a non-negative integer' });
+      }
+      if (max_order_value_paise !== undefined && max_order_value_paise !== null && (!Number.isInteger(max_order_value_paise) || max_order_value_paise <= 0)) {
+        return reply.status(400).send({ success: false, error: 'max_order_value_paise must be a positive integer, or null' });
       }
 
       const db = getServerClient();
@@ -36,6 +47,8 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
         .update({
           ...(tax_rate_bp !== undefined && { tax_rate_bp }),
           ...(packing_charge_paise !== undefined && { packing_charge_paise }),
+          ...(min_order_value_paise !== undefined && { min_order_value_paise }),
+          ...(max_order_value_paise !== undefined && { max_order_value_paise }),
         })
         .eq('id', request.tenantId);
 

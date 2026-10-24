@@ -77,6 +77,12 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
     const result = await createWebOrder(db, tenantId, phone.trim(), name?.trim() || null, normalisedItems);
 
     if (!result.ok) {
+      if (result.error === 'below_minimum' || result.error === 'above_maximum') {
+        const message = result.error === 'below_minimum'
+          ? `The minimum order value is ₹${(result.limitPaise / 100).toFixed(2)}.`
+          : `This order exceeds the maximum order value of ₹${(result.limitPaise / 100).toFixed(2)}.`;
+        return reply.status(400).send({ error: message });
+      }
       const status = result.error === 'empty_order' ? 400 : 500;
       const message = result.error === 'empty_order'
         ? 'None of the selected items are currently available'

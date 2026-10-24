@@ -6,12 +6,16 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 interface Props {
   initialTaxRateBp:          number;
   initialPackingChargePaise: number;
+  initialMinOrderValuePaise: number;
+  initialMaxOrderValuePaise: number | null;
 }
 
-/** PRC-01: tax rate and flat packing charge, applied to every checkout — server-side, never client-trusted. */
-export function BillingRulesSettings({ initialTaxRateBp, initialPackingChargePaise }: Props) {
+/** PRC-01/PRC-05: tax rate, packing charge, and min/max order value — all server-side, never client-trusted, applied to every checkout. */
+export function BillingRulesSettings({ initialTaxRateBp, initialPackingChargePaise, initialMinOrderValuePaise, initialMaxOrderValuePaise }: Props) {
   const [taxPercent, setTaxPercent] = useState((initialTaxRateBp / 100).toString());
   const [packingRupees, setPackingRupees] = useState((initialPackingChargePaise / 100).toString());
+  const [minOrderRupees, setMinOrderRupees] = useState((initialMinOrderValuePaise / 100).toString());
+  const [maxOrderRupees, setMaxOrderRupees] = useState(initialMaxOrderValuePaise !== null ? (initialMaxOrderValuePaise / 100).toString() : '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved]   = useState(false);
   const [error, setError]   = useState<string | null>(null);
@@ -25,6 +29,8 @@ export function BillingRulesSettings({ initialTaxRateBp, initialPackingChargePai
 
     const taxRateBp = Math.round(Number(taxPercent) * 100);
     const packingChargePaise = Math.round(Number(packingRupees) * 100);
+    const minOrderValuePaise = Math.round(Number(minOrderRupees) * 100);
+    const maxOrderValuePaise = maxOrderRupees.trim() === '' ? null : Math.round(Number(maxOrderRupees) * 100);
     if (!Number.isFinite(taxRateBp) || taxRateBp < 0 || taxRateBp > 10000) {
       setSaving(false);
       setError('Tax rate must be between 0% and 100%');
@@ -33,6 +39,16 @@ export function BillingRulesSettings({ initialTaxRateBp, initialPackingChargePai
     if (!Number.isFinite(packingChargePaise) || packingChargePaise < 0) {
       setSaving(false);
       setError('Packing charge must be 0 or more');
+      return;
+    }
+    if (!Number.isFinite(minOrderValuePaise) || minOrderValuePaise < 0) {
+      setSaving(false);
+      setError('Minimum order value must be 0 or more');
+      return;
+    }
+    if (maxOrderValuePaise !== null && (!Number.isFinite(maxOrderValuePaise) || maxOrderValuePaise <= 0)) {
+      setSaving(false);
+      setError('Maximum order value must be greater than 0, or left blank');
       return;
     }
 
@@ -44,7 +60,10 @@ export function BillingRulesSettings({ initialTaxRateBp, initialPackingChargePai
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tax_rate_bp: taxRateBp, packing_charge_paise: packingChargePaise }),
+        body: JSON.stringify({
+          tax_rate_bp: taxRateBp, packing_charge_paise: packingChargePaise,
+          min_order_value_paise: minOrderValuePaise, max_order_value_paise: maxOrderValuePaise,
+        }),
       }
     );
 
@@ -83,6 +102,30 @@ export function BillingRulesSettings({ initialTaxRateBp, initialPackingChargePai
             value={packingRupees}
             onChange={e => setPackingRupees(e.target.value)}
             className="w-32 rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+          />
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Minimum order value (₹)</p>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={minOrderRupees}
+            onChange={e => setMinOrderRupees(e.target.value)}
+            placeholder="0 = no minimum"
+            className="w-32 rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+          />
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Maximum order value (₹, sanity check)</p>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={maxOrderRupees}
+            onChange={e => setMaxOrderRupees(e.target.value)}
+            placeholder="Blank = no limit"
+            className="w-32 rounded-xl border border-line bg-sunken px-3 py-2 text-sm text-text placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
         </div>
       </div>

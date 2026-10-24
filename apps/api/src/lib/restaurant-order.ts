@@ -3,13 +3,14 @@ import { createEasebuzzPaymentLink } from '../services/payment/easebuzz.js';
 import { getCartSummary, clearCart } from './cart.js';
 import { getMenu } from './menu-cache.js';
 import { createCheckoutDraft, attachDraftPaymentLink, type DraftLineItem } from './checkout-draft.js';
-import { calculateBill, getTenantBillingConfig, type BillBreakdown } from './bill-calculator.js';
+import { calculateBill, checkOrderValue, getTenantBillingConfig, type BillBreakdown } from './bill-calculator.js';
 
 type Db = ReturnType<typeof getServerClient>;
 
 export type ConfirmOrderResult =
   | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
-  | { ok: false; error: 'empty_cart' | 'draft_create_failed' };
+  | { ok: false; error: 'empty_cart' | 'draft_create_failed' }
+  | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number };
 
 /**
  * ORD-02 (revised): creates a checkout draft — NOT an order — from the
@@ -37,6 +38,9 @@ export async function confirmOrderFromCart(
   }));
 
   const billingConfig = await getTenantBillingConfig(db, tenantId);
+  const valueCheck = checkOrderValue(cart.totalPaise, billingConfig);
+  if (!valueCheck.ok) return { ok: false, error: valueCheck.reason, limitPaise: valueCheck.limitPaise };
+
   const bill = calculateBill(cart.totalPaise, billingConfig);
 
   const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'whatsapp_bot', items, bill);
@@ -65,7 +69,8 @@ export async function confirmOrderFromCart(
 
 export type WebOrderResult =
   | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
-  | { ok: false; error: 'empty_order' | 'draft_create_failed' };
+  | { ok: false; error: 'empty_order' | 'draft_create_failed' }
+  | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number };
 
 /**
  * ORD-02 (revised): same draft-first model as confirmOrderFromCart, but for
@@ -100,6 +105,9 @@ export async function createWebOrder(
 
   const subtotalPaise = lines.reduce((s, l) => s + l.lineTotalPaise, 0);
   const billingConfig = await getTenantBillingConfig(db, tenantId);
+  const valueCheck = checkOrderValue(subtotalPaise, billingConfig);
+  if (!valueCheck.ok) return { ok: false, error: valueCheck.reason, limitPaise: valueCheck.limitPaise };
+
   const bill = calculateBill(subtotalPaise, billingConfig);
 
   const contactUpsert: Record<string, unknown> = { tenant_id: tenantId, phone };

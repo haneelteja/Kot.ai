@@ -16,6 +16,8 @@ export interface PublicMenuItem {
 export interface TenantBilling {
   taxRateBp:          number;
   packingChargePaise: number;
+  minOrderValuePaise: number;
+  maxOrderValuePaise: number | null;
 }
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
@@ -51,6 +53,7 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
   const subtotalPaise = cartLines.reduce((sum, l) => sum + l.item.price_paise * l.quantity, 0);
   const bill = calculateBillPreview(subtotalPaise, billing);
   const totalPaise = bill.totalPaise;
+  const belowMinimum = billing.minOrderValuePaise > 0 && subtotalPaise > 0 && subtotalPaise < billing.minOrderValuePaise;
 
   function setItemQty(id: string, next: number) {
     setQty(prev => ({ ...prev, [id]: Math.max(0, Math.min(20, next)) }));
@@ -59,6 +62,7 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
   async function handleCheckout() {
     setError(null);
     if (cartLines.length === 0) { setError('Add at least one item to your order.'); return; }
+    if (belowMinimum) { setError(`The minimum order value is ₹${(billing.minOrderValuePaise / 100).toFixed(2)}.`); return; }
     if (!/^\+?[0-9]{8,15}$/.test(phone.trim())) { setError('Enter a valid phone number.'); return; }
 
     setSubmit(true);
@@ -180,6 +184,12 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
             </div>
           </div>
 
+          {belowMinimum && (
+            <p className="text-xs text-amber-600">
+              Add ₹{((billing.minOrderValuePaise - subtotalPaise) / 100).toFixed(2)} more to reach the ₹{(billing.minOrderValuePaise / 100).toFixed(2)} minimum order value.
+            </p>
+          )}
+
           <div className="space-y-2">
             <input
               type="tel"
@@ -202,7 +212,7 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
           <button
             type="button"
             onClick={handleCheckout}
-            disabled={submitting}
+            disabled={submitting || belowMinimum}
             className="w-full flex items-center justify-center gap-2 bg-brand-strong text-white font-semibold text-sm py-2.5 rounded-lg hover:opacity-90 disabled:opacity-60"
           >
             {submitting ? <Loader2 size={15} className="animate-spin" /> : null}

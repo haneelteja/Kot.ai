@@ -614,7 +614,7 @@ export default async function SettingsPage({
       .eq('user_id', user.id).eq('tenant_id', tenantId).maybeSingle(),
     admin.from('tenant_products').select('id')
       .eq('tenant_id', tenantId).eq('product_type', 'restaurant_bot').eq('active', true).maybeSingle(),
-    admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise').eq('id', tenantId).single(),
+    admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise').eq('id', tenantId).single(),
   ]);
   const hasRestaurantBot = !!restaurantProductRow;
 
@@ -678,6 +678,8 @@ export default async function SettingsPage({
             <BillingRulesSettings
               initialTaxRateBp={(tenantRow as { tax_rate_bp?: number | null } | null)?.tax_rate_bp ?? 0}
               initialPackingChargePaise={(tenantRow as { packing_charge_paise?: number | null } | null)?.packing_charge_paise ?? 0}
+              initialMinOrderValuePaise={(tenantRow as { min_order_value_paise?: number | null } | null)?.min_order_value_paise ?? 0}
+              initialMaxOrderValuePaise={(tenantRow as { max_order_value_paise?: number | null } | null)?.max_order_value_paise ?? null}
             />
           </Section>
         )}

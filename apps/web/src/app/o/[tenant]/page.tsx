@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 async function fetchMenu(tenantId: string): Promise<{ menu: PublicMenuItem[]; billing: TenantBilling }> {
   const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
-  const fallback = { menu: [], billing: { taxRateBp: 0, packingChargePaise: 0 } };
+  const fallback = { menu: [], billing: { taxRateBp: 0, packingChargePaise: 0, minOrderValuePaise: 0, maxOrderValuePaise: null } };
   try {
     const res = await fetch(`${apiUrl}/api/public/orders/menu/${tenantId}`, { cache: 'no-store' });
     if (!res.ok) return fallback;

@@ -17,6 +17,7 @@ import {
   SlidersHorizontal,
   CalendarCheck,
   AlertTriangle,
+  Shield,
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -59,7 +60,7 @@ export function DashboardNav({
   }, []);
   const supabase = getSupabaseBrowserClient();
 
-  const ADMIN_ONLY_HREFS = new Set(['/audit']);
+  const ADMIN_ONLY_HREFS = new Set(['/audit', '/privacy-requests']);
   const AGENT_HREFS      = new Set(['/dashboard', '/conversations']);
 
   const navItems = (() => {
@@ -81,6 +82,7 @@ export function DashboardNav({
     if (['client_admin', 'client_manager'].includes(userRole)) {
       const settingsIdx = items.findIndex(i => i.href === '/settings');
       items.splice(settingsIdx, 0, { href: '/audit', label: 'Activity Log', icon: ClipboardList });
+      items.splice(settingsIdx, 0, { href: '/privacy-requests', label: 'Data Requests', icon: Shield });
     }
     if (userRole === 'agent') return items.filter(i => !ADMIN_ONLY_HREFS.has(i.href) && AGENT_HREFS.has(i.href));
     return items;

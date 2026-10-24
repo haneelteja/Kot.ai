@@ -22,6 +22,8 @@ import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '..
 import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
+import { handleConfirmComplaint, COMPLAINT_PROMPT_BLOCK } from '../../services/restaurant-bot/complaint-flow.js';
+import { handleReturnRequest } from '../../services/lifecycle-bot/return-request.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
 import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
@@ -1046,6 +1048,11 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
       systemPrompt += RESERVATION_PROMPT_BLOCK;
     }
 
+    // CMP-01: complaint capture — see services/restaurant-bot/complaint-flow.ts.
+    if (productType === 'restaurant_bot' && toolEnabled(allowedTools, TOOL_IDS.COMPLAINT_HANDLING)) {
+      systemPrompt += COMPLAINT_PROMPT_BLOCK;
+    }
+
     // ── Feature: AI Conversation State Machine ────────────────────────────
     // Inject the current conversation stage and AI-extracted entities into the
     // system prompt. The AI can advance the stage or capture new info by appending
@@ -1264,6 +1271,7 @@ Which branch works best for you?
     const isClearCart    = /CLEAR_CART/i.test(rawContent);
     const isConfirmOrder = /CONFIRM_ORDER/i.test(rawContent);
     const isConfirmBooking = /CONFIRM_BOOKING/i.test(rawContent);
+    const isConfirmComplaint = /CONFIRM_COMPLAINT/i.test(rawContent);
 
     fastify.log.info({ buttonTemplateName, inlineOptions, signals: newSignals, rawSnippet: rawContent.slice(-120) }, '[Webhook] AI response markers');
 
@@ -1287,6 +1295,7 @@ Which branch works best for you?
       .replace(/\[CLEAR_CART\]/gi, '')
       .replace(/\[CONFIRM_ORDER\]/gi, '')
       .replace(/\[CONFIRM_BOOKING\]/gi, '')
+      .replace(/\[CONFIRM_COMPLAINT\]/gi, '')
       .trimEnd();
 
     // Persist stage/entity updates non-blocking (after lock, before reply send)
@@ -1724,46 +1733,20 @@ Which branch works best for you?
       });
     }
 
+    // CMP-01: fires on [CONFIRM_COMPLAINT] — see services/restaurant-bot/complaint-flow.ts.
+    if (productType === 'restaurant_bot' && toolEnabled(allowedTools, TOOL_IDS.COMPLAINT_HANDLING) && isConfirmComplaint) {
+      await handleConfirmComplaint({
+        db, gateway, config, incoming, conversation, tenantId,
+        contactId: contactData.id, contactName: contactData.name ?? null, contactPhone: contactData.phone ?? incoming.from,
+        vars: latestVarsForScore, log: fastify.log,
+      });
+    }
+
     // ── Return / replacement request handler ─────────────────────────────
     // Fires when the lifecycle bot appends [RETURN_REQUEST] to its reply.
-    // Inserts a return_requests row and sends a WhatsApp confirmation.
+    // See services/lifecycle-bot/return-request.ts for the handler itself.
     if (isReturnRequest && productType === 'lifecycle_bot') {
-      const returnType = incoming.text?.toLowerCase().includes('replac') ? 'replacement' : 'return';
-      fireForget(
-        (async () => {
-          const { data: inserted, error: insertErr } = await db
-            .from('return_requests')
-            .insert({
-              tenant_id:       tenantId,
-              conversation_id: conversation.id,
-              contact_id:      contact.id,
-              type:            returnType,
-              reason:          incoming.text ?? null,
-              status:          'pending',
-            })
-            .select('id')
-            .single();
-
-          if (insertErr) {
-            fastify.log.error({ insertErr, tenantId }, '[Webhook] Failed to insert return_request');
-            return;
-          }
-          fastify.log.info({ returnRequestId: (inserted as { id: string }).id, returnType }, '[Webhook] Return request logged');
-
-          // WhatsApp confirmation message to customer
-          const confirmMsg = returnType === 'replacement'
-            ? `✅ We've received your replacement request and our team will review it shortly.\n\nPlease share your *order ID* and *photos of the item* so we can process it faster. You'll hear from us within 1–2 business days.`
-            : `✅ We've received your return request and our team will review it shortly.\n\nPlease share your *order ID* and *photos of the item* if applicable. You'll hear from us within 1–2 business days.`;
-
-          await gateway.sendMessage(config.phone_number_id, config.access_token, {
-            type: 'text',
-            to:   incoming.from,
-            text: confirmMsg,
-          });
-        })(),
-        'handle-return-request',
-        fastify.log,
-      );
+      handleReturnRequest({ db, gateway, config, incoming, conversation, contact, tenantId, log: fastify.log });
     }
 
     // ── Cancel enquiry follow-up when booking is made ────────────────────────

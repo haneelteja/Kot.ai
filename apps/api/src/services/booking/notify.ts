@@ -149,3 +149,39 @@ export async function notifyStaffOfLowRating(
     )
   );
 }
+
+/** CMP-01: new-complaint owner alert, same recipient lists as the other owner alerts above. */
+export async function notifyStaffOfComplaint(
+  tenantId:      string,
+  productSlug:   string,
+  customerName:  string,
+  customerPhone: string,
+  category:      string,
+  orderRef:      string | null,
+): Promise<void> {
+  const db = getServerClient();
+
+  const [settingsRes, wn] = await Promise.all([
+    db.from('tenant_notification_settings').select('lead_notification_wa_numbers').eq('tenant_id', tenantId).single(),
+    resolveNumberForRole(db, tenantId, productSlug, 'ops'),
+  ]);
+
+  const waNumbers = (settingsRes.data?.lead_notification_wa_numbers as string[] | null) ?? [];
+  if (waNumbers.length === 0 || !wn) return;
+
+  const gateway = new WhatsAppGateway(wn.provider as WhatsAppProvider);
+  const text = [
+    `🚩 *New complaint — ${category.replace('_', ' ')}*`,
+    ``,
+    `*Customer:* ${customerName}`,
+    `*Phone:* ${customerPhone}`,
+    ...(orderRef ? [`*Order:* ${orderRef}`] : []),
+  ].join('\n');
+
+  await Promise.allSettled(
+    waNumbers.map(number =>
+      gateway.sendMessage(wn.phone_number_id, wn.access_token, { type: 'text', to: number, text })
+        .catch(err => console.error(`[ComplaintNotify] Failed to send alert to ${number}:`, err))
+    )
+  );
+}

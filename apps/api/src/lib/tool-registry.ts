@@ -15,6 +15,7 @@ export const TOOL_IDS = {
   RETURN_REQUEST:     'return_request',
   MENU_ORDERING:      'menu_ordering',
   TABLE_RESERVATION:  'table_reservation',
+  COMPLAINT_HANDLING: 'complaint_handling',
 } as const;
 
 export type ToolId = typeof TOOL_IDS[keyof typeof TOOL_IDS];
@@ -102,6 +103,13 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     id:          TOOL_IDS.TABLE_RESERVATION,
     label:       'Table Reservation',
     description: 'AI captures party size, date, and time for a table booking and notifies staff. No availability/capacity checking.',
+    botTypes:    ['restaurant_bot'],
+    default:     true,
+  },
+  {
+    id:          TOOL_IDS.COMPLAINT_HANDLING,
+    label:       'Complaint Handling',
+    description: 'AI captures order complaints (wrong/missing/quality/late item) as a ticket with an SLA timer, auto-linked to the customer\'s most recent order.',
     botTypes:    ['restaurant_bot'],
     default:     true,
   },

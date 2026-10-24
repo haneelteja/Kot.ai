@@ -13,6 +13,7 @@ import { escalateConversation } from '../services/escalation/index.js';
 import { sendDueBookingFeedbackPrompts } from '../lib/booking-feedback.js';
 import { sendDueOrderFeedbackPrompts } from '../lib/order-feedback.js';
 import { checkStuckOrders, checkUncollectedOrders } from '../lib/stuck-order-check.js';
+import { purgeExpiredMessages } from '../lib/retention.js';
 import { processCheckoutDraftReminders } from '../lib/checkout-draft-expiry.js';
 
 function alertJobFailure(jobName: string, err: unknown): void {
@@ -463,6 +464,13 @@ export function startScheduler(): void {
   cron.schedule('0 0 * * *', () => {
     void withJobLock('sender_capacity_reset', 82800, () => resetAllDailyCounts()).catch(err =>
       alertJobFailure('sender_capacity_reset', err)
+    );
+  }, { timezone: 'UTC' });
+
+  // PRV-02: chat retention — anonymizes expired messages, 3 AM UTC  [TTL: 82800s = 23h]
+  cron.schedule('0 3 * * *', () => {
+    void withJobLock('chat_retention_purge', 82800, () => purgeExpiredMessages(getServerClient(), console)).catch(err =>
+      alertJobFailure('chat_retention_purge', err)
     );
   }, { timezone: 'UTC' });
 

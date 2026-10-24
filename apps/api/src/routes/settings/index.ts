@@ -3,6 +3,26 @@ import { getServerClient } from '@alphabot/database';
 import { requireAuth } from '../../middleware/auth.js';
 
 export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
+  // ─── GET/PATCH /api/settings/retention ───────────────────────────────────
+  // PRV-02: lives on `tenants` (not tenant_notification_settings) — retention
+  // is a data-governance setting, not a notification preference.
+  fastify.get('/retention', { preHandler: [requireAuth] }, async (request, reply) => {
+    const db = getServerClient();
+    const { data } = await db.from('tenants').select('chat_retention_days').eq('id', request.tenantId).single();
+    return { success: true, data: { chat_retention_days: (data as { chat_retention_days: number | null } | null)?.chat_retention_days ?? null } };
+  });
+
+  fastify.patch<{ Body: { chat_retention_days: number | null } }>('/retention', { preHandler: [requireAuth] }, async (request, reply) => {
+    const { chat_retention_days } = request.body;
+    if (chat_retention_days !== null && (!Number.isInteger(chat_retention_days) || chat_retention_days <= 0)) {
+      return reply.status(400).send({ success: false, error: 'chat_retention_days must be a positive integer or null' });
+    }
+
+    const { error } = await getServerClient().from('tenants').update({ chat_retention_days }).eq('id', request.tenantId);
+    if (error) return reply.status(500).send({ success: false, error: error.message });
+    return { success: true, data: { chat_retention_days } };
+  });
+
   // GET /api/settings/notifications
   fastify.get('/notifications', { preHandler: [requireAuth] }, async (request, reply) => {
     const db = getServerClient();

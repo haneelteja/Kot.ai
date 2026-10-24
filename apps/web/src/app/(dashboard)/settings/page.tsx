@@ -14,6 +14,7 @@ import { KitchenNotificationSettings } from '@/components/dashboard/KitchenNotif
 import { PrivacyNoticeSettings } from '@/components/dashboard/PrivacyNoticeSettings';
 import { DataRetentionSettings } from '@/components/dashboard/DataRetentionSettings';
 import { BillingRulesSettings } from '@/components/dashboard/BillingRulesSettings';
+import { TakeoverSettings } from '@/components/dashboard/TakeoverSettings';
 import { DailyReportSettings } from '@/components/dashboard/DailyReportSettings';
 import { NotificationPreferences } from '@/components/dashboard/NotificationPreferences';
 import { WhatsAppNumbersManager} from '@/components/dashboard/WhatsAppNumbersManager';
@@ -614,7 +615,7 @@ export default async function SettingsPage({
       .eq('user_id', user.id).eq('tenant_id', tenantId).maybeSingle(),
     admin.from('tenant_products').select('id')
       .eq('tenant_id', tenantId).eq('product_type', 'restaurant_bot').eq('active', true).maybeSingle(),
-    admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise').eq('id', tenantId).single(),
+    admin.from('tenants').select('chat_retention_days, tax_rate_bp, packing_charge_paise, min_order_value_paise, max_order_value_paise, bot_takeover_idle_minutes').eq('id', tenantId).single(),
   ]);
   const hasRestaurantBot = !!restaurantProductRow;
 
@@ -646,6 +647,12 @@ export default async function SettingsPage({
             initialResendKeyMasked={(notifSettings as { resend_api_key?: string | null } | null)?.resend_api_key
               ? '••••' + ((notifSettings as { resend_api_key: string }).resend_api_key).slice(-4)
               : ''}
+          />
+        </Section>
+
+        <Section icon={<Bell size={16} />} title="Human Takeover" hint="HND-03: when a staff member takes over a conversation, control auto-returns to the bot after this many idle minutes.">
+          <TakeoverSettings
+            initialMinutes={(tenantRow as { bot_takeover_idle_minutes?: number | null } | null)?.bot_takeover_idle_minutes ?? 120}
           />
         </Section>
 

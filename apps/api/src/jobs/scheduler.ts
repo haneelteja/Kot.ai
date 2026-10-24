@@ -14,6 +14,7 @@ import { sendDueBookingFeedbackPrompts } from '../lib/booking-feedback.js';
 import { sendDueOrderFeedbackPrompts } from '../lib/order-feedback.js';
 import { checkStuckOrders, checkUncollectedOrders } from '../lib/stuck-order-check.js';
 import { purgeExpiredMessages } from '../lib/retention.js';
+import { checkIdleTakeovers } from '../lib/idle-takeover-check.js';
 import { processCheckoutDraftReminders } from '../lib/checkout-draft-expiry.js';
 
 function alertJobFailure(jobName: string, err: unknown): void {
@@ -473,6 +474,13 @@ export function startScheduler(): void {
       alertJobFailure('chat_retention_purge', err)
     );
   }, { timezone: 'UTC' });
+
+  // HND-03: auto-release idle human-takeover conversations back to the bot  [TTL: 590s]
+  cron.schedule('*/10 * * * *', () => {
+    void withJobLock('idle_takeover_check', 590, () => checkIdleTakeovers(getServerClient(), console)).catch(err =>
+      alertJobFailure('idle_takeover_check', err)
+    );
+  });
 
   // Startup catch-up: generate insights if none in last 24h — fixes Render hibernation.
   // Guard: skip if the process started recently (< 5 min ago) and another instance is

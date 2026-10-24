@@ -7,7 +7,13 @@ type Db = ReturnType<typeof getServerClient>;
 const STUCK_THRESHOLD_MS      = 25 * 60 * 1000; // FUL-02 default: 25 minutes after auto-accept
 const UNCOLLECTED_THRESHOLD_MS = 45 * 60 * 1000; // TKW-03 default: 45 minutes after Ready
 
-async function alertOwner(db: Db, tenantId: string, text: string): Promise<void> {
+interface AlertButton {
+  id:    string;
+  title: string;
+}
+
+/** OWN-01: plain-text alert when no buttons are given, an interactive button alert otherwise — same recipient-resolution either way. */
+async function alertOwner(db: Db, tenantId: string, text: string, buttons?: AlertButton[]): Promise<void> {
   const [opsWn, settingsRes] = await Promise.all([
     resolveNumberForRole(db, tenantId, 'restaurant_bot', 'ops'),
     db.from('tenant_notification_settings').select('lead_notification_wa_numbers').eq('tenant_id', tenantId).maybeSingle(),
@@ -18,7 +24,12 @@ async function alertOwner(db: Db, tenantId: string, text: string): Promise<void>
   const gateway = new WhatsAppGateway(opsWn.provider as 'meta_cloud' | 'twilio' | 'interakt' | 'wati' | 'gupshup');
   await Promise.allSettled(
     ownerNumbers.map(number =>
-      gateway.sendMessage(opsWn.phone_number_id, opsWn.access_token, { type: 'text', to: number, text })
+      buttons && buttons.length > 0
+        ? gateway.sendMessage(opsWn.phone_number_id, opsWn.access_token, {
+            type: 'interactive', interactiveType: 'button', to: number, body: text,
+            buttons: buttons.map(b => ({ type: 'reply' as const, reply: { id: b.id, title: b.title } })),
+          })
+        : gateway.sendMessage(opsWn.phone_number_id, opsWn.access_token, { type: 'text', to: number, text })
     ),
   );
 }
@@ -41,7 +52,11 @@ export async function checkStuckOrders(db: Db, log: { warn: (o: unknown, m: stri
 
   for (const order of stuck ?? []) {
     try {
-      await alertOwner(db, order.tenant_id, `⏱️ Order ${order.order_ref ?? order.id} is 25 minutes old and not yet marked Ready.`);
+      await alertOwner(
+        db, order.tenant_id,
+        `⏱️ Order ${order.order_ref ?? order.id} is 25 minutes old and not yet marked Ready.`,
+        [{ id: `own_mark_ready:${order.id}`, title: 'Mark Ready' }],
+      );
       await db.from('orders').update({ stuck_alert_sent_at: new Date().toISOString() }).eq('id', order.id);
     } catch (err) {
       log.warn({ orderId: order.id, err }, '[FUL-02] stuck-order alert failed for one order — continuing');
@@ -66,7 +81,11 @@ export async function checkUncollectedOrders(db: Db, log: { warn: (o: unknown, m
 
   for (const order of uncollected ?? []) {
     try {
-      await alertOwner(db, order.tenant_id, `🧍 Order ${order.order_ref ?? order.id} has been ready for 45 minutes and hasn't been collected.`);
+      await alertOwner(
+        db, order.tenant_id,
+        `🧍 Order ${order.order_ref ?? order.id} has been ready for 45 minutes and hasn't been collected.`,
+        [{ id: `own_mark_collected:${order.id}`, title: 'Mark Collected' }],
+      );
       await db.from('orders').update({ uncollected_alert_sent_at: new Date().toISOString() }).eq('id', order.id);
     } catch (err) {
       log.warn({ orderId: order.id, err }, '[TKW-03] uncollected-order alert failed for one order — continuing');

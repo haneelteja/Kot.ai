@@ -15,13 +15,37 @@ interface Ctx {
   log:      FastifyBaseLogger;
 }
 
-async function loadOrder(db: Db, orderId: string) {
+export async function loadOrder(db: Db, orderId: string) {
   const { data } = await db
     .from('orders')
     .select('id, order_ref, total_paise, status, contact:contacts(phone)')
     .eq('id', orderId)
     .single();
   return data as { id: string; order_ref: string | null; total_paise: number | null; status: string; contact: { phone: string } | null } | null;
+}
+
+/**
+ * OWN-01: shared with handleKitchenReply's "Ready" tap — also callable from
+ * the owner's "Mark Ready" button on a stuck-order alert (FUL-02), since
+ * both do the exact same thing: generate a pickup code and notify the
+ * customer. Returns the pickup code for the caller's own confirmation text.
+ */
+export async function markOrderReady(db: Db, tenantId: string, orderId: string, order: NonNullable<Awaited<ReturnType<typeof loadOrder>>>): Promise<string> {
+  const pickupCode = String(Math.floor(1000 + Math.random() * 9000));
+  await db.from('orders')
+    .update({ status: 'ready', ready_at: new Date().toISOString(), pickup_code: pickupCode })
+    .eq('id', orderId);
+
+  const customerWn = await resolveNumberForRole(db, tenantId, 'restaurant_bot', 'customer');
+  if (customerWn && order.contact?.phone) {
+    const gw = new WhatsAppGateway(customerWn.provider as WhatsAppProvider);
+    await gw.sendMessage(customerWn.phone_number_id, customerWn.access_token, {
+      type: 'text',
+      to:   order.contact.phone,
+      text: `Your order ${order.order_ref ?? ''} is ready for pickup! 🎉\n\nShow this code at the counter: *${pickupCode}*`,
+    });
+  }
+  return pickupCode;
 }
 
 /**
@@ -48,20 +72,7 @@ export async function handleKitchenReply(ctx: Ctx): Promise<boolean> {
     // TKW-02: a pickup code the customer shows at the counter — always
     // generated (not configurable in this slice; harmless for a tenant
     // that doesn't care to use it).
-    const pickupCode = String(Math.floor(1000 + Math.random() * 9000));
-    await ctx.db.from('orders')
-      .update({ status: 'ready', ready_at: new Date().toISOString(), pickup_code: pickupCode })
-      .eq('id', orderId);
-
-    const customerWn = await resolveNumberForRole(ctx.db, ctx.tenantId, 'restaurant_bot', 'customer');
-    if (customerWn && order.contact?.phone) {
-      const gw = new WhatsAppGateway(customerWn.provider as WhatsAppProvider);
-      await gw.sendMessage(customerWn.phone_number_id, customerWn.access_token, {
-        type: 'text',
-        to:   order.contact.phone,
-        text: `Your order ${order.order_ref ?? ''} is ready for pickup! 🎉\n\nShow this code at the counter: *${pickupCode}*`,
-      });
-    }
+    const pickupCode = await markOrderReady(ctx.db, ctx.tenantId, orderId, order);
     await ctx.gateway.sendMessage(ctx.config.phone_number_id, ctx.config.access_token, {
       type: 'text', to: ctx.incoming.from, text: `Marked ${order.order_ref ?? orderId} ready. Pickup code ${pickupCode} sent to the customer.`,
     });
@@ -113,13 +124,34 @@ export async function handleOwnerProblemResolution(ctx: Ctx): Promise<boolean> {
   const replyId = ctx.incoming.interactiveReplyId;
   if (!replyId) return false;
 
-  const swapMatch   = replyId.match(/^own_swap:([0-9a-f-]{36})$/i);
-  const refundMatch = replyId.match(/^own_refund:([0-9a-f-]{36})$/i);
-  if (!swapMatch && !refundMatch) return false;
+  const swapMatch      = replyId.match(/^own_swap:([0-9a-f-]{36})$/i);
+  const refundMatch    = replyId.match(/^own_refund:([0-9a-f-]{36})$/i);
+  const markReadyMatch = replyId.match(/^own_mark_ready:([0-9a-f-]{36})$/i);
+  const collectedMatch = replyId.match(/^own_mark_collected:([0-9a-f-]{36})$/i);
+  if (!swapMatch && !refundMatch && !markReadyMatch && !collectedMatch) return false;
 
-  const orderId = (swapMatch ?? refundMatch)![1]!;
+  const orderId = (swapMatch ?? refundMatch ?? markReadyMatch ?? collectedMatch)![1]!;
   const order = await loadOrder(ctx.db, orderId);
   if (!order) return true;
+
+  // OWN-01: the owner's own "Mark Ready"/"Mark Collected" action buttons on
+  // a stuck/uncollected-order alert (FUL-02/TKW-03) — same effect as the
+  // kitchen's own Ready button and the dashboard's collection-confirmation
+  // action, just reachable straight from the alert.
+  if (markReadyMatch) {
+    const pickupCode = await markOrderReady(ctx.db, ctx.tenantId, orderId, order);
+    await ctx.gateway.sendMessage(ctx.config.phone_number_id, ctx.config.access_token, {
+      type: 'text', to: ctx.incoming.from, text: `Marked ${order.order_ref ?? orderId} ready. Pickup code ${pickupCode} sent to the customer.`,
+    });
+    return true;
+  }
+  if (collectedMatch) {
+    await ctx.db.from('orders').update({ status: 'delivered' }).eq('id', orderId);
+    await ctx.gateway.sendMessage(ctx.config.phone_number_id, ctx.config.access_token, {
+      type: 'text', to: ctx.incoming.from, text: `Marked ${order.order_ref ?? orderId} as collected.`,
+    });
+    return true;
+  }
 
   const customerWn = await resolveNumberForRole(ctx.db, ctx.tenantId, 'restaurant_bot', 'customer');
 

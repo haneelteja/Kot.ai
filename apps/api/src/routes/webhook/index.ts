@@ -23,6 +23,8 @@ import { handleConfirmOrder } from '../../services/restaurant-bot/order-confirm.
 import { calculateBill, getTenantBillingConfig } from '../../lib/bill-calculator.js';
 import { getOrderingPauseStatus } from '../../lib/ordering-pause.js';
 import { transcribeVoiceNote } from '../../lib/voice-note-transcribe.js';
+import { isAllergyQuestion } from '../../lib/allergy-check.js';
+import { sendProductCatalogue } from '../../services/sales-bot/send-catalogue.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
 import { handleConfirmComplaint, COMPLAINT_PROMPT_BLOCK } from '../../services/restaurant-bot/complaint-flow.js';
@@ -874,8 +876,23 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
     const onBlockedTopic   = clientBotG?.on_blocked_topic ?? tenantG?.on_blocked_topic ?? botTypeG?.on_blocked_topic ?? 'escalate';
     const customBlockedMsg = clientBotG?.custom_blocked_message ?? tenantG?.custom_blocked_message ?? botTypeG?.custom_blocked_message;
 
-    // ── Check for manual escalation request ────────────────────────────────
     const messageText = incoming.text?.toLowerCase() ?? '';
+
+    // ── Allergen/health-safety questions always escalate (AGT-04/CONV-06) ──
+    // Checked ahead of everything else below and not overridable by a
+    // tenant's own escalation_triggers — the bot must never answer an
+    // allergen question itself, no exceptions.
+    if (productType === 'restaurant_bot' && conversation.status === 'open' && isAllergyQuestion(messageText)) {
+      await escalateConversation(conversation, 'Allergen/health-safety question — always escalated, never answered by the bot');
+      await gateway.sendMessage(config.phone_number_id, config.access_token, {
+        type: 'text',
+        to:   incoming.from,
+        text: "That's an important question about allergens/health safety, so I want our team to confirm this for you directly rather than risk a wrong answer. Connecting you now.",
+      });
+      return;
+    }
+
+    // ── Check for manual escalation request ────────────────────────────────
     const wantsHuman = escalationTriggers.some((t) => messageText.includes(t));
 
     if (wantsHuman && conversation.status === 'open') {
@@ -1695,30 +1712,9 @@ Which branch works best for you?
     }
 
     // ── Send formatted product catalogue if requested ────────────────────
+    // See services/sales-bot/send-catalogue.ts.
     if (sendCatalogue && productType === 'sales_bot') {
-      const catalogue = await getProductCatalogue(tenantId); // already in Redis
-      if (catalogue.length > 0) {
-        const lines: string[] = ['📦 *Our Products*\n'];
-        for (const p of catalogue) {
-          lines.push(`*${p.name}*${p.sku ? ` (SKU: ${p.sku})` : ''}`);
-          if (p.category)    lines.push(`🏷 ${p.category}`);
-          if (p.description) lines.push(p.description);
-          if (p.price_inr !== null) {
-            lines.push(`💰 ₹${Number(p.price_inr).toLocaleString('en-IN')}`);
-          }
-          lines.push('');
-        }
-        lines.push('_Reply with a product name for details or to place an order._');
-        fireForget(
-          gateway.sendMessage(config.phone_number_id, config.access_token, {
-            type: 'text',
-            to:   incoming.from,
-            text: lines.join('\n').trimEnd(),
-          }),
-          'send-catalogue-message',
-          fastify.log,
-        );
-      }
+      await sendProductCatalogue({ gateway, config, incoming, tenantId, log: fastify.log });
     }
 
     // ── Restaurant ordering actions (restaurant_bot only) ─────────────────

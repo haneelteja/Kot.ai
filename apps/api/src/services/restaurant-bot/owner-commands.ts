@@ -22,6 +22,8 @@ const HELP_TEXT = [
   '*open orders* — orders still pending/confirmed/dispatched',
   '*OUT <dish name>* — mark a dish out of stock',
   '*BACK <dish name>* — mark a dish back in stock',
+  '*PAUSE <minutes>* — temporarily stop taking new orders',
+  '*RESUME* — start taking orders again',
 ].join('\n');
 
 async function reply(ctx: OwnerCommandContext, text: string): Promise<void> {
@@ -37,8 +39,10 @@ async function reply(ctx: OwnerCommandContext, text: string): Promise<void> {
  * dedicated "ops" WhatsApp number (WAB-06). Deliberately scoped to commands
  * with an existing underlying action today — `sales today`/`open orders`
  * read existing data, `OUT`/`BACK` toggle MENU-02's existing `in_stock`
- * flag. PAUSE/RESUME are NOT implemented here: there is no bot-pause
- * mechanism yet (BR-03, not built) for them to drive.
+ * flag. PAUSE/RESUME drive `tenants.ordering_paused_until` — a single
+ * tenant-wide flag, not BR-03's full per-branch pause model (BR-01's
+ * branches table doesn't exist in this codebase), but equivalent for the
+ * current single-location product.
  *
  * This never touches conversations/messages/contacts — the ops number is
  * an internal admin channel, not a customer conversation, so nothing here
@@ -66,7 +70,27 @@ export async function handleOwnerCommand(ctx: OwnerCommandContext): Promise<void
   const backMatch = text.match(/^back\s+(.+)$/i);
   if (backMatch) { await handleStockToggle(ctx, backMatch[1]!.trim(), true); return; }
 
+  const pauseMatch = text.match(/^pause\s+(\d+)$/i);
+  if (pauseMatch) { await handlePause(ctx, Number(pauseMatch[1])); return; }
+
+  if (lower === 'resume') { await handleResume(ctx); return; }
+
   await reply(ctx, HELP_TEXT);
+}
+
+async function handlePause(ctx: OwnerCommandContext, minutes: number): Promise<void> {
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    await reply(ctx, 'Usage: *PAUSE <minutes>*, e.g. "PAUSE 30"');
+    return;
+  }
+  const pausedUntil = new Date(Date.now() + minutes * 60_000);
+  await ctx.db.from('tenants').update({ ordering_paused_until: pausedUntil.toISOString() }).eq('id', ctx.tenantId);
+  await reply(ctx, `⏸️ Orders paused for ${minutes} minute${minutes === 1 ? '' : 's'}. Send *RESUME* to start taking orders again before then.`);
+}
+
+async function handleResume(ctx: OwnerCommandContext): Promise<void> {
+  await ctx.db.from('tenants').update({ ordering_paused_until: null }).eq('id', ctx.tenantId);
+  await reply(ctx, '▶️ Orders resumed.');
 }
 
 async function handleSalesToday(ctx: OwnerCommandContext): Promise<void> {

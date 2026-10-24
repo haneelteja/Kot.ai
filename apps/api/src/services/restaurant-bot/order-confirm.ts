@@ -65,6 +65,8 @@ export async function handleConfirmOrder(ctx: ConfirmOrderContext): Promise<void
     ? `This order exceeds our maximum order value of ₹${(result.limitPaise / 100).toFixed(2)}. Please split it into smaller orders or contact us directly.`
     : !result.ok && result.error === 'coupon_invalid'
     ? `${COUPON_ERROR_MESSAGES[result.couponError] ?? "That coupon code isn't valid."} Say "confirm" again to place the order without it, or give me a different code.`
+    : !result.ok && result.error === 'ordering_paused'
+    ? "We're not taking new orders right now — please try again shortly."
     : "Sorry, I couldn't set up payment for that order right now. Please try again in a moment.";
 
   // PRC-02: clear the stale coupon_code so a bare "confirm again" doesn't

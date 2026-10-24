@@ -21,6 +21,7 @@ import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
 import { handleConfirmOrder } from '../../services/restaurant-bot/order-confirm.js';
 import { calculateBill, getTenantBillingConfig } from '../../lib/bill-calculator.js';
+import { getOrderingPauseStatus } from '../../lib/ordering-pause.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
 import { handleConfirmComplaint, COMPLAINT_PROMPT_BLOCK } from '../../services/restaurant-bot/complaint-flow.js';
@@ -1038,10 +1039,11 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
     // separate SHOW_MENU/VIEW_CART marker round-trip needed. Code always
     // recomputes prices from live menu_items — the model never sets a price.
     if (productType === 'restaurant_bot' && toolEnabled(allowedTools, TOOL_IDS.MENU_ORDERING)) {
-      const [menu, cart, billingConfig] = await Promise.all([
+      const [menu, cart, billingConfig, pauseStatus] = await Promise.all([
         getMenu(tenantId),
         getCartSummary(db, tenantId, contactData.id),
         getTenantBillingConfig(db, tenantId),
+        getOrderingPauseStatus(db, tenantId),
       ]);
       if (menu.length > 0) {
         // Note: item ids are shown as "id: <uuid>" (NOT "[uuid]") deliberately —
@@ -1068,7 +1070,10 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
                 `\n  Total: ₹${(bill.totalPaise / 100).toFixed(2)}`
               : `\n  Total: ₹${(bill.totalPaise / 100).toFixed(2)}`)
           : '  (empty)';
-        systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\nIf the customer mentions a coupon/promo/discount code, capture it with [ENTITY:coupon_code=<code>] on its own — the actual validity, discount amount, and usage limit are checked server-side, never assume it's valid or state a discount amount yourself.\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nCRITICAL: if you tell the customer you added, removed, or changed something in their order, you MUST include the matching tag in that same reply — the tag is what actually performs the action; saying it in words does nothing by itself. Never say "I've added X" or similar without also appending [ADD_ITEM:...] in the same message. Since a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself in addition to the tag — never the tag alone, and never the words alone. Never quote a price or item you did not see in the MENU list above.`;
+        const pauseNotice = pauseStatus.paused
+          ? `\n\nORDERING IS CURRENTLY PAUSED — the restaurant is not taking new orders right now. Tell the customer this clearly if they try to order, and do not append [CONFIRM_ORDER] even if they insist; you may still help them browse the menu.`
+          : '';
+        systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}${pauseNotice}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\nIf the customer mentions a coupon/promo/discount code, capture it with [ENTITY:coupon_code=<code>] on its own — the actual validity, discount amount, and usage limit are checked server-side, never assume it's valid or state a discount amount yourself.\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nCRITICAL: if you tell the customer you added, removed, or changed something in their order, you MUST include the matching tag in that same reply — the tag is what actually performs the action; saying it in words does nothing by itself. Never say "I've added X" or similar without also appending [ADD_ITEM:...] in the same message. Since a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself in addition to the tag — never the tag alone, and never the words alone. Never quote a price or item you did not see in the MENU list above.`;
       }
     }
 

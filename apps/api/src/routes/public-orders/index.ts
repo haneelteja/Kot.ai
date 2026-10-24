@@ -3,6 +3,7 @@ import { getServerClient } from '@alphabot/database';
 import { getMenu } from '../../lib/menu-cache.js';
 import { createWebOrder } from '../../lib/restaurant-order.js';
 import { getTenantBillingConfig } from '../../lib/bill-calculator.js';
+import { getOrderingPauseStatus } from '../../lib/ordering-pause.js';
 
 const PHONE_RE = /^\+?[0-9]{8,15}$/;
 const MAX_LINES = 50;
@@ -23,11 +24,12 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
     if (!/^[0-9a-f-]{36}$/i.test(tenantId)) {
       return reply.status(400).send({ error: 'Invalid tenant id' });
     }
-    const [menu, billing] = await Promise.all([
+    const [menu, billing, pauseStatus] = await Promise.all([
       getMenu(tenantId),
       getTenantBillingConfig(db, tenantId),
+      getOrderingPauseStatus(db, tenantId),
     ]);
-    return reply.send({ menu, billing });
+    return reply.send({ menu, billing, orderingPaused: pauseStatus.paused });
   });
 
   fastify.post<{
@@ -93,6 +95,9 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
           usage_limit_reached: 'That coupon has already reached its usage limit.',
         };
         return reply.status(400).send({ error: couponMsg[result.couponError] ?? "That coupon code isn't valid." });
+      }
+      if (result.error === 'ordering_paused') {
+        return reply.status(503).send({ error: "We're not taking new orders right now — please try again shortly.", pausedUntil: result.until });
       }
       const status = result.error === 'empty_order' ? 400 : 500;
       const message = result.error === 'empty_order'

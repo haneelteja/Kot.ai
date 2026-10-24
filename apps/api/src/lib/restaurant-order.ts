@@ -5,6 +5,7 @@ import { getMenu } from './menu-cache.js';
 import { createCheckoutDraft, attachDraftPaymentLink, type DraftLineItem } from './checkout-draft.js';
 import { calculateBill, checkOrderValue, getTenantBillingConfig, type BillBreakdown } from './bill-calculator.js';
 import { redeemCoupon, type CouponRedeemResult } from './coupon.js';
+import { getOrderingPauseStatus } from './ordering-pause.js';
 
 type Db = ReturnType<typeof getServerClient>;
 
@@ -12,7 +13,8 @@ export type ConfirmOrderResult =
   | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
   | { ok: false; error: 'empty_cart' | 'draft_create_failed' }
   | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number }
-  | { ok: false; error: 'coupon_invalid'; couponError: Exclude<CouponRedeemResult, { ok: true }>['error'] };
+  | { ok: false; error: 'coupon_invalid'; couponError: Exclude<CouponRedeemResult, { ok: true }>['error'] }
+  | { ok: false; error: 'ordering_paused'; until: string };
 
 /**
  * ORD-02 (revised): creates a checkout draft — NOT an order — from the
@@ -32,6 +34,9 @@ export async function confirmOrderFromCart(
   conversationId: string,
   couponCode:     string | null = null,
 ): Promise<ConfirmOrderResult> {
+  const pauseStatus = await getOrderingPauseStatus(db, tenantId);
+  if (pauseStatus.paused) return { ok: false, error: 'ordering_paused', until: pauseStatus.until! };
+
   const cart = await getCartSummary(db, tenantId, contactId);
   if (cart.items.length === 0) return { ok: false, error: 'empty_cart' };
 
@@ -83,7 +88,8 @@ export type WebOrderResult =
   | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
   | { ok: false; error: 'empty_order' | 'draft_create_failed' }
   | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number }
-  | { ok: false; error: 'coupon_invalid'; couponError: Exclude<CouponRedeemResult, { ok: true }>['error'] };
+  | { ok: false; error: 'coupon_invalid'; couponError: Exclude<CouponRedeemResult, { ok: true }>['error'] }
+  | { ok: false; error: 'ordering_paused'; until: string };
 
 /**
  * ORD-02 (revised): same draft-first model as confirmOrderFromCart, but for
@@ -103,6 +109,9 @@ export async function createWebOrder(
   items:      Array<{ menuItemId: string; quantity: number }>,
   couponCode: string | null = null,
 ): Promise<WebOrderResult> {
+  const pauseStatus = await getOrderingPauseStatus(db, tenantId);
+  if (pauseStatus.paused) return { ok: false, error: 'ordering_paused', until: pauseStatus.until! };
+
   const menu     = await getMenu(tenantId);
   const menuById = new Map(menu.map(m => [m.id, m]));
 

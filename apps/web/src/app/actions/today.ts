@@ -13,6 +13,8 @@ export interface TodaySummary {
   uncollectedOrders:      number;
   abandonedCheckoutValue: number; // rupees
   abandonedCheckoutCount: number;
+  orderingPaused:         boolean;
+  orderingPausedUntil:    string | null;
 }
 
 /** IST midnight (today), returned as a UTC ISO timestamp — this platform has no per-tenant timezone setting, and IST is the practical default (brief/₹ context). */
@@ -44,12 +46,17 @@ export async function getTodaySummaryAction(): Promise<{ summary?: TodaySummary;
     { count: bookingsCount },
     { data: complaints },
     { data: drafts },
+    { data: tenantRow },
   ] = await Promise.all([
     admin.from('orders').select('status, total').eq('tenant_id', tenantId).gte('created_at', sinceIso),
     admin.from('bookings').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('booking_date', todayDate),
     admin.from('complaints').select('status, sla_due_at').eq('tenant_id', tenantId).in('status', ['open', 'in_progress']),
     admin.from('checkout_drafts').select('total_paise').eq('tenant_id', tenantId).gte('created_at', sinceIso).neq('status', 'paid'),
+    admin.from('tenants').select('ordering_paused_until').eq('id', tenantId).single(),
   ]);
+
+  const pausedUntilRaw = (tenantRow as { ordering_paused_until: string | null } | null)?.ordering_paused_until ?? null;
+  const orderingPaused = pausedUntilRaw !== null && new Date(pausedUntilRaw).getTime() > Date.now();
 
   const ordersByStatus: Record<string, number> = {};
   let gmv = 0;
@@ -82,6 +89,8 @@ export async function getTodaySummaryAction(): Promise<{ summary?: TodaySummary;
       uncollectedOrders:      uncollectedOrders ?? 0,
       abandonedCheckoutValue,
       abandonedCheckoutCount: draftRows.length,
+      orderingPaused,
+      orderingPausedUntil:    orderingPaused ? pausedUntilRaw : null,
     },
   };
 }

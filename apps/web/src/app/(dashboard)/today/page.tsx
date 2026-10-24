@@ -57,6 +57,14 @@ export default async function TodayPage() {
 
       {summary && (
         <>
+          {summary.orderingPaused && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <p className="text-sm text-amber-800">
+                ⏸️ Ordering is paused{summary.orderingPausedUntil ? ` until ${new Date(summary.orderingPausedUntil).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}` : ''} — send <span className="font-mono font-semibold">RESUME</span> on your ops WhatsApp number to start taking orders again.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <StatCard icon={<IndianRupee size={13} />} label="GMV today" value={`₹${summary.gmv.toFixed(0)}`} />
             <StatCard icon={<ShoppingBag size={13} />} label="Orders today" value={String(Object.values(summary.ordersByStatus).reduce((a, b) => a + b, 0))}

@@ -3,14 +3,14 @@ import { MenuOrderClient, type PublicMenuItem, type TenantBilling } from './Menu
 
 export const dynamic = 'force-dynamic';
 
-async function fetchMenu(tenantId: string): Promise<{ menu: PublicMenuItem[]; billing: TenantBilling }> {
+async function fetchMenu(tenantId: string): Promise<{ menu: PublicMenuItem[]; billing: TenantBilling; orderingPaused: boolean }> {
   const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
-  const fallback = { menu: [], billing: { taxRateBp: 0, packingChargePaise: 0, minOrderValuePaise: 0, maxOrderValuePaise: null } };
+  const fallback = { menu: [], billing: { taxRateBp: 0, packingChargePaise: 0, minOrderValuePaise: 0, maxOrderValuePaise: null }, orderingPaused: false };
   try {
     const res = await fetch(`${apiUrl}/api/public/orders/menu/${tenantId}`, { cache: 'no-store' });
     if (!res.ok) return fallback;
-    const data = (await res.json()) as { menu?: PublicMenuItem[]; billing?: TenantBilling };
-    return { menu: data.menu ?? [], billing: data.billing ?? fallback.billing };
+    const data = (await res.json()) as { menu?: PublicMenuItem[]; billing?: TenantBilling; orderingPaused?: boolean };
+    return { menu: data.menu ?? [], billing: data.billing ?? fallback.billing, orderingPaused: data.orderingPaused ?? false };
   } catch {
     return fallback;
   }
@@ -48,7 +48,7 @@ export default async function PublicOrderPage({
     return <ErrorCard message={verified.error === 'expired' ? 'This ordering link has expired — please ask the restaurant to send you a fresh one.' : 'This ordering link isn’t valid.'} />;
   }
 
-  const { menu, billing } = await fetchMenu(tenantId);
+  const { menu, billing, orderingPaused } = await fetchMenu(tenantId);
 
   return (
     <main className="min-h-screen bg-sunken">
@@ -56,12 +56,18 @@ export default async function PublicOrderPage({
         <h1 className="text-xl font-bold text-text mb-1">Order Online</h1>
         <p className="text-sm text-muted-foreground mb-5">Browse the menu and place your order — pay securely online.</p>
 
+        {orderingPaused && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-amber-800">We&apos;re not taking new orders right now — please check back shortly.</p>
+          </div>
+        )}
+
         {menu.length === 0 ? (
           <div className="bg-surface border border-line rounded-2xl p-8 text-center">
             <p className="text-sm text-muted-foreground">The menu isn&apos;t available right now. Please try again later.</p>
           </div>
         ) : (
-          <MenuOrderClient tenantId={tenantId} menu={menu} billing={billing} />
+          <MenuOrderClient tenantId={tenantId} menu={menu} billing={billing} orderingPaused={orderingPaused} />
         )}
       </div>
     </main>

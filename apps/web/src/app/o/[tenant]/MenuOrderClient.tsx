@@ -29,7 +29,7 @@ function calculateBillPreview(subtotalPaise: number, billing: TenantBilling) {
   return { subtotalPaise, taxPaise, packingPaise, totalPaise: subtotalPaise + taxPaise + packingPaise };
 }
 
-export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string; menu: PublicMenuItem[]; billing: TenantBilling }) {
+export function MenuOrderClient({ tenantId, menu, billing, orderingPaused = false }: { tenantId: string; menu: PublicMenuItem[]; billing: TenantBilling; orderingPaused?: boolean }) {
   const [qty, setQty]           = useState<Record<string, number>>({});
   const [phone, setPhone]       = useState('');
   const [name, setName]         = useState('');
@@ -62,6 +62,7 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
 
   async function handleCheckout() {
     setError(null);
+    if (orderingPaused) { setError("We're not taking new orders right now — please check back shortly."); return; }
     if (cartLines.length === 0) { setError('Add at least one item to your order.'); return; }
     if (belowMinimum) { setError(`The minimum order value is ₹${(billing.minOrderValuePaise / 100).toFixed(2)}.`); return; }
     if (!/^\+?[0-9]{8,15}$/.test(phone.trim())) { setError('Enter a valid phone number.'); return; }
@@ -221,7 +222,7 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
           <button
             type="button"
             onClick={handleCheckout}
-            disabled={submitting || belowMinimum}
+            disabled={submitting || belowMinimum || orderingPaused}
             className="w-full flex items-center justify-center gap-2 bg-brand-strong text-white font-semibold text-sm py-2.5 rounded-lg hover:opacity-90 disabled:opacity-60"
           >
             {submitting ? <Loader2 size={15} className="animate-spin" /> : null}

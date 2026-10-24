@@ -22,6 +22,7 @@ import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '..
 import { handleConfirmOrder } from '../../services/restaurant-bot/order-confirm.js';
 import { calculateBill, getTenantBillingConfig } from '../../lib/bill-calculator.js';
 import { getOrderingPauseStatus } from '../../lib/ordering-pause.js';
+import { transcribeVoiceNote } from '../../lib/voice-note-transcribe.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
 import { handleConfirmComplaint, COMPLAINT_PROMPT_BLOCK } from '../../services/restaurant-bot/complaint-flow.js';
@@ -432,6 +433,26 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
         `${incoming.location.address ? ' (' + incoming.location.address + ')' : ''}` +
         ` [lat: ${incoming.location.latitude.toFixed(5)}, lon: ${incoming.location.longitude.toFixed(5)}]`
       : null;
+
+    // CONV-05: voice notes are transcribed before the agent ever sees them —
+    // a bare "[audio received]" placeholder (the old fallback below) left
+    // the AI with nothing to act on. Applies to every bot type, not just
+    // restaurant_bot; transcription itself isn't restaurant-specific.
+    let isFromVoiceNote = false;
+    if (incoming.type === 'audio') {
+      const transcript = await transcribeVoiceNote(db, incoming, config.access_token);
+      if (transcript) {
+        incoming.text = transcript;
+        isFromVoiceNote = true;
+      } else {
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to:   incoming.from,
+          text: "Sorry, I couldn't understand that voice note — could you type your message instead?",
+        });
+        return;
+      }
+    }
 
     // Mark message as read (non-blocking)
     void gateway.markAsRead(config.phone_number_id, config.access_token, incoming.messageId);
@@ -938,7 +959,8 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
     // has a custom system_prompt that doesn't include it.
     const wantLeadScoring = toolEnabled(allowedTools, TOOL_IDS.LEAD_SCORING) && productType !== 'lifecycle_bot';
     const wantReturnFlow  = toolEnabled(allowedTools, TOOL_IDS.RETURN_REQUEST) && productType === 'lifecycle_bot';
-    let systemPrompt = baseSystemPrompt + (wantLeadScoring ? SALES_LEAD_INSTRUCTION : '') + (wantReturnFlow ? RETURN_REQUEST_INSTRUCTION : '');
+    let systemPrompt = baseSystemPrompt + (wantLeadScoring ? SALES_LEAD_INSTRUCTION : '') + (wantReturnFlow ? RETURN_REQUEST_INSTRUCTION : '')
+      + (isFromVoiceNote ? `\n\nCONV-05: this message was transcribed from a voice note (transcription can be imperfect) — briefly confirm what you understood before acting on it, especially before adding items to an order.` : '');
 
     // Inject persona preamble when bot_config has persona fields set
     const bc = botConfig as (typeof botConfig & {

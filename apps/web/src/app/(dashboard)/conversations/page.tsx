@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
   MessageSquare, AlertCircle, Clock, Users, Star, Search, ChevronLeft,
+  ShoppingBag, CalendarCheck,
 } from 'lucide-react';
 import { BotFilterBar } from '@/components/dashboard/BotFilterBar';
 import { ContactsTabClient } from '@/components/dashboard/ContactsTabClient';
@@ -434,6 +435,31 @@ export default async function ConversationsPage({
                         </span>
                       </div>
                     </div>
+
+                    {/* HND-02: linked order/booking context, restaurant_bot only */}
+                    {(detail.linkedOrder || detail.linkedBooking) && (
+                      <div className="flex items-center gap-4 px-5 py-2.5 bg-brand-wash/40 border-b border-line text-xs shrink-0 flex-wrap">
+                        {detail.linkedOrder && (
+                          <div className="flex items-center gap-1.5 text-text">
+                            <ShoppingBag size={13} className="text-brand-strong" />
+                            <span className="font-medium">{detail.linkedOrder.order_ref ? `Order #${detail.linkedOrder.order_ref}` : 'Order'}</span>
+                            <span className="text-muted-foreground capitalize">{detail.linkedOrder.status.replace('_', ' ')}</span>
+                            <span className="text-muted-foreground">₹{Number(detail.linkedOrder.total).toFixed(0)}</span>
+                            {detail.linkedOrder.pickup_code && <span className="text-muted-foreground">code {detail.linkedOrder.pickup_code}</span>}
+                            <Link href="/orders" className="text-brand-strong font-medium hover:underline">View</Link>
+                          </div>
+                        )}
+                        {detail.linkedBooking && (
+                          <div className="flex items-center gap-1.5 text-text">
+                            <CalendarCheck size={13} className="text-brand-strong" />
+                            <span className="font-medium">Booking</span>
+                            <span className="text-muted-foreground">{detail.linkedBooking.party_size} guests · {detail.linkedBooking.booking_date} {detail.linkedBooking.booking_time.slice(0, 5)}</span>
+                            <span className="text-muted-foreground capitalize">{detail.linkedBooking.status.replace('_', ' ')}</span>
+                            <Link href="/bookings" className="text-brand-strong font-medium hover:underline">View</Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <ConversationMessages
                       conversationId={detail.id}

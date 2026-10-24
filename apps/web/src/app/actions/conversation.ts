@@ -6,6 +6,23 @@ import { getSession }             from '@/lib/session';
 import { revalidatePath }         from 'next/cache';
 import { unstable_cache }         from 'next/cache';
 
+export interface LinkedOrderSummary {
+  id:          string;
+  order_ref:   string | null;
+  status:      string;
+  total:       number;
+  pickup_code: string | null;
+  created_at:  string;
+}
+
+export interface LinkedBookingSummary {
+  id:           string;
+  party_size:   number;
+  booking_date: string;
+  booking_time: string;
+  status:       string;
+}
+
 export interface ConversationDetail {
   id:               string;
   status:           string;
@@ -14,6 +31,9 @@ export interface ConversationDetail {
   contact: { phone: string | null; name: string | null } | null;
   messages: Array<{ id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: string; confidence_score: number | null }>;
   teamMembers: Array<{ id: string; name: string }>;
+  /** HND-02: the most recent order/booking linked to this conversation, restaurant_bot only. */
+  linkedOrder?:   LinkedOrderSummary | null;
+  linkedBooking?: LinkedBookingSummary | null;
 }
 
 const getAuthUsersCached = unstable_cache(
@@ -76,6 +96,21 @@ export async function getConversationDetailAction(conversationId: string): Promi
     };
   });
 
+  // HND-02: side-panel order/booking context — restaurant_bot only, since
+  // neither table applies to other bot types.
+  let linkedOrder: LinkedOrderSummary | null = null;
+  let linkedBooking: LinkedBookingSummary | null = null;
+  if (conversation.product_type === 'restaurant_bot') {
+    const [{ data: orderRow }, { data: bookingRow }] = await Promise.all([
+      admin.from('orders').select('id, order_ref, status, total, pickup_code, created_at')
+        .eq('conversation_id', conversationId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      admin.from('bookings').select('id, party_size, booking_date, booking_time, status')
+        .eq('conversation_id', conversationId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    linkedOrder = (orderRow as LinkedOrderSummary | null) ?? null;
+    linkedBooking = (bookingRow as LinkedBookingSummary | null) ?? null;
+  }
+
   return {
     id:                conversation.id,
     status:            conversation.status,
@@ -84,6 +119,8 @@ export async function getConversationDetailAction(conversationId: string): Promi
     contact:           (conversation.contacts as unknown as { phone: string | null; name: string | null } | null) ?? null,
     messages:          ((messagesDesc ?? []) as ConversationDetail['messages']).reverse(),
     teamMembers,
+    linkedOrder,
+    linkedBooking,
   };
 }
 

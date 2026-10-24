@@ -24,6 +24,7 @@ import { calculateBill, getTenantBillingConfig } from '../../lib/bill-calculator
 import { getOrderingPauseStatus } from '../../lib/ordering-pause.js';
 import { transcribeVoiceNote } from '../../lib/voice-note-transcribe.js';
 import { isAllergyQuestion } from '../../lib/allergy-check.js';
+import { INJECTION_DEFENSE_INSTRUCTION } from '../../lib/injection-defense.js';
 import { sendProductCatalogue } from '../../services/sales-bot/send-catalogue.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
@@ -976,7 +977,8 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
     // has a custom system_prompt that doesn't include it.
     const wantLeadScoring = toolEnabled(allowedTools, TOOL_IDS.LEAD_SCORING) && productType !== 'lifecycle_bot';
     const wantReturnFlow  = toolEnabled(allowedTools, TOOL_IDS.RETURN_REQUEST) && productType === 'lifecycle_bot';
-    let systemPrompt = baseSystemPrompt + (wantLeadScoring ? SALES_LEAD_INSTRUCTION : '') + (wantReturnFlow ? RETURN_REQUEST_INSTRUCTION : '')
+    let systemPrompt = baseSystemPrompt + INJECTION_DEFENSE_INSTRUCTION
+      + (wantLeadScoring ? SALES_LEAD_INSTRUCTION : '') + (wantReturnFlow ? RETURN_REQUEST_INSTRUCTION : '')
       + (isFromVoiceNote ? `\n\nCONV-05: this message was transcribed from a voice note (transcription can be imperfect) — briefly confirm what you understood before acting on it, especially before adding items to an order.` : '');
 
     // Inject persona preamble when bot_config has persona fields set

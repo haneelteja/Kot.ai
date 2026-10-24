@@ -46,11 +46,24 @@ export function TeamInviteForm() {
         </select>
         <SubmitButton />
       </form>
-      {state?.error && (
+      {state?.error && !state?.emailFailed && (
         <p className="text-xs text-red-500 mt-2">{state.error}</p>
       )}
       {state?.success && (
         <p className="text-xs text-done mt-2">Invite sent successfully!</p>
+      )}
+      {state?.emailFailed && (
+        <div className="mt-2 space-y-1">
+          <p className="text-xs text-amber-600">{state.error}</p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={state.inviteUrl}
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 rounded-lg border border-line bg-sunken px-2.5 py-1.5 text-xs text-text font-mono"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

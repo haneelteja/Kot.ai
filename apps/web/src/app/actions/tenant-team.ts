@@ -61,20 +61,26 @@ export async function sendTeamInviteAction(_prevState: unknown, formData: FormDa
   const webUrl    = process.env['WEB_BASE_URL'] ?? 'https://whats-app-agent-web.vercel.app';
   const inviteUrl = `${webUrl}/invite/${invite.token}`;
 
-  await sendEmail({
+  // Bug fix: this result was previously never checked — sendEmail failing
+  // (e.g. a misconfigured/invalid RESEND_API_KEY) still returned
+  // `{ success: true }` to the UI, so an admin had no way to know the
+  // invite email never actually went out. The invite row itself is still
+  // created and the link still works either way; only the notification
+  // path can fail.
+  const emailResult = await sendEmail({
     to:      email,
-    subject: `You've been invited to join ${tenant.name} on Alphabot`,
+    subject: `You've been invited to join ${tenant.name} on KOT.ai`,
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;">
         <div style="margin-bottom:24px;">
-          <span style="font-weight:700;font-size:18px;color:#111">Alphabot</span>
+          <span style="font-weight:700;font-size:18px;color:#111">KOT.ai</span>
         </div>
         <h2 style="font-size:20px;font-weight:700;color:#111;margin:0 0 8px">You've been invited</h2>
         <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px">
-          You've been invited to join <strong>${tenant.name}</strong> as a <strong>${role}</strong> on Alphabot.
+          You've been invited to join <strong>${tenant.name}</strong> as a <strong>${role}</strong> on KOT.ai.
         </p>
         <a href="${inviteUrl}"
-           style="display:inline-block;background:#059669;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
+           style="display:inline-block;background:#C8431D;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
           Accept Invitation
         </a>
         <p style="color:#999;font-size:12px;margin-top:32px;line-height:1.6">
@@ -92,10 +98,14 @@ export async function sendTeamInviteAction(_prevState: unknown, formData: FormDa
     entityType:  'team_invite',
     entityId:    email,
     description: `Invited ${email} as ${role}`,
-    metadata: { email, role },
+    metadata: { email, role, emailSent: emailResult.ok },
   });
 
   revalidatePath('/team');
+
+  if (!emailResult.ok) {
+    return { emailFailed: true, inviteUrl, error: `Invite created, but the email could not be sent (${emailResult.error ?? 'unknown error'}). Share this link with them directly.` };
+  }
   return { success: true, inviteUrl };
 }
 

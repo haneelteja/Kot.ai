@@ -11,25 +11,30 @@ export interface TenantBillingConfig {
 
 export interface BillBreakdown {
   subtotalPaise: number;
+  discountPaise: number;
   taxPaise:      number;
   packingPaise:  number;
   totalPaise:    number;
 }
 
 /**
- * PRC-01: the one place a restaurant order's final bill is computed.
- * Both tax and packing default to 0, so a tenant that hasn't configured
- * either sees no change from the pre-PRC-01 behaviour (totalPaise ===
- * subtotalPaise, as before).
+ * PRC-01/PRC-02: the one place a restaurant order's final bill is
+ * computed. Tax and packing default to 0, so a tenant that hasn't
+ * configured either sees no change from the pre-PRC-01 behaviour. A
+ * coupon discount (PRC-02, optional) is applied to the subtotal BEFORE
+ * tax — tax is charged on the actual sale price, not the pre-discount
+ * price.
  */
-export function calculateBill(subtotalPaise: number, config: TenantBillingConfig): BillBreakdown {
-  const taxPaise     = Math.round(subtotalPaise * config.taxRateBp / 10000);
+export function calculateBill(subtotalPaise: number, config: TenantBillingConfig, discountPaise = 0): BillBreakdown {
+  const discountedSubtotal = Math.max(0, subtotalPaise - discountPaise);
+  const taxPaise     = Math.round(discountedSubtotal * config.taxRateBp / 10000);
   const packingPaise = subtotalPaise > 0 ? config.packingChargePaise : 0;
   return {
     subtotalPaise,
+    discountPaise,
     taxPaise,
     packingPaise,
-    totalPaise: subtotalPaise + taxPaise + packingPaise,
+    totalPaise: discountedSubtotal + taxPaise + packingPaise,
   };
 }
 

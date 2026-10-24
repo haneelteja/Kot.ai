@@ -19,7 +19,7 @@ import type { BranchLocation, RoutingConfig } from '../../services/routing/route
 import { getProductCatalogue } from '../../lib/product-cache.js';
 import { getMenu } from '../../lib/menu-cache.js';
 import { getCartSummary, addItemToCart, removeItemFromCart, clearCart } from '../../lib/cart.js';
-import { confirmOrderFromCart } from '../../lib/restaurant-order.js';
+import { handleConfirmOrder } from '../../services/restaurant-bot/order-confirm.js';
 import { calculateBill, getTenantBillingConfig } from '../../lib/bill-calculator.js';
 import { handleRestaurantButtonTap, handleConfirmBooking, handleBookingFeedbackReply, handleOrderFeedbackReply, RESERVATION_PROMPT_BLOCK } from '../../services/restaurant-bot/button-flow.js';
 import { routeNonCustomerRoleMessage } from '../../services/restaurant-bot/role-routing.js';
@@ -1068,7 +1068,7 @@ Tag this conversation with customer intent by appending [SIGNAL:x] markers at th
                 `\n  Total: ₹${(bill.totalPaise / 100).toFixed(2)}`
               : `\n  Total: ₹${(bill.totalPaise / 100).toFixed(2)}`)
           : '  (empty)';
-        systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nCRITICAL: if you tell the customer you added, removed, or changed something in their order, you MUST include the matching tag in that same reply — the tag is what actually performs the action; saying it in words does nothing by itself. Never say "I've added X" or similar without also appending [ADD_ITEM:...] in the same message. Since a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself in addition to the tag — never the tag alone, and never the words alone. Never quote a price or item you did not see in the MENU list above.`;
+        systemPrompt += `\n\n---\nMENU (use the exact id shown — never invent an id, never invent a price):\n${menuText}\n\nCURRENT CART:\n${cartText}\n\nORDERING ACTIONS — append at most one per reply, on the VERY LAST LINE, after your visible reply text, in EXACTLY this format and no other (plain square brackets, colon-separated — NOT a function call, NOT wrapped in any special tokens):\n[ADD_ITEM:<item_id>:<qty>]\nExample: [ADD_ITEM:${menu[0]!.id}:1]\nDo NOT write ADD_ITEM(...), do NOT use quotes, do NOT use <|tool_call|>-style tokens, do NOT wrap the id in brackets — copy the id exactly as shown above with no alteration.\n[REMOVE_ITEM:<item_id>] — remove that item entirely from the cart\n[CLEAR_CART] — empty the cart\nIf the customer mentions a coupon/promo/discount code, capture it with [ENTITY:coupon_code=<code>] on its own — the actual validity, discount amount, and usage limit are checked server-side, never assume it's valid or state a discount amount yourself.\n[CONFIRM_ORDER] — place the order from the current cart; ALWAYS read back the full item list and total in your visible reply text before appending this tag, and only once the customer has explicitly confirmed they want to place the order\nCRITICAL: if you tell the customer you added, removed, or changed something in their order, you MUST include the matching tag in that same reply — the tag is what actually performs the action; saying it in words does nothing by itself. Never say "I've added X" or similar without also appending [ADD_ITEM:...] in the same message. Since a cart change only takes effect after this reply, always state in your own words what you added/removed in the visible reply text itself in addition to the tag — never the tag alone, and never the words alone. Never quote a price or item you did not see in the MENU list above.`;
       }
     }
 
@@ -1731,37 +1731,10 @@ Which branch works best for you?
       if (isClearCart) void clearCart(db, tenantId, contactData.id);
 
       if (isConfirmOrder) {
-        // ORD-02: this creates a checkout draft, not an order — the order
-        // exists only once Easebuzz confirms payment (routes/orders/index.ts).
-        const result = await confirmOrderFromCart(db, tenantId, contactData.id, conversation.id);
-        if (result.ok && result.linkUrl) {
-          const hasSurcharge = result.bill.taxPaise > 0 || result.bill.packingPaise > 0;
-          const billLines = hasSurcharge
-            ? `Subtotal: ₹${(result.bill.subtotalPaise / 100).toFixed(2)}\n` +
-              (result.bill.taxPaise > 0 ? `Tax: ₹${(result.bill.taxPaise / 100).toFixed(2)}\n` : '') +
-              (result.bill.packingPaise > 0 ? `Packing charge: ₹${(result.bill.packingPaise / 100).toFixed(2)}\n` : '') +
-              `Total: ₹${(result.totalPaise / 100).toFixed(2)}\n\n`
-            : '';
-          const msg = `${billLines}Please pay ₹${(result.totalPaise / 100).toFixed(2)} to confirm your order. This link is valid for 30 minutes.\n\n💳 ${result.linkUrl}`;
-          fireForget(
-            gateway.sendMessage(config.phone_number_id, config.access_token, { type: 'text', to: incoming.from, text: msg }),
-            'send-order-confirmation',
-            fastify.log,
-          );
-        } else {
-          const msg = !result.ok && result.error === 'empty_cart'
-            ? "Your cart is empty — add a few items first! 🍽️"
-            : !result.ok && result.error === 'below_minimum'
-            ? `The minimum order value is ₹${(result.limitPaise / 100).toFixed(2)}. Please add a bit more to your order.`
-            : !result.ok && result.error === 'above_maximum'
-            ? `This order exceeds our maximum order value of ₹${(result.limitPaise / 100).toFixed(2)}. Please split it into smaller orders or contact us directly.`
-            : "Sorry, I couldn't set up payment for that order right now. Please try again in a moment.";
-          fireForget(
-            gateway.sendMessage(config.phone_number_id, config.access_token, { type: 'text', to: incoming.from, text: msg }),
-            'send-order-confirm-failure',
-            fastify.log,
-          );
-        }
+        await handleConfirmOrder({
+          db, gateway, config, incoming, conversation, tenantId,
+          contactId: contactData.id, vars: latestVarsForScore, convAiVars, log: fastify.log,
+        });
       }
     }
 

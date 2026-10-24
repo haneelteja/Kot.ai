@@ -33,6 +33,7 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
   const [qty, setQty]           = useState<Record<string, number>>({});
   const [phone, setPhone]       = useState('');
   const [name, setName]         = useState('');
+  const [couponCode, setCouponCode] = useState('');
   const [submitting, setSubmit] = useState(false);
   const [error, setError]       = useState<string | null>(null);
 
@@ -72,9 +73,10 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId,
-          phone: phone.trim(),
-          name:  name.trim() || undefined,
-          items: cartLines.map(l => ({ menuItemId: l.item.id, quantity: l.quantity })),
+          phone:      phone.trim(),
+          name:       name.trim() || undefined,
+          items:      cartLines.map(l => ({ menuItemId: l.item.id, quantity: l.quantity })),
+          couponCode: couponCode.trim() || undefined,
         }),
       });
       const data = await res.json() as { error?: string; linkUrl?: string | null };
@@ -204,6 +206,13 @@ export function MenuOrderClient({ tenantId, menu, billing }: { tenantId: string;
               onChange={e => setName(e.target.value)}
               placeholder="Name (optional)"
               className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+            />
+            <input
+              type="text"
+              value={couponCode}
+              onChange={e => setCouponCode(e.target.value)}
+              placeholder="Coupon code (optional)"
+              className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand uppercase placeholder:normal-case"
             />
           </div>
 

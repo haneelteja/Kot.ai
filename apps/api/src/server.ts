@@ -18,6 +18,7 @@ import { buttonTemplateRoutes } from './routes/button-templates/index.js';
 import { metricsRoutes } from './routes/metrics/index.js';
 import { publicOrderRoutes } from './routes/public-orders/index.js';
 import { complaintRoutes } from './routes/complaints/index.js';
+import { couponRoutes } from './routes/coupons/index.js';
 import { startScheduler } from './jobs/scheduler.js';
 import { runInsightsForAllTenants } from './services/insights/generator.js';
 import { getServerClient } from '@alphabot/database';
@@ -122,6 +123,7 @@ await server.register(buttonTemplateRoutes,   { prefix: '/api/button-templates' 
 await server.register(metricsRoutes);
 await server.register(publicOrderRoutes,   { prefix: '/api/public/orders' });
 await server.register(complaintRoutes,     { prefix: '/api/complaints' });
+await server.register(couponRoutes,        { prefix: '/api/coupons' });
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 server.get('/health', async () => {

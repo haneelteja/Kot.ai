@@ -4,13 +4,15 @@ import { getCartSummary, clearCart } from './cart.js';
 import { getMenu } from './menu-cache.js';
 import { createCheckoutDraft, attachDraftPaymentLink, type DraftLineItem } from './checkout-draft.js';
 import { calculateBill, checkOrderValue, getTenantBillingConfig, type BillBreakdown } from './bill-calculator.js';
+import { redeemCoupon, type CouponRedeemResult } from './coupon.js';
 
 type Db = ReturnType<typeof getServerClient>;
 
 export type ConfirmOrderResult =
   | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
   | { ok: false; error: 'empty_cart' | 'draft_create_failed' }
-  | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number };
+  | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number }
+  | { ok: false; error: 'coupon_invalid'; couponError: Exclude<CouponRedeemResult, { ok: true }>['error'] };
 
 /**
  * ORD-02 (revised): creates a checkout draft — NOT an order — from the
@@ -28,6 +30,7 @@ export async function confirmOrderFromCart(
   tenantId:       string,
   contactId:      string,
   conversationId: string,
+  couponCode:     string | null = null,
 ): Promise<ConfirmOrderResult> {
   const cart = await getCartSummary(db, tenantId, contactId);
   if (cart.items.length === 0) return { ok: false, error: 'empty_cart' };
@@ -41,9 +44,18 @@ export async function confirmOrderFromCart(
   const valueCheck = checkOrderValue(cart.totalPaise, billingConfig);
   if (!valueCheck.ok) return { ok: false, error: valueCheck.reason, limitPaise: valueCheck.limitPaise };
 
-  const bill = calculateBill(cart.totalPaise, billingConfig);
+  let discountPaise = 0;
+  let redeemedCode: string | null = null;
+  if (couponCode) {
+    const couponResult = await redeemCoupon(db, tenantId, couponCode, cart.totalPaise);
+    if (!couponResult.ok) return { ok: false, error: 'coupon_invalid', couponError: couponResult.error };
+    discountPaise = couponResult.discountPaise;
+    redeemedCode = couponResult.code;
+  }
 
-  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'whatsapp_bot', items, bill);
+  const bill = calculateBill(cart.totalPaise, billingConfig, discountPaise);
+
+  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'whatsapp_bot', items, bill, redeemedCode);
   if (!draft) return { ok: false, error: 'draft_create_failed' };
 
   let linkUrl: string | null = null;
@@ -70,7 +82,8 @@ export async function confirmOrderFromCart(
 export type WebOrderResult =
   | { ok: true; draftId: string; totalPaise: number; bill: BillBreakdown; linkUrl: string | null }
   | { ok: false; error: 'empty_order' | 'draft_create_failed' }
-  | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number };
+  | { ok: false; error: 'below_minimum' | 'above_maximum'; limitPaise: number }
+  | { ok: false; error: 'coupon_invalid'; couponError: Exclude<CouponRedeemResult, { ok: true }>['error'] };
 
 /**
  * ORD-02 (revised): same draft-first model as confirmOrderFromCart, but for
@@ -83,11 +96,12 @@ export type WebOrderResult =
  * for a web order.
  */
 export async function createWebOrder(
-  db:       Db,
-  tenantId: string,
-  phone:    string,
-  name:     string | null,
-  items:    Array<{ menuItemId: string; quantity: number }>,
+  db:         Db,
+  tenantId:   string,
+  phone:      string,
+  name:       string | null,
+  items:      Array<{ menuItemId: string; quantity: number }>,
+  couponCode: string | null = null,
 ): Promise<WebOrderResult> {
   const menu     = await getMenu(tenantId);
   const menuById = new Map(menu.map(m => [m.id, m]));
@@ -108,7 +122,16 @@ export async function createWebOrder(
   const valueCheck = checkOrderValue(subtotalPaise, billingConfig);
   if (!valueCheck.ok) return { ok: false, error: valueCheck.reason, limitPaise: valueCheck.limitPaise };
 
-  const bill = calculateBill(subtotalPaise, billingConfig);
+  let discountPaise = 0;
+  let redeemedCode: string | null = null;
+  if (couponCode) {
+    const couponResult = await redeemCoupon(db, tenantId, couponCode, subtotalPaise);
+    if (!couponResult.ok) return { ok: false, error: 'coupon_invalid', couponError: couponResult.error };
+    discountPaise = couponResult.discountPaise;
+    redeemedCode = couponResult.code;
+  }
+
+  const bill = calculateBill(subtotalPaise, billingConfig, discountPaise);
 
   const contactUpsert: Record<string, unknown> = { tenant_id: tenantId, phone };
   if (name) contactUpsert['name'] = name;
@@ -128,7 +151,7 @@ export async function createWebOrder(
   if (convError || !conv) return { ok: false, error: 'draft_create_failed' };
   const conversationId = (conv as { id: string }).id;
 
-  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'weblink', lines, bill);
+  const draft = await createCheckoutDraft(db, tenantId, contactId, conversationId, 'weblink', lines, bill, redeemedCode);
   if (!draft) return { ok: false, error: 'draft_create_failed' };
 
   let linkUrl: string | null = null;

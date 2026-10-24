@@ -32,10 +32,11 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
 
   fastify.post<{
     Body: {
-      tenantId: string;
-      phone:    string;
-      name?:    string;
-      items:    Array<{ menuItemId: string; quantity: number }>;
+      tenantId:   string;
+      phone:      string;
+      name?:      string;
+      items:      Array<{ menuItemId: string; quantity: number }>;
+      couponCode?: string;
     };
   }>('/', {
     config: {
@@ -49,7 +50,7 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
       },
     },
   }, async (request, reply) => {
-    const { tenantId, phone, name, items } = request.body ?? {};
+    const { tenantId, phone, name, items, couponCode } = request.body ?? {};
 
     if (!tenantId || !/^[0-9a-f-]{36}$/i.test(tenantId)) {
       return reply.status(400).send({ error: 'Invalid tenant id' });
@@ -74,7 +75,7 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
 
     // ORD-02 (revised): this creates a checkout draft, not an order — the
     // order itself is only created once Easebuzz confirms payment.
-    const result = await createWebOrder(db, tenantId, phone.trim(), name?.trim() || null, normalisedItems);
+    const result = await createWebOrder(db, tenantId, phone.trim(), name?.trim() || null, normalisedItems, couponCode?.trim() || null);
 
     if (!result.ok) {
       if (result.error === 'below_minimum' || result.error === 'above_maximum') {
@@ -82,6 +83,16 @@ export async function publicOrderRoutes(fastify: FastifyInstance): Promise<void>
           ? `The minimum order value is ₹${(result.limitPaise / 100).toFixed(2)}.`
           : `This order exceeds the maximum order value of ₹${(result.limitPaise / 100).toFixed(2)}.`;
         return reply.status(400).send({ error: message });
+      }
+      if (result.error === 'coupon_invalid') {
+        const couponMsg: Record<string, string> = {
+          not_found: "That coupon code isn't valid.",
+          inactive: 'That coupon is no longer active.',
+          expired: 'That coupon has expired.',
+          below_minimum: "Your order doesn't meet that coupon's minimum order value.",
+          usage_limit_reached: 'That coupon has already reached its usage limit.',
+        };
+        return reply.status(400).send({ error: couponMsg[result.couponError] ?? "That coupon code isn't valid." });
       }
       const status = result.error === 'empty_order' ? 400 : 500;
       const message = result.error === 'empty_order'

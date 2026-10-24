@@ -33,6 +33,7 @@ export async function createCheckoutDraft(
   source:         'whatsapp_bot' | 'weblink',
   items:          DraftLineItem[],
   bill:           BillBreakdown,
+  couponCode:     string | null = null,
 ): Promise<CheckoutDraft | null> {
   const expiresAt = new Date(Date.now() + DRAFT_EXPIRY_MS).toISOString();
 
@@ -45,9 +46,11 @@ export async function createCheckoutDraft(
       source,
       items_json:           items,
       subtotal_paise:       bill.subtotalPaise,
+      discount_paise:       bill.discountPaise,
       tax_paise:            bill.taxPaise,
       packing_charge_paise: bill.packingPaise,
       total_paise:          bill.totalPaise,
+      coupon_code:          couponCode,
       expires_at:           expiresAt,
     })
     .select('id, expires_at')
@@ -62,7 +65,7 @@ export async function attachDraftPaymentLink(db: Db, draftId: string, linkUrl: s
 }
 
 export type ConvertDraftResult =
-  | { ok: true; orderId: string; orderRef: string; totalPaise: number; subtotalPaise: number; taxPaise: number; packingPaise: number; tenantId: string; contactId: string; conversationId: string; source: string }
+  | { ok: true; orderId: string; orderRef: string; totalPaise: number; subtotalPaise: number; taxPaise: number; packingPaise: number; discountPaise: number; couponCode: string | null; tenantId: string; contactId: string; conversationId: string; source: string }
   | { ok: false; error: 'draft_not_found' | 'already_converted' | 'create_failed' };
 
 /**
@@ -74,7 +77,7 @@ export type ConvertDraftResult =
 export async function convertDraftToOrder(db: Db, draftId: string): Promise<ConvertDraftResult> {
   const { data: draft } = await db
     .from('checkout_drafts')
-    .select('id, tenant_id, contact_id, conversation_id, source, items_json, subtotal_paise, tax_paise, packing_charge_paise, total_paise, status, order_id')
+    .select('id, tenant_id, contact_id, conversation_id, source, items_json, subtotal_paise, discount_paise, tax_paise, packing_charge_paise, total_paise, coupon_code, status, order_id')
     .eq('id', draftId)
     .single();
 
@@ -91,6 +94,8 @@ export async function convertDraftToOrder(db: Db, draftId: string): Promise<Conv
         subtotalPaise: draft.subtotal_paise as number,
         taxPaise: draft.tax_paise as number,
         packingPaise: draft.packing_charge_paise as number,
+        discountPaise: draft.discount_paise as number,
+        couponCode: draft.coupon_code as string | null,
         tenantId: draft.tenant_id as string,
         contactId: draft.contact_id as string,
         conversationId: draft.conversation_id as string,
@@ -114,8 +119,10 @@ export async function convertDraftToOrder(db: Db, draftId: string): Promise<Conv
       total:                (draft.total_paise as number) / 100,
       total_paise:          draft.total_paise,
       subtotal_paise:       draft.subtotal_paise,
+      discount_paise:       draft.discount_paise,
       tax_paise:            draft.tax_paise,
       packing_charge_paise: draft.packing_charge_paise,
+      coupon_code:          draft.coupon_code,
       order_ref:            orderRef,
       source:               draft.source,
       status:               'confirmed',
@@ -158,6 +165,8 @@ export async function convertDraftToOrder(db: Db, draftId: string): Promise<Conv
     subtotalPaise: draft.subtotal_paise as number,
     taxPaise: draft.tax_paise as number,
     packingPaise: draft.packing_charge_paise as number,
+    discountPaise: draft.discount_paise as number,
+    couponCode: draft.coupon_code as string | null,
     tenantId,
     contactId: draft.contact_id as string,
     conversationId: draft.conversation_id as string,

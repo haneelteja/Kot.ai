@@ -1,6 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { getServerClient } from '@alphabot/database';
 import type { BotConfig, Conversation, IncomingWhatsAppMessage, Product } from '@alphabot/shared';
+import { signOrderingLink } from '@alphabot/shared';
 import { WhatsAppGateway } from '../whatsapp/gateway.js';
 import { getMenu } from '../../lib/menu-cache.js';
 import { createBooking, createBookingFeedback } from '../../lib/booking.js';
@@ -58,6 +59,10 @@ export async function handleRestaurantButtonTap(ctx: ButtonTapContext): Promise<
   if (tappedId === 'order_food') {
     if (botConfig?.order_mode === 'weblink') {
       const webBaseUrl = process.env['WEB_BASE_URL'] ?? 'https://whats-app-agent-web.vercel.app';
+      // WEB-01: signed so a tampered/guessed URL is rejected — falls back
+      // to the raw tenant id (today's behaviour) if ORDERING_LINK_SECRET
+      // isn't configured.
+      const link = signOrderingLink(tenantId, process.env['ORDERING_LINK_SECRET']);
       const text = 'Here you go — order online 🍽️';
       await db.from('messages').insert({ conversation_id: conversation.id, role: 'assistant', content: text });
       await gateway.sendMessage(config.phone_number_id, config.access_token, {
@@ -66,7 +71,7 @@ export async function handleRestaurantButtonTap(ctx: ButtonTapContext): Promise<
         to:              incoming.from,
         body:            text,
         ctaButtonText:   'Order now',
-        ctaUrl:          `${webBaseUrl}/o/${tenantId}`,
+        ctaUrl:          `${webBaseUrl}/o/${link}`,
       });
     } else {
       const text = "Awesome! Here's our menu — just tell me what you'd like and I'll add it to your order 🍽️";

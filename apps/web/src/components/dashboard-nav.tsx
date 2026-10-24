@@ -18,7 +18,9 @@ import {
   CalendarCheck,
   AlertTriangle,
   Shield,
+  Sunrise,
   Link2,
+  Users,
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -36,7 +38,9 @@ const RETURNS_ITEM        = { href: '/returns',         label: 'Returns',      i
 const MENU_ITEM            = { href: '/menu',            label: 'Menu',         icon: UtensilsCrossed };
 const BOOKINGS_ITEM        = { href: '/bookings',        label: 'Bookings',     icon: CalendarCheck   };
 const COMPLAINTS_ITEM      = { href: '/complaints',      label: 'Complaints',   icon: AlertTriangle   };
+const TODAY_ITEM           = { href: '/today',           label: 'Today',        icon: Sunrise         };
 const SHARE_LINKS_ITEM     = { href: '/share-links',     label: 'Share Links',  icon: Link2           };
+const CUSTOMERS_ITEM       = { href: '/customers',       label: 'Customers',    icon: Users           };
 
 export function DashboardNav({
   tenantName,
@@ -71,7 +75,7 @@ export function DashboardNav({
     items.splice(convsIdx + 1, 0, INTEGRATIONS_ITEM);
     if (hasRestaurantBot) {
       const configIdx = items.findIndex(i => i.href === '/configurations');
-      const toAdd = [MENU_ITEM, BOOKINGS_ITEM, COMPLAINTS_ITEM, SHARE_LINKS_ITEM, ...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM])];
+      const toAdd = [TODAY_ITEM, MENU_ITEM, BOOKINGS_ITEM, COMPLAINTS_ITEM, CUSTOMERS_ITEM, SHARE_LINKS_ITEM, ...(items.some(i => i.href === '/orders') ? [] : [ORDERS_ITEM])];
       items.splice(configIdx + 1, 0, ...toAdd);
     }
     if (hasLifecycleBot) {

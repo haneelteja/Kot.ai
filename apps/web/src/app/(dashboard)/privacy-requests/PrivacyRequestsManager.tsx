@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Download, Trash2, AlertTriangle } from 'lucide-react';
 import {
   findContactByPhoneAction,
@@ -9,14 +9,23 @@ import {
   type ContactLookupResult,
 } from '@/app/actions/privacy';
 
-export function PrivacyRequestsManager() {
-  const [phone, setPhone]       = useState('');
+export function PrivacyRequestsManager({ initialPhone }: { initialPhone?: string }) {
+  const [phone, setPhone]       = useState(initialPhone ?? '');
   const [contact, setContact]   = useState<ContactLookupResult | null>(null);
   const [error, setError]       = useState<string | null>(null);
   const [busy, setBusy]         = useState(false);
   const [confirmPhone, setConfirmPhone] = useState('');
   const [deleteMode, setDeleteMode]     = useState(false);
   const [deleted, setDeleted]   = useState(false);
+  const didAutoSearch = useRef(false);
+
+  useEffect(() => {
+    if (initialPhone && !didAutoSearch.current) {
+      didAutoSearch.current = true;
+      void handleSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSearch() {
     setBusy(true);

@@ -5,10 +5,16 @@ import { PrivacyRequestsManager } from './PrivacyRequestsManager';
 
 export const metadata = { title: 'Data Requests' };
 
-export default async function PrivacyRequestsPage() {
+export default async function PrivacyRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ phone?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect('/login');
   if (!['admin', 'client_admin', 'client_manager'].includes(session.role)) redirect('/dashboard');
+
+  const { phone } = await searchParams;
 
   return (
     <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
@@ -24,7 +30,7 @@ export default async function PrivacyRequestsPage() {
         </div>
       </div>
 
-      <PrivacyRequestsManager />
+      <PrivacyRequestsManager initialPhone={phone} />
     </div>
   );
 }

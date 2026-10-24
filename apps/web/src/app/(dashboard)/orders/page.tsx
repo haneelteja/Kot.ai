@@ -2,7 +2,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Plus, ExternalLink, CheckCircle, Clock, Truck, XCircle, Package, ChefHat, BellRing } from 'lucide-react';
+import { ShoppingCart, Plus, ExternalLink, CheckCircle, Clock, Truck, XCircle, Package, ChefHat, BellRing, Printer } from 'lucide-react';
 import { OrderStatusBadge }   from '@/components/dashboard/OrderStatusBadge';
 import { SendInvoiceButton } from '@/components/dashboard/SendInvoiceButton';
 
@@ -195,6 +195,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                     <OrderStatusBadge orderId={order.id} currentStatus={order.status as 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled'} isPickup={isPickup} />
 
                     <SendInvoiceButton orderId={order.id} />
+
+                    <a
+                      href={`/orders/${order.id}/print`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Print KOT"
+                      className="p-1.5 rounded-md hover:bg-sunken text-muted-foreground hover:text-text transition-colors"
+                    >
+                      <Printer size={13} />
+                    </a>
 
                     {payment?.link_url && payment.status !== 'paid' && (
                       <a

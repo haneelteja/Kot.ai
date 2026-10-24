@@ -26,7 +26,8 @@ import { handleConfirmComplaint, COMPLAINT_PROMPT_BLOCK } from '../../services/r
 import { handleReturnRequest } from '../../services/lifecycle-bot/return-request.js';
 import { buildStagePromptBlock } from '../../lib/stage-definitions.js';
 import { toolEnabled, TOOL_IDS } from '../../lib/tool-registry.js';
-import { isOptOutMessage, isSuppressed, writeSuppression } from '../../lib/suppression.js';
+import { isOptOutMessage, isOptInMessage, isSuppressed, writeSuppression, removeSuppression } from '../../lib/suppression.js';
+import { writeConsent } from '../../lib/consent.js';
 import { classifyMessageKind, KIND_CLASSIFIER_VERSION } from '../../lib/message-kind.js';
 import { maybeUpdateChatSummary } from '../../lib/chat-summary.js';
 import { isNumberBlocked } from '../../lib/blocked-numbers.js';
@@ -499,6 +500,7 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
     if (incoming.text && isOptOutMessage(incoming.text)) {
       // Write suppression record (idempotent)
       void writeSuppression(tenantId, contactPhone, 'user_opt_out');
+      void writeConsent(tenantId, (contact as Contact).id, 'marketing', 'opt_out', 'whatsapp_keyword');
       // Mark any open conversation for this contact as opted_out (non-blocking, best-effort)
       void db
         .from('conversations')
@@ -515,8 +517,22 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
       return;
     }
 
-    // Check if this contact is already suppressed (e.g. earlier opt-out)
+    // Check if this contact is already suppressed (e.g. earlier opt-out).
+    // MKT-01/02: only check the resubscribe keyword here, scoped to already-
+    // suppressed contacts — isOptInMessage's 'start' keyword would otherwise
+    // false-positive on a non-suppressed customer just saying "start" to
+    // begin ordering.
     if (contactPhone && await isSuppressed(tenantId, contactPhone)) {
+      if (incoming.text && isOptInMessage(incoming.text)) {
+        void removeSuppression(tenantId, contactPhone);
+        void writeConsent(tenantId, (contact as Contact).id, 'marketing', 'opt_in', 'whatsapp_keyword');
+        await gateway.sendMessage(config.phone_number_id, config.access_token, {
+          type: 'text',
+          to:   incoming.from,
+          text: "You're resubscribed — you'll hear from us again. Reply STOP anytime to opt out.",
+        });
+        return;
+      }
       fastify.log.info({ tenantId, phone: contactPhone }, '[Webhook] suppressed contact — dropping reply');
       return;
     }
